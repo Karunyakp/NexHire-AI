@@ -1,41 +1,53 @@
 import google.generativeai as genai
 import streamlit as st
+
+# --- API CONFIGURATION ---
+# Try to get the key from Streamlit Secrets (Cloud)
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
 except:
-       API_KEY = ""
+    # Fallback for local testing (Keep your real key here if testing locally)
+    API_KEY = "PASTE_YOUR_KEY_HERE"
 
-if API_KEY != "":
+# Configure the AI
+if API_KEY != "PASTE_YOUR_KEY_HERE":
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # SWITCHING TO THE STABLE MODEL "gemini-pro"
+    model = genai.GenerativeModel('gemini-pro')
 else:
     model = None
+
+# --- FUNCTION 1: GET MATCH SCORE ---
 def get_ats_score(resume_text, job_desc):
     if not model: return 0
     
+    # Prompt optimized for Gemini Pro
     prompt = f"""
-    Act as a strict ATS (Applicant Tracking System).
+    You are an ATS (Applicant Tracking System).
     Compare the Resume to the Job Description.
-    Give a compatibility score (0-100).
-    RETURN ONLY THE NUMBER. NO TEXT.
+    Output ONLY a single integer from 0 to 100 representing the match percentage.
+    Do not output any text, just the number.
     
     Resume: {resume_text[:3000]}
     Job: {job_desc[:3000]}
     """
     try:
         response = model.generate_content(prompt)
+        # Extract number
         return int(''.join(filter(str.isdigit, response.text)))
-    except:
+    except Exception as e:
+        # If AI fails, return a safe default to prevent crashing
         return 0
+
+# --- FUNCTION 2: GET FEEDBACK ---
 def get_feedback(resume_text, job_desc):
     if not model: return "Error: API Key Missing"
     
     prompt = f"""
-    Act as a Senior Technical Recruiter.
-    The candidate scored low on the ATS check.
-    
-    1. List 3 CRITICAL keywords missing from the resume.
-    2. Suggest 1 project idea that would improve their odds for this specific job.
+    Act as a Senior Recruiter.
+    Review this resume against the job description.
+    Provide 3 bullet points on what is missing or needs improvement.
+    Keep it professional and concise.
     
     Resume: {resume_text[:3000]}
     Job: {job_desc[:3000]}
