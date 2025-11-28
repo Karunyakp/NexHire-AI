@@ -16,13 +16,13 @@ st.markdown("""
         background-color: #F9FAFB;
     }
 
-    [data-testid="stHeaderActionElements"] {
-        display: none !important;
-    }
-    
     .stMarkdown a {
         display: none !important;
         pointer-events: none;
+    }
+    
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
     }
 
     .stApp {
@@ -65,7 +65,6 @@ st.markdown("""
     div.stButton > button:hover {
         background-color: #4338ca;
         transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
     }
 
     h1 {
@@ -75,7 +74,7 @@ st.markdown("""
         font-size: 3rem;
     }
     h2 { font-weight: 600; letter-spacing: -0.02em; color: #374151; }
-    h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; padding: 0; line-height: 1.4; }
+    h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; }
     
     #MainMenu, footer, header {visibility: hidden;}
     
@@ -87,9 +86,10 @@ st.markdown("""
         border-bottom-color: #4F46E5 !important;
     }
     
-    div[data-testid="stImage"] {
-        display: flex;
-        justify-content: center;
+    div[data-testid="stImage"] > img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -110,12 +110,14 @@ if not st.session_state['logged_in']:
         st.write("")
         
         with st.container(border=True):
-            try:
-                st.image("logo.png", width=180)
-            except:
-                st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
+            logo_c1, logo_c2, logo_c3 = st.columns([1, 2, 1])
+            with logo_c2:
+                try:
+                    st.image("logo.png", use_container_width=True)
+                except:
+                    st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
 
-            st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-top: 10px; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
             
             tab_sign, tab_reg = st.tabs(["Sign In", "Register"])
             
@@ -149,10 +151,10 @@ if not st.session_state['logged_in']:
 else:
     c_left, c_right = st.columns([6, 1])
     with c_left:
-        cl1, cl2 = st.columns([0.8, 5.2])
+        cl1, cl2 = st.columns([1, 6])
         with cl1:
             try:
-                st.image("logo.png", width=60)
+                st.image("logo.png", width=70)
             except:
                 st.write("🔹")
         with cl2:
