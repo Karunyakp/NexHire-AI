@@ -3,16 +3,14 @@ import streamlit as st
 
 # --- API CONFIGURATION ---
 try:
-    # Attempt to load from Streamlit Secrets (Cloud)
     API_KEY = st.secrets["GOOGLE_API_KEY"]
 except:
-    # Fallback for local testing
     API_KEY = "PASTE_YOUR_KEY_HERE"
 
 if API_KEY != "PASTE_YOUR_KEY_HERE":
     genai.configure(api_key=API_KEY)
-    # 🔴 FIX: Using 'gemini-pro' because it is 100% compatible with the Cloud
-    model = genai.GenerativeModel('gemini-pro')
+    # 🔴 WE ARE USING THE NEWEST FLASH MODEL
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
@@ -20,11 +18,8 @@ def get_ats_score(resume_text, job_desc):
     if not model: return 0
     
     prompt = f"""
-    You are an ATS (Applicant Tracking System).
-    Compare the Resume to the Job Description.
-    Output ONLY a single integer from 0 to 100 representing the match percentage.
-    Do not output any text, just the number.
-    
+    You are an ATS. Compare the Resume to the Job Description.
+    Output ONLY a single integer from 0 to 100.
     Resume: {resume_text[:3000]}
     Job: {job_desc[:3000]}
     """
@@ -36,13 +31,8 @@ def get_ats_score(resume_text, job_desc):
 
 def get_feedback(resume_text, job_desc):
     if not model: return "Error: API Key Missing"
-    
     prompt = f"""
-    Act as a Senior Recruiter.
-    Review this resume against the job description.
-    Provide 3 bullet points on what is missing or needs improvement.
-    Keep it professional and concise.
-    
+    Act as a Recruiter. Provide 3 feedback points.
     Resume: {resume_text[:3000]}
     Job: {job_desc[:3000]}
     """
