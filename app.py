@@ -3,12 +3,9 @@ import database as db
 import ai_engine as ai
 import PyPDF2
 import time
-from PIL import Image # Needed to load your local image
 
-# --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
-# --- PLATINUM DESIGN SYSTEM ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -19,26 +16,34 @@ st.markdown("""
         background-color: #F9FAFB;
     }
 
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    
+    .stMarkdown a {
+        display: none !important;
+        pointer-events: none;
+    }
+
     .stApp {
         background-color: #F9FAFB;
     }
 
-    /* CARD STYLING */
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         background-color: #FFFFFF;
         border-radius: 16px; 
         border: 1px solid #E5E7EB;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        padding: 30px;
+        padding: 40px;
     }
 
-    /* INPUTS */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
         background-color: #FFFFFF;
         border: 1px solid #D1D5DB;
         border-radius: 8px;
         padding: 14px;
         color: #111827;
+        font-size: 15px;
         transition: all 0.2s;
     }
     .stTextInput > div > div > input:focus {
@@ -46,7 +51,6 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
 
-    /* BUTTONS */
     div.stButton > button {
         background-color: #4F46E5;
         color: white;
@@ -55,6 +59,7 @@ st.markdown("""
         font-weight: 600;
         border: none;
         width: 100%;
+        margin-top: 10px;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
@@ -63,17 +68,28 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
     }
 
+    h1 {
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #111827;
+        font-size: 3rem;
+    }
+    h2 { font-weight: 600; letter-spacing: -0.02em; color: #374151; }
+    h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; padding: 0; line-height: 1.4; }
+    
     #MainMenu, footer, header {visibility: hidden;}
     
-    /* TABS */
-    .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
-    .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+    .stTabs [data-baseweb="tab-list"] {
+        border-bottom: 2px solid #E5E7EB;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #4F46E5 !important;
+        border-bottom-color: #4F46E5 !important;
+    }
     
-    /* CENTER IMAGES */
     div[data-testid="stImage"] {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
+        display: flex;
+        justify-content: center;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -85,9 +101,6 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
-# ==========================================
-# 💎 LOGIN SCREEN (With YOUR Custom Logo)
-# ==========================================
 if not st.session_state['logged_in']:
     
     col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -97,14 +110,12 @@ if not st.session_state['logged_in']:
         st.write("")
         
         with st.container(border=True):
-            # --- YOUR LOGO HERE ---
             try:
-                # Displays logo.png centered
-                st.image("logo.png", width=150) 
+                st.image("logo.png", width=180)
             except:
-                st.warning("⚠️ Upload 'logo.png' to GitHub to see the image here.")
+                st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
 
-            st.markdown("<h3 style='text-align: center; color: #6B7280; margin-top: 10px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
             
             tab_sign, tab_reg = st.tabs(["Sign In", "Register"])
             
@@ -135,14 +146,9 @@ if not st.session_state['logged_in']:
 
         st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure.</p>", unsafe_allow_html=True)
 
-# ==========================================
-# 💎 DASHBOARD (Logo in Header)
-# ==========================================
 else:
-    # Top Bar with Logo
     c_left, c_right = st.columns([6, 1])
     with c_left:
-        # Layout: Logo | Welcome Text
         cl1, cl2 = st.columns([0.8, 5.2])
         with cl1:
             try:
