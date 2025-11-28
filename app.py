@@ -3,15 +3,15 @@ import database as db
 import ai_engine as ai
 import PyPDF2
 import time
+from PIL import Image # Needed to load your local image
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="NexHire Platinum", page_icon="✨", layout="wide")
+st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
-# --- PLATINUM DESIGN SYSTEM (Unique & Clean) ---
+# --- PLATINUM DESIGN SYSTEM ---
 st.markdown("""
     <style>
-    /* 1. TYPOGRAPHY */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Outfit', sans-serif;
@@ -19,7 +19,11 @@ st.markdown("""
         background-color: #F9FAFB;
     }
 
-    /* 2. NATIVE CONTAINERS */
+    .stApp {
+        background-color: #F9FAFB;
+    }
+
+    /* CARD STYLING */
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         background-color: #FFFFFF;
         border-radius: 16px; 
@@ -28,7 +32,21 @@ st.markdown("""
         padding: 30px;
     }
 
-    /* 3. BUTTONS */
+    /* INPUTS */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+        background-color: #FFFFFF;
+        border: 1px solid #D1D5DB;
+        border-radius: 8px;
+        padding: 14px;
+        color: #111827;
+        transition: all 0.2s;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* BUTTONS */
     div.stButton > button {
         background-color: #4F46E5;
         color: white;
@@ -37,7 +55,6 @@ st.markdown("""
         font-weight: 600;
         border: none;
         width: 100%;
-        letter-spacing: 0.5px;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
@@ -46,36 +63,17 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
     }
 
-    /* 4. HIDE STREAMLIT UI */
     #MainMenu, footer, header {visibility: hidden;}
     
-    /* 5. TABS STYLING */
-    .stTabs [data-baseweb="tab-list"] {
-        border-bottom: 2px solid #E5E7EB;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #4F46E5 !important;
-        border-bottom-color: #4F46E5 !important;
-    }
-
-    /* --- CUSTOM CSS LOGO --- */
-    .logo-text {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 800;
-        font-size: 2.5rem;
-        letter-spacing: -0.03em;
-        color: #111827;
-        margin: 0;
-    }
-    .logo-accent {
-        color: #4F46E5; /* Deep Violet Accent */
-    }
-    .login-logo-container {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    .dashboard-logo {
-        font-size: 1.8rem; /* Smaller for dashboard */
+    /* TABS */
+    .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
+    .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+    
+    /* CENTER IMAGES */
+    div[data-testid="stImage"] {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -88,7 +86,7 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
 # ==========================================
-# 💎 LOGIN SCREEN (With CSS Logo)
+# 💎 LOGIN SCREEN (With YOUR Custom Logo)
 # ==========================================
 if not st.session_state['logged_in']:
     
@@ -97,17 +95,16 @@ if not st.session_state['logged_in']:
     with col2:
         st.write("")
         st.write("")
-        st.write("") 
         
         with st.container(border=True):
-            # --- CSS LOGO HERE ---
-            st.markdown("""
-                <div class="login-logo-container">
-                    <h1 class="logo-text">Nex<span class="logo-accent">Hire</span></h1>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<p style='text-align: center; color: #6B7280; font-size: 16px; margin-bottom: 30px;'>The Platinum Standard for Hiring.</p>", unsafe_allow_html=True)
+            # --- YOUR LOGO HERE ---
+            try:
+                # Displays logo.png centered
+                st.image("logo.png", width=150) 
+            except:
+                st.warning("⚠️ Upload 'logo.png' to GitHub to see the image here.")
+
+            st.markdown("<h3 style='text-align: center; color: #6B7280; margin-top: 10px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
             
             tab_sign, tab_reg = st.tabs(["Sign In", "Register"])
             
@@ -116,7 +113,7 @@ if not st.session_state['logged_in']:
                 username = st.text_input("Username", key="login_user")
                 password = st.text_input("Password", type="password", key="login_pass")
                 st.write("")
-                if st.button("Continue to Dashboard"):
+                if st.button("Access Dashboard"):
                     if db.login_user(username, password):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = username
@@ -126,38 +123,37 @@ if not st.session_state['logged_in']:
             
             with tab_reg:
                 st.write("")
-                new_user = st.text_input("New Username", key="new_user")
-                new_pass = st.text_input("New Password", type="password", key="new_pass")
+                new_user = st.text_input("Choose Username", key="new_user")
+                new_pass = st.text_input("Choose Password", type="password", key="new_pass")
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
                         if db.add_user(new_user, new_pass):
-                            st.success("Profile created. Please Sign In.")
+                            st.success("Success. Please Log In.")
                         else:
                             st.error("Username taken.")
 
-        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems Inc. Secure Connection.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure.</p>", unsafe_allow_html=True)
 
 # ==========================================
-# 💎 DASHBOARD (With CSS Logo in Header)
+# 💎 DASHBOARD (Logo in Header)
 # ==========================================
 else:
-    # Top Bar with CSS Logo
+    # Top Bar with Logo
     c_left, c_right = st.columns([6, 1])
     with c_left:
-        # CSS Logo next to the username
-        st.markdown(f"""
-            <div style="display: flex; align-items: center;">
-                <h1 class="logo-text dashboard-logo" style="margin-right: 20px;">Nex<span class="logo-accent">Hire</span></h1>
-                <div>
-                    <h3 style="margin: 0; color: #111827;">Hello, {st.session_state['username']}</h3>
-                    <p style="color: #6B7280; font-size: 14px; margin: 0;">Your analytics overview</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        # Layout: Logo | Welcome Text
+        cl1, cl2 = st.columns([0.8, 5.2])
+        with cl1:
+            try:
+                st.image("logo.png", width=60)
+            except:
+                st.write("🔹")
+        with cl2:
+            st.markdown(f"### Hello, {st.session_state['username']}")
+            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your analytics overview</p>", unsafe_allow_html=True)
             
     with c_right:
-        st.write("") # alignment spacer
         if st.button("Sign Out"):
             st.session_state['logged_in'] = False
             st.rerun()
@@ -171,15 +167,15 @@ else:
     with m1:
         with st.container(border=True):
             st.markdown("### LATEST SCORE")
-            st.markdown(f"<h1 style='margin: 0; color: #4F46E5; font-size: 3rem;'>{last_score}%</h1>", unsafe_allow_html=True)
+            st.markdown(f"<h1 style='margin: 0; color: #4F46E5;'>{last_score}%</h1>", unsafe_allow_html=True)
     with m2:
         with st.container(border=True):
             st.markdown("### TOTAL SCANS")
-            st.markdown(f"<h1 style='margin: 0; color: #111827; font-size: 3rem;'>{len(history)}</h1>", unsafe_allow_html=True)
+            st.markdown(f"<h1 style='margin: 0; color: #111827;'>{len(history)}</h1>", unsafe_allow_html=True)
     with m3:
         with st.container(border=True):
             st.markdown("### SYSTEM STATUS")
-            st.markdown(f"<h1 style='margin: 0; color: #10B981; font-size: 3rem;'>Online</h1>", unsafe_allow_html=True)
+            st.markdown(f"<h1 style='margin: 0; color: #10B981;'>Online</h1>", unsafe_allow_html=True)
 
     st.write("")
     
