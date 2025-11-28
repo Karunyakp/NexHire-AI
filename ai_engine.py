@@ -13,7 +13,7 @@ except:
 if API_KEY != "PASTE_YOUR_KEY_HERE":
     genai.configure(api_key=API_KEY)
     # SWITCHING TO THE STABLE MODEL "gemini-pro"
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
