@@ -5,275 +5,228 @@ import PyPDF2
 import time
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="NexHire Enterprise", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="NexHire AI", page_icon="⚡", layout="wide")
 
-# --- ENTERPRISE CSS DESIGN SYSTEM ---
+# --- DARK MODE DESIGN SYSTEM ---
 st.markdown("""
     <style>
-    /* 1. IMPORT FONTS */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    /* 1. IMPORT MODERN FONT */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700&display=swap');
     
-    /* 2. GLOBAL RESET */
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #FFFFFF;
     }
     
-    /* 3. BACKGROUND */
+    /* 2. BACKGROUND (Deep Space Dark) */
     .stApp {
-        background-color: #F5F7FA;
+        background: #0B0E14;
+        background-image: radial-gradient(circle at 50% 0%, #1c2333 0%, #0B0E14 70%);
     }
     
-    /* 4. HIDE STREAMLIT BRANDING */
+    /* 3. HIDE JUNK */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* 5. THE LOGIN CARD CONTAINER */
-    .login-card {
-        background-color: #ffffff;
-        padding: 40px 32px;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        text-align: center;
+    /* 4. CARDS (The Dark Glass Look) */
+    .tech-card {
+        background: #151921;
+        border: 1px solid #2D3342;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         margin-bottom: 20px;
+        transition: transform 0.2s;
+    }
+    .tech-card:hover {
+        border-color: #4F8BF9;
+        box-shadow: 0 0 15px rgba(79, 139, 249, 0.2);
     }
     
-    /* 6. TYPOGRAPHY */
-    .brand-logo {
-        font-size: 40px;
-        color: #1F3C88;
-        margin-bottom: 10px;
-    }
-    .brand-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0;
-        line-height: 1.2;
-    }
-    .brand-subtitle {
-        font-size: 15px;
-        color: #6B7280;
-        font-weight: 400;
-        margin-top: 8px;
-        margin-bottom: 24px;
-    }
-    
-    /* 7. INPUT FIELDS (OVERRIDING STREAMLIT DEFAULTS) */
-    .stTextInput > div > div > input {
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 14px;
-        color: #1F2937;
-        background-color: #FFFFFF;
-        transition: border 0.2s, box-shadow 0.2s;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #1F3C88;
-        box-shadow: 0 0 0 3px rgba(31, 60, 136, 0.1);
-    }
-    
-    /* 8. BUTTONS (PRIMARY ACTION) */
-    .stButton > button {
-        width: 100%;
-        background-color: #1F3C88;
-        color: #ffffff;
-        font-weight: 600;
-        padding: 12px 0;
-        border-radius: 8px;
-        border: none;
-        font-size: 16px;
-        transition: background-color 0.2s;
-        height: 48px;
-    }
-    .stButton > button:hover {
-        background-color: #162a60; /* Darker Navy on Hover */
-        color: #ffffff;
-    }
-    
-    /* 9. TABS STYLING */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
-        border-bottom: 1px solid #E5E7EB;
-        margin-bottom: 24px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: transparent;
-        border-radius: 0px;
-        color: #6B7280;
-        font-weight: 500;
-        font-size: 14px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: transparent;
-        color: #1F3C88; /* Active Tab Color */
-        border-bottom: 2px solid #1F3C88;
-        font-weight: 600;
-    }
-    
-    /* DASHBOARD CARD STYLES */
-    .dashboard-card {
-        background: white;
-        border: 1px solid #E5E7EB;
+    /* 5. INPUT FIELDS (Dark Grey, No White) */
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+        background-color: #0B0E14;
+        color: #FFFFFF;
+        border: 1px solid #2D3342;
         border-radius: 10px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        padding: 12px;
     }
+    .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
+        border-color: #4F8BF9;
+        box-shadow: 0 0 0 2px rgba(79, 139, 249, 0.3);
+    }
+    
+    /* 6. BUTTONS (Neon Glow) */
+    .stButton>button {
+        width: 100%;
+        background: linear-gradient(135deg, #2563EB 0%, #9333EA 100%);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+    }
+    .stButton>button:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+    }
+    
+    /* 7. TEXT STYLES */
+    h1 {
+        background: linear-gradient(90deg, #FFFFFF 0%, #94A3B8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }
+    h2, h3 { color: #E2E8F0; }
+    p, label { color: #94A3B8 !important; }
+    
+    /* 8. TABS */
+    .stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #2D3342; }
+    .stTabs [aria-selected="true"] { color: #4F8BF9 !important; border-bottom-color: #4F8BF9 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# Initialize Database
 db.create_tables()
 
-# Session State
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
 # ==========================================
-# 🔐 LOGIN SCREEN (ENTERPRISE DESIGN)
+# 🌑 LOGIN SCREEN (DARK MODE)
 # ==========================================
 if not st.session_state['logged_in']:
-    
-    # We use columns to force the card to the center.
-    # Ratios: [1, 1.2, 1] makes the middle column narrow and centered.
     col1, col2, col3 = st.columns([1, 1.2, 1])
     
     with col2:
-        # --- HEADER SECTION ---
-        # We inject a specific DIV structure to match your requested design
-        st.markdown("""
-        <div class="login-card">
-            <div class="brand-logo">🛡️</div>
-            <h1 class="brand-title">NexHire Enterprise</h1>
-            <p class="brand-subtitle">Secure AI Assessment Portal</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.write("")
+        st.write("")
+        st.markdown('<div class="tech-card">', unsafe_allow_html=True)
         
-        # --- TABS SECTION ---
-        # We put the inputs OUTSIDE the HTML div so Streamlit logic still works,
-        # but we style them using the CSS above.
-        tab1, tab2 = st.tabs(["SIGN IN", "REGISTER"])
+        # Logo Area
+        st.markdown("<h1 style='text-align: center; font-size: 36px; margin-bottom: 5px;'>⚡ NexHire</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; margin-bottom: 30px;'>AI-Powered Resume Architect</p>", unsafe_allow_html=True)
+        
+        tab1, tab2 = st.tabs(["LOG IN", "SIGN UP"])
         
         with tab1:
-            username = st.text_input("Username / Email", key="login_user", placeholder="Enter your username")
-            password = st.text_input("Password", type="password", key="login_pass", placeholder="Enter your password")
-            st.write("") # Spacer
-            
-            if st.button("Sign In"):
+            st.write("")
+            username = st.text_input("Username", key="login_user", placeholder="Ex: admin")
+            password = st.text_input("Password", type="password", key="login_pass", placeholder="••••••")
+            st.write("")
+            if st.button("Initialize Session"):
                 if db.login_user(username, password):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = username
                     st.rerun()
                 else:
-                    st.error("Authentication failed. Please check credentials.")
-            
-            # Secondary Actions
-            st.markdown("""
-            <div style="text-align: center; margin-top: 16px;">
-                <a href="#" style="color: #6B7280; text-decoration: none; font-size: 13px;">Forgot password?</a>
-            </div>
-            """, unsafe_allow_html=True)
-
+                    st.error("Access Denied")
+        
         with tab2:
-            new_user = st.text_input("New Username", key="new_user", placeholder="Choose a username")
-            new_pass = st.text_input("New Password", type="password", key="new_pass", placeholder="Choose a strong password")
-            st.write("") # Spacer
-            
-            if st.button("Create Account"):
+            st.write("")
+            new_user = st.text_input("New Username", key="new_user")
+            new_pass = st.text_input("New Password", type="password", key="new_pass")
+            st.write("")
+            if st.button("Create ID"):
                 if new_user and new_pass:
                     if db.add_user(new_user, new_pass):
-                        st.success("Account created successfully.")
+                        st.success("ID Created. Proceed to Login.")
                     else:
-                        st.error("Username is not available.")
-                else:
-                    st.warning("All fields are required.")
+                        st.error("Username Unavailable")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 🚀 DASHBOARD (ENTERPRISE STYLE)
+# ⚡ DASHBOARD (DARK MODE)
 # ==========================================
 else:
     # Sidebar
     with st.sidebar:
         st.markdown(f"### 👤 {st.session_state['username']}")
-        st.caption("Enterprise Account")
-        st.markdown("---")
-        if st.button("Sign Out"):
+        st.caption("Pro License Active")
+        st.write("")
+        if st.button("Terminate Session"):
             st.session_state['logged_in'] = False
             st.rerun()
-
-        st.markdown("### Audit Logs")
+            
+        st.markdown("---")
+        st.markdown("### 🕒 Recent Activity")
         history = db.fetch_history(st.session_state['username'])
         if history:
             for item in history:
                 st.markdown(f"""
-                <div style="font-size: 13px; color: #4B5563; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
-                    <strong>{item[1]}</strong>
-                    <br>Score: {item[2]}%
+                <div style="background: #151921; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #2D3342;">
+                    <div style="color: #E2E8F0; font-weight: 500; font-size: 13px;">{item[1]}</div>
+                    <div style="color: #4F8BF9; font-size: 12px;">Match: {item[2]}%</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-    # Main Content
-    st.markdown("## Assessment Dashboard")
-    st.markdown("<p style='color: #6B7280; margin-bottom: 32px;'>Manage candidate screenings and AI evaluations.</p>", unsafe_allow_html=True)
-    
+    # Header
+    col_h1, col_h2 = st.columns([3, 1])
+    with col_h1:
+        st.title("Command Center")
+        st.markdown("<p>Analyze compatibility and optimize for ATS algorithms.</p>", unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-        st.markdown("### 📄 Candidate Resume")
-        uploaded_file = st.file_uploader("Upload PDF Document", type="pdf")
+        st.markdown('<div class="tech-card">', unsafe_allow_html=True)
+        st.markdown("### 📄 Resume Data")
+        uploaded_file = st.file_uploader("Upload PDF", type="pdf")
         
         resume_text = ""
         if uploaded_file:
             reader = PyPDF2.PdfReader(uploaded_file)
             for page in reader.pages:
                 resume_text += page.extract_text()
-            st.success("Document parsed securely.")
+            st.success("File Decrypted Successfully")
         else:
-            resume_text = st.text_area("Manual Data Entry", height=200, placeholder="Paste resume text...")
+            resume_text = st.text_area("Manual Input", height=200, placeholder="Paste resume content...")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-        st.markdown("### 🎯 Job Requisition")
-        job_role = st.text_input("Role Title", placeholder="e.g. Senior Backend Engineer")
-        job_desc = st.text_area("Job Description", height=200, placeholder="Enter requirements...")
+        st.markdown('<div class="tech-card">', unsafe_allow_html=True)
+        st.markdown("### 🎯 Target Parameters")
+        job_role = st.text_input("Role", placeholder="e.g. Machine Learning Engineer")
+        job_desc = st.text_area("Description", height=200, placeholder="Paste job requirements...")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("<hr style='border: 0; border-top: 1px solid #E5E7EB; margin: 32px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-color: #2D3342;'>", unsafe_allow_html=True)
     
-    col_l, col_r = st.columns([3, 1])
-    with col_r:
-        analyze_btn = st.button("Run Evaluation")
+    col_btn1, col_btn2 = st.columns([2, 1])
+    with col_btn2:
+        analyze_btn = st.button("⚡ RUN DIAGNOSTICS")
 
     if analyze_btn:
         if resume_text and job_desc:
-            with st.spinner("Processing analysis..."):
+            with st.spinner("Processing Neural Network..."):
                 time.sleep(1)
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 db.save_scan(st.session_state['username'], job_role, score)
                 
-                # Results
+                # Results UI
                 st.markdown("---")
                 
-                m1, m2 = st.columns([1, 2])
-                with m1:
-                    st.markdown('<div class="dashboard-card" style="text-align: center;">', unsafe_allow_html=True)
-                    st.markdown("#### Compatibility")
+                c1, c2 = st.columns([1, 2])
+                
+                with c1:
+                    st.markdown('<div class="tech-card" style="text-align: center; border-color: #4F8BF9;">', unsafe_allow_html=True)
+                    st.markdown("### Match Index")
                     color = "#EF4444" if score < 50 else "#10B981"
-                    st.markdown(f"<div style='font-size: 48px; font-weight: 700; color: {color};'>{score}%</div>", unsafe_allow_html=True)
+                    st.markdown(f"<h1 style='font-size: 60px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
                 
-                with m2:
-                    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-                    st.markdown("#### AI Assessment Report")
+                with c2:
+                    st.markdown('<div class="tech-card">', unsafe_allow_html=True)
+                    st.markdown("### AI Report")
                     st.info(feedback)
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.warning("Please complete all fields.")
+            st.warning("Data Missing.")
