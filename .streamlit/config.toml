@@ -5,6 +5,5 @@ magicEnabled = false
 port = 8501
 
 [runner]
-# FORCING A STABLE PYTHON VERSION
-# 3.12 is highly stable and compatible with most libraries
-python_version = "3.12"
+# This line is the key fix!
+python_version = "3.12" 
