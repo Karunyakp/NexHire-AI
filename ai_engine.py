@@ -4,13 +4,19 @@ import streamlit as st
 # --- API CONFIGURATION ---
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
-except:
-    API_KEY = "PASTE_YOUR_KEY_HERE"
+    st.write(f"✅ DEBUG: API Key found - {API_KEY[:10]}...")  # Remove in production
+except KeyError:
+    API_KEY = None
+    st.error("❌ GOOGLE_API_KEY not found in secrets. Add it to .streamlit/secrets.toml")
 
-if API_KEY != "PASTE_YOUR_KEY_HERE":
-    genai.configure(api_key=API_KEY)
-    # 🔴 WE ARE USING THE NEWEST FLASH MODEL
-    model = genai.GenerativeModel('gemini-1.5-flash')
+if API_KEY:
+    try:
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        st.success("✅ API Configured Successfully")
+    except Exception as e:
+        st.error(f"❌ API Configuration Error: {e}")
+        model = None
 else:
     model = None
 
