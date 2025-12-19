@@ -12,7 +12,8 @@ except KeyError:
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+       
+        model = genai.GenerativeModel('gemini-1.5-flash')
         st.success("✅ API Configured Successfully")
     except Exception as e:
         st.error(f"❌ API Configuration Error: {e}")
@@ -47,3 +48,4 @@ def get_feedback(resume_text, job_desc):
         return response.text
     except Exception as e:
         return f"AI Error: {e}"
+
