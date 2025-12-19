@@ -30,8 +30,6 @@ def initialize_model():
         st.error("❌ No GOOGLE_API_KEY found. Please configure API keys in .streamlit/secrets.toml")
         return None
     
-    st.success(f"✅ Found {len(API_KEYS)} API key(s)")
-    
     # Try to initialize with first key
     try:
         genai.configure(api_key=API_KEYS[0])
