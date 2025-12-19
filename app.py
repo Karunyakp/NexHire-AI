@@ -7,12 +7,13 @@ import time
 st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50) 
     st.write("### Created by Karunya K P")
     st.write("3rd Sem CSE Student & Full Stack Developer.")
     
-    st.markdown("[LinkedIn Profile](https://www.linkedin.com/in/karunya-kp)") 
-    st.markdown("[GitHub Profile](https://github.com/Karunyakp)")
+    st.write("")
+    
+    st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+    st.link_button("GitHub Profile", "https://github.com/Karunyakp")
     
     st.divider()
     st.info("Built with Python, Streamlit & Gemini AI")
@@ -25,11 +26,6 @@ st.markdown("""
         font-family: 'Outfit', sans-serif;
         color: #111827;
         background-color: #F9FAFB;
-    }
-
-    .stMarkdown a {
-        display: none !important;
-        pointer-events: none;
     }
     
     [data-testid="stHeaderActionElements"] {
@@ -57,11 +53,7 @@ st.markdown("""
         font-size: 15px;
         transition: all 0.2s;
     }
-    .stTextInput > div > div > input:focus {
-        border-color: #4F46E5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-    }
-
+    
     div.stButton > button {
         background-color: #4F46E5;
         color: white;
@@ -78,23 +70,18 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
-    h1 {
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        color: #111827;
-        font-size: 3rem;
-    }
+    h1 { font-weight: 700; letter-spacing: -0.03em; color: #111827; font-size: 3rem; }
     h2 { font-weight: 600; letter-spacing: -0.02em; color: #374151; }
     h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; }
     
     #MainMenu, footer, header {visibility: hidden;}
     
-    .stTabs [data-baseweb="tab-list"] {
-        border-bottom: 2px solid #E5E7EB;
-    }
-    .stTabs [aria-selected="true"] {
+    a {
         color: #4F46E5 !important;
-        border-bottom-color: #4F46E5 !important;
+        text-decoration: none;
+    }
+    a:hover {
+        text_decoration: underline;
     }
     
     div[data-testid="stImage"] > img {
