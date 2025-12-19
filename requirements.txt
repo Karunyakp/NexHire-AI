@@ -1,6 +1,6 @@
-streamlit
-google-generativeai==0.8.3
-pypdf2
 
-reportlab
+streamlit
+google-generativeai
+pypdf2
 pandas
+reportlab
