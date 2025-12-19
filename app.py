@@ -1,29 +1,10 @@
 import streamlit as st
-import time
-import PyPDF2
-
-# --- CRITICAL: THIS MUST BE THE FIRST STREAMLIT COMMAND ---
-st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
-
-# --- IMPORT LOCAL MODULES AFTER CONFIG ---
 import database as db
 import ai_engine as ai
+import PyPDF2
+import time
 
-# --- SIDEBAR & DIAGNOSTICS ---
-with st.sidebar:
-    st.write("### Created by Karunya K P")
-    
-    # --- API KEY CHECKER (Debug Tool) ---
-    st.divider()
-    st.write("### 🔑 API Key Status")
-    if "GOOGLE_API_KEY" in st.secrets:
-        st.success("Key Found in Secrets ✅")
-    else:
-        st.error("Key MISSING ❌")
-        st.info("Please add GOOGLE_API_KEY to .streamlit/secrets.toml")
-    st.divider()
-    
-    st.info("Built with Python, Streamlit & Gemini AI")
+st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
 st.markdown("""
     <style>
@@ -34,15 +15,42 @@ st.markdown("""
         color: #111827;
         background-color: #F9FAFB;
     }
-    .stApp { background-color: #F9FAFB; }
+
+    .stMarkdown a {
+        display: none !important;
+        pointer-events: none;
+    }
     
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+
+    .stApp {
+        background-color: #F9FAFB;
+    }
+
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         background-color: #FFFFFF;
         border-radius: 16px; 
         border: 1px solid #E5E7EB;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         padding: 40px;
     }
-    
+
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+        background-color: #FFFFFF;
+        border: 1px solid #D1D5DB;
+        border-radius: 8px;
+        padding: 14px;
+        color: #111827;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
     div.stButton > button {
         background-color: #4F46E5;
         color: white;
@@ -52,11 +60,40 @@ st.markdown("""
         border: none;
         width: 100%;
         margin-top: 10px;
+        transition: all 0.2s;
+    }
+    div.stButton > button:hover {
+        background-color: #4338ca;
+        transform: translateY(-2px);
+    }
+
+    h1 {
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #111827;
+        font-size: 3rem;
+    }
+    h2 { font-weight: 600; letter-spacing: -0.02em; color: #374151; }
+    h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; }
+    
+    #MainMenu, footer, header {visibility: hidden;}
+    
+    .stTabs [data-baseweb="tab-list"] {
+        border-bottom: 2px solid #E5E7EB;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #4F46E5 !important;
+        border-bottom-color: #4F46E5 !important;
+    }
+    
+    div[data-testid="stImage"] > img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Initialize Database
 db.create_tables()
 
 if 'logged_in' not in st.session_state:
@@ -65,18 +102,30 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ""
 
 if not st.session_state['logged_in']:
+    
     col1, col2, col3 = st.columns([1, 1.2, 1])
+    
     with col2:
         st.write("")
+        st.write("")
+        
         with st.container(border=True):
-            st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
-            st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
+            logo_c1, logo_c2, logo_c3 = st.columns([1, 2, 1])
+            with logo_c2:
+                try:
+                    st.image("logo.png", use_container_width=True)
+                except:
+                    st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
+
+            st.markdown("<h3 style='text-align: center; margin-top: 10px; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
             
             tab_sign, tab_reg = st.tabs(["Sign In", "Register"])
             
             with tab_sign:
+                st.write("")
                 username = st.text_input("Username", key="login_user")
                 password = st.text_input("Password", type="password", key="login_pass")
+                st.write("")
                 if st.button("Access Dashboard"):
                     if db.login_user(username, password):
                         st.session_state['logged_in'] = True
@@ -86,8 +135,10 @@ if not st.session_state['logged_in']:
                         st.error("Access Denied.")
             
             with tab_reg:
+                st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
+                st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
                         if db.add_user(new_user, new_pass):
@@ -95,11 +146,20 @@ if not st.session_state['logged_in']:
                         else:
                             st.error("Username taken.")
 
+        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure.</p>", unsafe_allow_html=True)
+
 else:
-    # --- DASHBOARD ---
     c_left, c_right = st.columns([6, 1])
     with c_left:
-        st.markdown(f"### Hello, {st.session_state['username']}")
+        cl1, cl2 = st.columns([1, 6])
+        with cl1:
+            try:
+                st.image("logo.png", width=60)
+            except:
+                st.write("🔹")
+        with cl2:
+            st.markdown(f"### Hello, {st.session_state['username']}")
+            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your analytics overview</p>", unsafe_allow_html=True)
             
     with c_right:
         if st.button("Sign Out"):
@@ -132,45 +192,36 @@ else:
     with col_main:
         with st.container(border=True):
             st.markdown("### 1. Document Processing")
-            uploaded_file = st.file_uploader("Upload PDF Resume", type="pdf")
+            st.info("Upload the candidate's PDF resume here.")
+            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed")
             
             resume_text = ""
             if uploaded_file:
-                with st.spinner("Reading PDF..."):
-                    try:
-                        reader = PyPDF2.PdfReader(uploaded_file)
-                        for page in reader.pages:
-                            resume_text += page.extract_text()
-                        st.success("Resume Loaded Successfully")
-                    except Exception as e:
-                        st.error(f"Error reading PDF: {e}")
+                with st.spinner("Extracting text..."):
+                    reader = PyPDF2.PdfReader(uploaded_file)
+                    for page in reader.pages:
+                        resume_text += page.extract_text()
+                st.success("Resume Extracted")
             else:
-                resume_text = st.text_area("Or paste resume text here", height=200)
+                resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
 
     with col_side:
         with st.container(border=True):
             st.markdown("### 2. Job Requisition")
-            job_role = st.text_input("Role Title", placeholder="e.g. Data Scientist")
-            job_desc = st.text_area("Job Description", height=250)
+            job_role = st.text_input("Role Title", placeholder="Product Designer")
+            job_desc = st.text_area("Requirements", height=250, placeholder="Paste JD here...", label_visibility="collapsed")
 
     st.write("")
-    
-    # --- THE ANALYZE BUTTON ---
     if st.button("Initialize Intelligence Engine", type="primary"):
         if resume_text and job_desc:
-            with st.spinner("AI is analyzing..."):
-                # 1. Get Score
+            with st.spinner("Performing Gap Analysis..."):
+                time.sleep(1)
                 score = ai.get_ats_score(resume_text, job_desc)
-                
-                # 2. Get Feedback
                 feedback = ai.get_feedback(resume_text, job_desc)
-                
-                # 3. Save
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
-                # 4. Display Results
                 r1, r2 = st.columns([1, 2])
                 with r1:
                     with st.container(border=True):
@@ -183,9 +234,6 @@ else:
                 with r2:
                     with st.container(border=True):
                         st.markdown("### AI ASSESSMENT REPORT")
-                        st.markdown(feedback)
+                        st.write(feedback)
         else:
-            st.warning("Please upload a resume and enter a job description.")
-
-st.markdown("---")
-st.markdown("<div style='text-align: center; color: grey;'>© 2025 NexHire Systems</div>", unsafe_allow_html=True)
+            st.warning("Input required.")
