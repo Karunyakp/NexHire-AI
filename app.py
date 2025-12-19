@@ -6,6 +6,16 @@ import time
 
 st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50) # You can replace this with your own profile pic URL
+    st.write("### Created by Karunya K P")
+    st.write("3rd Sem CSE Student & Full Stack Developer.")
+    
+    st.markdown("[LinkedIn Profile](https://www.linkedin.com/in/karunya-kp)") 
+    st.markdown("[GitHub Profile](https://github.com/Karunyakp)")
+    
+    st.divider() # Adds a nice line
+    st.info("Built with Python, Streamlit & Gemini AI")
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -237,3 +247,4 @@ else:
                         st.write(feedback)
         else:
             st.warning("Input required.")
+
