@@ -4,125 +4,89 @@ import ai_engine as ai
 import PyPDF2
 import time
 
-st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
-
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+# --- 1. CONFIGURATION & STYLING ---
+def setup_page():
+    st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     
-    html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif;
-        color: #111827;
-        background-color: #F9FAFB;
-    }
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Outfit', sans-serif;
+            color: #111827;
+            background-color: #F9FAFB;
+        }
+        
+        .stMarkdown a {
+            text-decoration: none;
+            color: #4F46E5 !important;
+            font-weight: 600;
+        }
+        
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #FFFFFF;
+            border-radius: 16px; 
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
 
-    .stMarkdown a {
-        display: none !important;
-        pointer-events: none;
-    }
-    
-    [data-testid="stHeaderActionElements"] {
-        display: none !important;
-    }
+        .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+            background-color: #FFFFFF;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            padding: 14px;
+        }
 
-    .stApp {
-        background-color: #F9FAFB;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        background-color: #FFFFFF;
-        border-radius: 16px; 
-        border: 1px solid #E5E7EB;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        padding: 40px;
-    }
-
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-        background-color: #FFFFFF;
-        border: 1px solid #D1D5DB;
-        border-radius: 8px;
-        padding: 14px;
-        color: #111827;
-        font-size: 15px;
-        transition: all 0.2s;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #4F46E5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-    }
-
-    div.stButton > button {
-        background-color: #4F46E5;
-        color: white;
-        border-radius: 8px;
-        padding: 14px 28px;
-        font-weight: 600;
-        border: none;
-        width: 100%;
-        margin-top: 10px;
-        transition: all 0.2s;
-    }
-    div.stButton > button:hover {
-        background-color: #4338ca;
-        transform: translateY(-2px);
-    }
-
-    h1 {
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        color: #111827;
-        font-size: 3rem;
-    }
-    h2 { font-weight: 600; letter-spacing: -0.02em; color: #374151; }
-    h3 { font-size: 1.1rem; font-weight: 500; color: #6B7280; margin: 0; }
-    
-    #MainMenu, footer, header {visibility: hidden;}
-    
-    .stTabs [data-baseweb="tab-list"] {
-        border-bottom: 2px solid #E5E7EB;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #4F46E5 !important;
-        border-bottom-color: #4F46E5 !important;
-    }
-    
-    div[data-testid="stImage"] > img {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    </style>
+        div.stButton > button {
+            background-color: #4F46E5;
+            color: white;
+            border-radius: 8px;
+            padding: 14px 28px;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        div.stButton > button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        
+        /* Hide Streamlit Elements */
+        #MainMenu, footer, header {visibility: hidden;}
+        div[data-testid="stHeaderActionElements"] {display: none !important;}
+        </style>
     """, unsafe_allow_html=True)
-# --- Add this Sidebar Code ---
-with st.sidebar:
-    st.image("logo.png", width=100)  # Optional: Shows your logo in sidebar
-    st.title("NexHire")
-    
-    st.subheader("Connect with Developer")
-    
-    # Replace these with your actual profile links
-    st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
-    st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
-    
-    # Pushes the text to the bottom visually
-    st.write("") 
-    st.write("")
-    st.divider()
-    
-    # Footer
-    st.caption("Developed by")
-    st.markdown("### Karunya. K. P") 
-    st.caption("© 2025 NexHire Systems")
-# -----------------------------
-db.create_tables()
 
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-if 'username' not in st.session_state:
-    st.session_state['username'] = ""
+# --- 2. SIDEBAR (YOUR PROOF & LINKS) ---
+def render_sidebar():
+    with st.sidebar:
+        try:
+            st.image("logo.png", width=80) 
+        except:
+            pass # Fail silently if logo missing
+            
+        st.title("NexHire")
+        st.markdown("### Enterprise Recruitment Intelligence")
+        
+        st.divider()
+        
+        st.subheader("Connect with Developer")
+        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+        st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
+        
+        st.write("") 
+        st.divider()
+        
+        # Footer Proof
+        st.caption("Developed & Maintained by")
+        st.markdown("### Karunya. K. P") 
+        st.caption("© 2025 NexHire Systems")
 
-if not st.session_state['logged_in']:
-    
+# --- 3. LOGIN PAGE LOGIC ---
+def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     
     with col2:
@@ -130,16 +94,17 @@ if not st.session_state['logged_in']:
         st.write("")
         
         with st.container(border=True):
-            logo_c1, logo_c2, logo_c3 = st.columns([1, 2, 1])
-            with logo_c2:
+            # Logo centered
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c2:
                 try:
                     st.image("logo.png", use_container_width=True)
                 except:
                     st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
 
-            st.markdown("<h3 style='text-align: center; margin-top: 10px; margin-bottom: 30px;'>Enterprise Recruitment Intelligence</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Welcome Back</h3>", unsafe_allow_html=True)
             
-            tab_sign, tab_reg = st.tabs(["Sign In", "Register"])
+            tab_sign, tab_reg = st.tabs(["Sign In", "Register New Account"])
             
             with tab_sign:
                 st.write("")
@@ -152,7 +117,7 @@ if not st.session_state['logged_in']:
                         st.session_state['username'] = username
                         st.rerun()
                     else:
-                        st.error("Access Denied.")
+                        st.error("Invalid credentials.")
             
             with tab_reg:
                 st.write("")
@@ -162,24 +127,26 @@ if not st.session_state['logged_in']:
                 if st.button("Create Profile"):
                     if new_user and new_pass:
                         if db.add_user(new_user, new_pass):
-                            st.success("Success. Please Log In.")
+                            st.success("Account created! Please log in.")
                         else:
-                            st.error("Username taken.")
+                            st.error("Username already taken.")
 
-        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure Environment.</p>", unsafe_allow_html=True)
 
-else:
+# --- 4. DASHBOARD LOGIC ---
+def dashboard_page():
+    # Header Section
     c_left, c_right = st.columns([6, 1])
     with c_left:
-        cl1, cl2 = st.columns([1, 6])
+        cl1, cl2 = st.columns([1, 10])
         with cl1:
             try:
-                st.image("logo.png", width=60)
+                st.image("logo.png", width=50)
             except:
                 st.write("🔹")
         with cl2:
             st.markdown(f"### Hello, {st.session_state['username']}")
-            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your analytics overview</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your recruitment analytics overview</p>", unsafe_allow_html=True)
             
     with c_right:
         if st.button("Sign Out"):
@@ -188,6 +155,7 @@ else:
             
     st.divider()
 
+    # Metrics Section
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
@@ -207,6 +175,7 @@ else:
 
     st.write("")
     
+    # Main Input Section
     col_main, col_side = st.columns([2, 1])
     
     with col_main:
@@ -221,27 +190,32 @@ else:
                     reader = PyPDF2.PdfReader(uploaded_file)
                     for page in reader.pages:
                         resume_text += page.extract_text()
-                st.success("Resume Extracted")
+                st.success("Resume Extracted Successfully")
             else:
                 resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
 
     with col_side:
         with st.container(border=True):
             st.markdown("### 2. Job Requisition")
-            job_role = st.text_input("Role Title", placeholder="Product Designer")
-            job_desc = st.text_area("Requirements", height=250, placeholder="Paste JD here...", label_visibility="collapsed")
+            job_role = st.text_input("Role Title", placeholder="e.g. Product Designer")
+            job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
 
     st.write("")
+    
+    # AI Processing Section
     if st.button("Initialize Intelligence Engine", type="primary"):
         if resume_text and job_desc:
-            with st.spinner("Performing Gap Analysis..."):
-                time.sleep(1)
+            with st.spinner("Analyzing candidate profile against requirements..."):
+                time.sleep(1) # Visual pacing
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
+                
+                # Save to database
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
+                # Results Display
                 r1, r2 = st.columns([1, 2])
                 with r1:
                     with st.container(border=True):
@@ -256,6 +230,27 @@ else:
                         st.markdown("### AI ASSESSMENT REPORT")
                         st.write(feedback)
         else:
-            st.warning("Input required.")
+            st.warning("⚠️ Please provide both a Resume and a Job Description.")
 
+# --- 5. MAIN EXECUTION ---
+def main():
+    setup_page()
+    db.create_tables()
+    
+    # Render sidebar ALWAYS (so proof is visible on login page too)
+    render_sidebar()
 
+    # Initialize Session State
+    if 'logged_in' not in st.session_state:
+        st.session_state['logged_in'] = False
+    if 'username' not in st.session_state:
+        st.session_state['username'] = ""
+
+    # Routing
+    if not st.session_state['logged_in']:
+        login_page()
+    else:
+        dashboard_page()
+
+if __name__ == "__main__":
+    main()
