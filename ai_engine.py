@@ -4,7 +4,7 @@ import os
 import time
 from google.api_core import exceptions
 
-# --- API CONFIGURATION WITH KEY ROTATION ---
+# --- API CONFIGURATION ---
 API_KEYS = []
 model = None
 current_key_index = 0
@@ -32,11 +32,9 @@ def get_model():
     """Get or initialize the model. Only runs when needed."""
     global model, current_key_index
     
-    # If we already have a working model, return it
     if model:
         return model
 
-    # Otherwise, load keys and start fresh
     load_keys()
     
     if not API_KEYS:
@@ -44,7 +42,6 @@ def get_model():
         return None
         
     try:
-        # Configure with the current key
         genai.configure(api_key=API_KEYS[current_key_index])
         model = genai.GenerativeModel('gemini-1.5-flash')
         return model
@@ -64,19 +61,25 @@ def rotate_api_key():
         try:
             genai.configure(api_key=API_KEYS[current_key_index])
             model = genai.GenerativeModel('gemini-1.5-flash')
-            st.info(f"🔄 Switched to Key #{current_key_index + 1}")
+            st.toast(f"🔄 Switched to Key #{current_key_index + 1}", icon="🔄")
             return True
-        except Exception as e:
+        except Exception:
             return False
     return False
 
+# --- SAFETY SETTINGS (CRITICAL FOR RESUMES) ---
+# Resumes often trigger false "Harassment" or "Personal Info" blocks.
+# We disable these blocks so the report always generates.
+SAFETY_SETTINGS = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+]
+
 def get_ats_score(resume_text, job_desc):
-    """Get ATS score with lazy loading"""
-    # Initialize model NOW, not at startup
     active_model = get_model()
-    
-    if not active_model:
-        return 0
+    if not active_model: return 0
     
     prompt = f"""You are an ATS. Output ONLY a single integer score (0-100).
     Resume: {resume_text[:2000]}
@@ -84,7 +87,11 @@ def get_ats_score(resume_text, job_desc):
     Score:"""
     
     try:
-        response = active_model.generate_content(prompt, request_options={"timeout": 30})
+        response = active_model.generate_content(
+            prompt, 
+            request_options={"timeout": 30},
+            safety_settings=SAFETY_SETTINGS
+        )
         import re
         match = re.search(r'\d+', response.text)
         return int(match.group()) if match else 0
@@ -92,31 +99,33 @@ def get_ats_score(resume_text, job_desc):
     except exceptions.ResourceExhausted:
         if rotate_api_key():
             time.sleep(1)
-            return get_ats_score(resume_text, job_desc) # Retry
+            return get_ats_score(resume_text, job_desc)
         return 0
     except Exception:
         return 0
 
 def get_feedback(resume_text, job_desc):
-    """Get Feedback with lazy loading"""
-    # Initialize model NOW, not at startup
     active_model = get_model()
-    
-    if not active_model:
-        return "AI Error"
+    if not active_model: return "❌ Error: AI Model not loaded."
     
     prompt = f"""Act as a Recruiter. Provide 3 bullet points of feedback.
     Resume: {resume_text[:2000]}
     Job: {job_desc[:2000]}"""
     
     try:
-        response = active_model.generate_content(prompt, request_options={"timeout": 30})
+        response = active_model.generate_content(
+            prompt, 
+            request_options={"timeout": 30},
+            safety_settings=SAFETY_SETTINGS
+        )
         return response.text
     
     except exceptions.ResourceExhausted:
         if rotate_api_key():
             time.sleep(1)
             return get_feedback(resume_text, job_desc)
-        return "Rate limit reached."
+        return "⚠️ Rate limit reached. Please try again in 30 seconds."
+        
     except Exception as e:
-        return "Error generating feedback."
+        # This will now print the REAL error to your app screen
+        return f"⚠️ Report Generation Error: {str(e)}"
