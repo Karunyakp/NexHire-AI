@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import database as db
 import ai_engine as ai
+import advanced_features as af  # <--- NEW IMPORT
 import PyPDF2
 import time
 
@@ -56,6 +57,18 @@ def setup_page():
             transform: translateY(-2px);
         }
         
+        /* Custom Tag Styles for Skills */
+        .skill-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 4px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .skill-match { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
+        .skill-missing { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
@@ -75,7 +88,7 @@ def render_sidebar():
         st.divider()
         
         st.subheader("Connect with Developer")
-        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
         st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
         
         st.write("") 
@@ -115,11 +128,8 @@ def login_page():
                     if db.login_user(username, password):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = username
-                        
-                        # FAILSAFE: If Karunya logs in, FORCE Admin status
                         if username.lower() == "karunya":
                             db.set_admin(username)
-                            
                         st.rerun()
                     else:
                         st.error("Invalid credentials.")
@@ -128,21 +138,18 @@ def login_page():
                 st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
-                st.info(" Password must be at least 8 characters.")
+                st.info("ℹ️ Password must be at least 8 characters.")
                 
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
-                        # 1. Enforce Password Length
                         if len(new_pass) < 8:
-                            st.error(":( Password is too short! Must be at least 8 characters.")
+                            st.error("❌ Password is too short! Must be at least 8 characters.")
                         else:
-                            # 2. Attempt Registration
                             if db.add_user(new_user, new_pass):
-                                # 3. CHECK FOR ADMIN (Karunya)
                                 if new_user.lower() == "karunya":
                                     db.set_admin(new_user)
-                                    st.success(" Admin Account Created! Please Login.")
+                                    st.success("👑 Admin Account Created! Please Login.")
                                 else:
                                     st.success("Account created! Please log in.")
                             else:
@@ -150,7 +157,6 @@ def login_page():
                     else:
                         st.warning("Please fill all fields.")
 
-            # Footer Proof
             st.write("")
             st.divider()
             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
@@ -181,23 +187,18 @@ def dashboard_page():
             
     st.divider()
 
-    # --- 🔐 ADMIN CONSOLE (Only for Karunya/Admins) ---
+    # --- 🔐 ADMIN CONSOLE ---
     if db.is_admin(st.session_state['username']):
-        st.markdown("# Admin Surveillance Console")
+        st.markdown("### 🛡️ Admin Surveillance Console")
         st.info(f"Welcome, Administrator {st.session_state['username']}.")
-        
         with st.expander("View All User Uploads & Results", expanded=True):
-            # Fetch all history from DB
             all_data = db.get_all_scans()
             if all_data:
-                # Create a clean table
                 df = pd.DataFrame(all_data, columns=['ID', 'User', 'Uploaded Role (Job)', 'Result (Score)', 'Date'])
-                # Hide ID column for cleaner look
                 st.dataframe(df[['Date', 'User', 'Uploaded Role (Job)', 'Result (Score)']], use_container_width=True)
             else:
                 st.warning("No data found in the system yet.")
         st.divider()
-    # ----------------------------------------------------
 
     # User Metrics
     history = db.fetch_history(st.session_state['username'])
@@ -251,14 +252,21 @@ def dashboard_page():
         if resume_text and job_desc:
             with st.spinner("Analyzing candidate profile against requirements..."):
                 time.sleep(1)
+                
+                # 1. Get AI Score & Feedback
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 
-                # Save scan results to DB
+                # 2. Extract Skills (NEW FEATURE)
+                resume_skills = af.extract_skills(resume_text)
+                job_skills = af.extract_skills(job_desc)
+                
+                # 3. Save to DB
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
+                # --- RESULTS DISPLAY ---
                 r1, r2 = st.columns([1, 2])
                 with r1:
                     with st.container(border=True):
@@ -267,20 +275,60 @@ def dashboard_page():
                         color = "#EF4444" if score < 50 else "#4F46E5"
                         st.markdown(f"<h1 style='font-size: 72px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
+                        
+                        # PDF DOWNLOAD BUTTON (NEW FEATURE)
+                        st.write("")
+                        pdf_data = af.generate_pdf_report(
+                            st.session_state['username'], 
+                            job_role, 
+                            score, 
+                            feedback, 
+                            resume_skills, 
+                            job_skills
+                        )
+                        st.download_button(
+                            label="📄 Download Full Report",
+                            data=pdf_data,
+                            file_name=f"NexHire_Report_{st.session_state['username']}.pdf",
+                            mime="application/pdf"
+                        )
                 
                 with r2:
                     with st.container(border=True):
+                        st.markdown("### 📊 SKILL GAP ANALYSIS")
+                        
+                        # Skill Logic
+                        matched = [s for s in resume_skills if s in job_skills]
+                        missing = [s for s in job_skills if s not in resume_skills]
+                        
+                        if matched:
+                            st.markdown("**✅ Matched Skills**")
+                            # Create HTML for matched tags
+                            html_matched = "".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched])
+                            st.markdown(html_matched, unsafe_allow_html=True)
+                        else:
+                            st.info("No direct keyword matches found.")
+                            
+                        st.write("") # Spacer
+                        
+                        if missing:
+                            st.markdown("**❌ Missing Skills (Critical)**")
+                            # Create HTML for missing tags
+                            html_missing = "".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing])
+                            st.markdown(html_missing, unsafe_allow_html=True)
+                        else:
+                            st.success("No critical skills missing!")
+                            
+                        st.divider()
                         st.markdown("### AI ASSESSMENT REPORT")
                         st.write(feedback)
         else:
-            st.warning(" Please provide both a Resume and a Job Description.")
+            st.warning("⚠️ Please provide both a Resume and a Job Description.")
 
 # --- 5. MAIN EXECUTION ---
 def main():
     setup_page()
     db.create_tables()
-    
-    # Always render sidebar
     render_sidebar()
 
     if 'logged_in' not in st.session_state:
