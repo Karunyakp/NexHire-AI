@@ -12,7 +12,7 @@ with st.sidebar:
     
     st.write("")
     
-    st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+    st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
     st.link_button("GitHub Profile", "https://github.com/Karunyakp")
     
     st.divider()
@@ -243,3 +243,4 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
