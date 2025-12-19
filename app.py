@@ -20,7 +20,6 @@ def setup_page():
             background-color: #F9FAFB;
         }
         
-        /* Sidebar Links */
         .stMarkdown a {
             text-decoration: none;
             color: #4F46E5 !important;
@@ -35,7 +34,6 @@ def setup_page():
             padding: 40px;
         }
         
-        /* Tabs & Tags */
         .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
         .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
 
@@ -138,15 +136,60 @@ def dashboard_page():
             st.rerun()
     st.divider()
 
-    # --- ADMIN CONSOLE ---
+    # --- 🛡️ SUPER ADMIN CONSOLE ---
     if db.is_admin(st.session_state['username']):
-        st.markdown("### 🛡️ Admin Surveillance Console")
-        with st.expander("View All User Uploads & Results", expanded=True):
-            all_data = db.get_all_scans()
+        st.markdown("### 🛡️ Super Admin Console")
+        st.info("Full Access to User Data, Resumes, and AI Outputs.")
+        
+        with st.expander("📂 View Full Database (Click to Expand)", expanded=True):
+            # Fetch ALL detailed data
+            all_data = db.get_all_full_analysis()
+            
             if all_data:
-                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Uploaded Role (Job)', 'Result (Score)', 'Date'])
-                st.dataframe(df[['Date', 'User', 'Uploaded Role (Job)', 'Result (Score)']], use_container_width=True)
-            else: st.warning("No data found.")
+                # Convert to DataFrame
+                # Mapping database columns to friendly names
+                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
+                
+                # Show Summary Table first
+                st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
+                
+                st.divider()
+                st.markdown("### 🔍 Deep Inspection")
+                
+                # Dropdown to select a specific scan to inspect
+                selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
+                
+                if selected_id:
+                    # Get the row for that ID
+                    record = df[df['ID'] == selected_id].iloc[0]
+                    
+                    st.success(f"Inspecting Record #{selected_id} | User: {record['User']}")
+                    
+                    # 1. Inputs
+                    with st.expander("📄 Resume & Job Description (Inputs)"):
+                        c1, c2 = st.columns(2)
+                        with c1: 
+                            st.caption("Resume Text")
+                            st.text_area("Resume", record['Resume'], height=200, key="adm_res")
+                        with c2: 
+                            st.caption("Job Description")
+                            st.text_area("JD", record['JD'], height=200, key="adm_jd")
+                    
+                    # 2. Outputs
+                    with st.expander("🤖 AI Feedback & Analysis (Outputs)"):
+                        st.markdown(f"**Score:** {record['Score']}%")
+                        st.markdown("---")
+                        st.markdown(record['Feedback'])
+                        
+                    # 3. Generated Content
+                    with st.expander("📝 Generated Content (Drafts)"):
+                        t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
+                        with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
+                        with t2: st.markdown(record['Interview'])
+                        with t3: st.markdown(record['Market'])
+                        with t4: st.markdown(record['Roadmap'])
+            else:
+                st.warning("No analysis data recorded yet.")
         st.divider()
 
     # --- METRICS SECTION ---
@@ -162,7 +205,6 @@ def dashboard_page():
         with st.container(border=True):
             st.markdown("### TOTAL SCANS")
             st.markdown(f"<h1 style='margin: 0; color: #111827;'>{len(history)}</h1>", unsafe_allow_html=True)
-    
     st.write("")
     
     # Input Area
@@ -192,23 +234,25 @@ def dashboard_page():
             with st.spinner("Analyzing candidate profile..."):
                 time.sleep(1)
                 
-                # --- CALLING ALL AI FUNCTIONS ---
+                # --- CORE AI ---
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 resume_skills = af.extract_skills(resume_text)
                 job_skills = af.extract_skills(job_desc)
                 
-                # Generative Features
+                # --- STRATEGIC INSIGHTS ---
                 cover_letter = ai.generate_cover_letter(resume_text, job_desc)
                 interview_q = ai.generate_interview_questions(resume_text, job_desc)
                 market_analysis = ai.get_market_analysis(resume_text, job_role)
-                roadmap = ai.generate_learning_roadmap(resume_text, job_desc) # NEW
+                roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
                 
+                # SAVE DATA (Basic + Admin Full)
                 db.save_scan(st.session_state['username'], job_role, score)
+                db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
                 
                 st.divider()
                 
-                # --- RESULTS TABS (RENAMED) ---
+                # --- RESULTS TABS ---
                 tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "🚀 Strategic Insights"])
                 
                 # TAB 1: REPORT
@@ -251,7 +295,7 @@ def dashboard_page():
                         st.markdown("### 🎤 Interview Questions")
                         st.markdown(interview_q)
 
-                # TAB 4: STRATEGIC INSIGHTS (RENAMED & IMPROVED)
+                # TAB 4: STRATEGIC INSIGHTS
                 with tab4:
                     d1, d2 = st.columns([1.5, 1])
                     with d1:
@@ -261,7 +305,6 @@ def dashboard_page():
                             st.markdown(market_analysis)
                         
                         st.write("")
-                        # NEW UPSKILLING SECTION
                         with st.container(border=True):
                             st.markdown("### 📈 Candidate Upskilling Roadmap")
                             st.success("Suggested 4-Week Plan to bridge skill gaps:")
