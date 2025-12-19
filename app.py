@@ -149,23 +149,24 @@ def dashboard_page():
             else: st.warning("No data found.")
         st.divider()
 
-    # Metrics
+    # --- METRICS SECTION (UPDATED) ---
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
-    m1, m2, m3 = st.columns(3)
+    # Removed "System Status" column. Now only 2 columns.
+    m1, m2 = st.columns(2)
+    
     with m1:
         with st.container(border=True):
             st.markdown("### LATEST SCORE")
+            # Added explicit "%" symbol to ensure it shows
             st.markdown(f"<h1 style='margin: 0; color: #4F46E5;'>{last_score}%</h1>", unsafe_allow_html=True)
+            
     with m2:
         with st.container(border=True):
             st.markdown("### TOTAL SCANS")
             st.markdown(f"<h1 style='margin: 0; color: #111827;'>{len(history)}</h1>", unsafe_allow_html=True)
-    with m3:
-        with st.container(border=True):
-            st.markdown("### SYSTEM STATUS")
-            st.markdown(f"<h1 style='margin: 0; color: #10B981;'>Online</h1>", unsafe_allow_html=True)
+    
     st.write("")
     
     # Input Area
@@ -204,14 +205,13 @@ def dashboard_page():
                 # --- GENERATIVE & DIAMOND FEATURES ---
                 cover_letter = ai.generate_cover_letter(resume_text, job_desc)
                 interview_q = ai.generate_interview_questions(resume_text, job_desc)
-                market_analysis = ai.get_market_analysis(resume_text, job_role) # NEW
+                market_analysis = ai.get_market_analysis(resume_text, job_role)
                 
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
                 # --- RESULTS TABS ---
-                # Added "💎 Market Intel" tab
                 tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "💎 Diamond Suite"])
                 
                 # TAB 1: REPORT
@@ -254,7 +254,7 @@ def dashboard_page():
                         st.markdown("### 🎤 Interview Questions")
                         st.markdown(interview_q)
 
-                # TAB 4: DIAMOND SUITE (NEW)
+                # TAB 4: DIAMOND SUITE
                 with tab4:
                     d1, d2 = st.columns([1.5, 1])
                     with d1:
