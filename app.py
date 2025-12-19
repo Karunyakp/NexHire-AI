@@ -238,9 +238,10 @@ st.markdown(
     """
     <div style='text-align: center; color: grey;'>
         © 2025 NexHire Systems. <br>
-        Designed & Developed by <a href='https://www.linkedin.com/in/karunya-kp' target='_blank'>Karunya K P</a>
+        Designed & Developed by <a href='https://www.linkedin.com/in/karunyakp' target='_blank'>Karunya K P</a>
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
