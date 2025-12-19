@@ -93,7 +93,27 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
-
+# --- Add this Sidebar Code ---
+with st.sidebar:
+    st.image("logo.png", width=100)  # Optional: Shows your logo in sidebar
+    st.title("NexHire")
+    
+    st.subheader("Connect with Developer")
+    
+    # Replace these with your actual profile links
+    st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/your-id")
+    st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
+    
+    # Pushes the text to the bottom visually
+    st.write("") 
+    st.write("")
+    st.divider()
+    
+    # Footer
+    st.caption("Developed by")
+    st.markdown("### Karunya. K. P") 
+    st.caption("© 2025 NexHire Systems")
+# -----------------------------
 db.create_tables()
 
 if 'logged_in' not in st.session_state:
@@ -237,3 +257,4 @@ else:
                         st.write(feedback)
         else:
             st.warning("Input required.")
+
