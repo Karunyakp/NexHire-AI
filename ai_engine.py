@@ -4,12 +4,13 @@ import os
 import time
 from google.api_core import exceptions
 
-# --- MODELS TO TRY (If one fails, we try the next) ---
+# --- MODELS TO TRY ---
+# We try these in order. If one fails, we try the next.
 AVAILABLE_MODELS = [
     'gemini-1.5-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-001',
-    'gemini-pro',  # Fallback to 1.0 Pro if Flash fails
+    'gemini-1.5-pro',
+    'gemini-pro',
+    'gemini-1.0-pro'
 ]
 
 # --- API CONFIGURATION ---
@@ -26,14 +27,14 @@ def load_keys():
         for i in range(1, 11):
             key = st.secrets.get(f"GOOGLE_API_KEY_{i}") or os.environ.get(f"GOOGLE_API_KEY_{i}")
             if key:
-                API_KEYS.append(key)
+                API_KEYS.append(key.strip()) # .strip() removes accidental spaces
     except:
         pass
     
     # Check single key
     single_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if single_key and single_key not in API_KEYS:
-        API_KEYS.append(single_key)
+    if single_key and single_key.strip() not in API_KEYS:
+        API_KEYS.append(single_key.strip())
 
 def get_current_key():
     global API_KEYS, current_key_index
@@ -63,16 +64,15 @@ SAFETY_SETTINGS = [
 
 def generate_smart(prompt):
     """
-    Universal generation function that handles:
-    1. Key Rotation (for 429 Rate Limits)
-    2. Model Fallback (for 404 Not Found errors)
+    Universal generation function with DETAILED ERROR REPORTING
     """
-    max_retries = 3
+    max_retries = 2
+    last_error_msg = "Unknown Error"
     
     for attempt in range(max_retries):
         key = get_current_key()
         if not key:
-            st.error("❌ No API Key found.")
+            st.error("❌ No API Key found in secrets.toml")
             return None
             
         genai.configure(api_key=key)
@@ -89,11 +89,11 @@ def generate_smart(prompt):
                 return response
                 
             except exceptions.NotFound:
-                # If 404 (Model Not Found), just try the next model in the list
+                # Model doesn't exist, try next one
                 continue 
                 
             except exceptions.ResourceExhausted:
-                # If Rate Limit, rotate key and BREAK to outer loop to retry
+                # Quota full, rotate key
                 if rotate_key():
                     time.sleep(1)
                     break 
@@ -101,10 +101,12 @@ def generate_smart(prompt):
                     time.sleep(2)
                     continue
             except Exception as e:
-                # Ignore other errors and keep trying
-                pass
+                # Capture the error to show the user
+                last_error_msg = str(e)
+                continue
                 
-    st.error("⚠️ AI Service Busy: Could not generate report with any model.")
+    # If we get here, EVERYTHING failed. Show the user why.
+    st.error(f"⚠️ AI Failure. Reason: {last_error_msg}")
     return None
 
 def get_ats_score(resume_text, job_desc):
@@ -134,5 +136,4 @@ def get_feedback(resume_text, job_desc):
     if response:
         return response.text
     
-    return "⚠️ Could not generate feedback. Please try again."
-    
+    return f"⚠️ Could not generate feedback."
