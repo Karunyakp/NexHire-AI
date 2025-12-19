@@ -20,7 +20,7 @@ def setup_page():
             background-color: #F9FAFB;
         }
         
-        /* Links */
+        /* Sidebar Links */
         .stMarkdown a {
             text-decoration: none;
             color: #4F46E5 !important;
@@ -149,19 +149,15 @@ def dashboard_page():
             else: st.warning("No data found.")
         st.divider()
 
-    # --- METRICS SECTION (UPDATED) ---
+    # --- METRICS SECTION ---
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
-    # Removed "System Status" column. Now only 2 columns.
     m1, m2 = st.columns(2)
-    
     with m1:
         with st.container(border=True):
             st.markdown("### LATEST SCORE")
-            # Added explicit "%" symbol to ensure it shows
             st.markdown(f"<h1 style='margin: 0; color: #4F46E5;'>{last_score}%</h1>", unsafe_allow_html=True)
-            
     with m2:
         with st.container(border=True):
             st.markdown("### TOTAL SCANS")
@@ -196,23 +192,24 @@ def dashboard_page():
             with st.spinner("Analyzing candidate profile..."):
                 time.sleep(1)
                 
-                # --- CORE AI ---
+                # --- CALLING ALL AI FUNCTIONS ---
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 resume_skills = af.extract_skills(resume_text)
                 job_skills = af.extract_skills(job_desc)
                 
-                # --- GENERATIVE & DIAMOND FEATURES ---
+                # Generative Features
                 cover_letter = ai.generate_cover_letter(resume_text, job_desc)
                 interview_q = ai.generate_interview_questions(resume_text, job_desc)
                 market_analysis = ai.get_market_analysis(resume_text, job_role)
+                roadmap = ai.generate_learning_roadmap(resume_text, job_desc) # NEW
                 
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
-                # --- RESULTS TABS ---
-                tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "💎 Diamond Suite"])
+                # --- RESULTS TABS (RENAMED) ---
+                tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "🚀 Strategic Insights"])
                 
                 # TAB 1: REPORT
                 with tab1:
@@ -254,17 +251,25 @@ def dashboard_page():
                         st.markdown("### 🎤 Interview Questions")
                         st.markdown(interview_q)
 
-                # TAB 4: DIAMOND SUITE
+                # TAB 4: STRATEGIC INSIGHTS (RENAMED & IMPROVED)
                 with tab4:
                     d1, d2 = st.columns([1.5, 1])
                     with d1:
                         with st.container(border=True):
-                            st.markdown("### 💰 Market Value & Salary Estimation")
-                            st.info("Based on 2025 Market Trends for this specific skill set.")
+                            st.markdown("### 💰 Market Value & Salary")
+                            st.info("Based on 2025 Market Trends.")
                             st.markdown(market_analysis)
+                        
+                        st.write("")
+                        # NEW UPSKILLING SECTION
+                        with st.container(border=True):
+                            st.markdown("### 📈 Candidate Upskilling Roadmap")
+                            st.success("Suggested 4-Week Plan to bridge skill gaps:")
+                            st.markdown(roadmap)
+                            
                     with d2:
                         with st.container(border=True):
-                            st.markdown("### 📧 Smart Outreach")
+                            st.markdown("### 📧 Recruiter Outreach")
                             email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
                             if st.button("Generate Email Draft"):
                                 with st.spinner("Drafting..."):
