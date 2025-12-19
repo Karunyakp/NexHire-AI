@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import database as db
 import ai_engine as ai
 import PyPDF2
@@ -18,7 +19,7 @@ def setup_page():
             background-color: #F9FAFB;
         }
         
-        /* Links in Sidebar */
+        /* Sidebar Links */
         .stMarkdown a {
             text-decoration: none;
             color: #4F46E5 !important;
@@ -80,12 +81,11 @@ def render_sidebar():
         st.write("") 
         st.divider()
         
-        # Sidebar Footer
         st.caption("Developed & Maintained by")
         st.markdown("### Karunya. K. P") 
         st.caption("© 2025 NexHire Systems")
 
-# --- 3. LOGIN PAGE (WITH FOOTER PROOF) ---
+# --- 3. LOGIN PAGE ---
 def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     
@@ -102,7 +102,7 @@ def login_page():
                 except:
                     st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
 
-            st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Welcome Back</h3>", unsafe_allow_html=True)
+            st.write("") 
             
             tab_sign, tab_reg = st.tabs(["Sign In", "Register New Account"])
             
@@ -123,15 +123,29 @@ def login_page():
                 st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
+                st.info("ℹ️ Password must be at least 8 characters.")
+                
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
-                        if db.add_user(new_user, new_pass):
-                            st.success("Account created! Please log in.")
+                        # 1. Enforce Password Length
+                        if len(new_pass) < 8:
+                            st.error("❌ Password is too short! Must be at least 8 characters.")
                         else:
-                            st.error("Username already taken.")
+                            # 2. Attempt Registration
+                            if db.add_user(new_user, new_pass):
+                                # 3. CHECK FOR ADMIN (Karunya)
+                                if new_user.lower() == "karunya":
+                                    db.set_admin(new_user)
+                                    st.success("👑 Admin Account Created! You have special access.")
+                                else:
+                                    st.success("Account created! Please log in.")
+                            else:
+                                st.error("Username already taken.")
+                    else:
+                        st.warning("Please fill all fields.")
 
-            # --- MAIN SCREEN PROOF (Visible at bottom of login card) ---
+            # Footer Proof
             st.write("")
             st.divider()
             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
@@ -162,7 +176,25 @@ def dashboard_page():
             
     st.divider()
 
-    # Metrics
+    # --- 🔐 ADMIN CONSOLE (Only for Karunya/Admins) ---
+    if db.is_admin(st.session_state['username']):
+        st.markdown("### 🛡️ Admin Surveillance Console")
+        st.info("You are viewing this because you are an Administrator.")
+        
+        with st.expander("View All User Uploads & Results", expanded=True):
+            # Fetch all history from DB
+            all_data = db.get_all_scans()
+            if all_data:
+                # Create a clean table
+                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Uploaded Role (Job)', 'Result (Score)', 'Date'])
+                # Hide ID column for cleaner look
+                st.dataframe(df[['Date', 'User', 'Uploaded Role (Job)', 'Result (Score)']], use_container_width=True)
+            else:
+                st.warning("No data found in the system yet.")
+        st.divider()
+    # ----------------------------------------------------
+
+    # User Metrics
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
@@ -217,6 +249,7 @@ def dashboard_page():
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 
+                # Save scan results to DB
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
@@ -242,7 +275,7 @@ def main():
     setup_page()
     db.create_tables()
     
-    # This ensures the Sidebar is visible on ALL pages (Login & Dashboard)
+    # Always render sidebar
     render_sidebar()
 
     if 'logged_in' not in st.session_state:
