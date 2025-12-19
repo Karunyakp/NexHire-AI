@@ -78,14 +78,13 @@ def generate_interview_questions(resume_text, job_desc):
     except:
         return "Error generating questions."
 
-# --- 💎 DIAMOND FEATURES (NEW) ---
+# --- STRATEGIC INSIGHTS (The "Best" Features) ---
 def get_market_analysis(resume_text, job_role):
     if not model: return "Error"
     prompt = f"""
     Act as a Compensation Analyst. Based on the skills and experience in this resume for the role of '{job_role}':
     1. Estimate a competitive Salary Range (in USD and INR) for 2025.
     2. Rate the Market Demand for these skills (High/Medium/Low) with a brief reason.
-    3. Estimated "Ramp-up Time" (how long to become productive).
     Output in clean markdown points.
     Resume: {resume_text[:4000]}
     """
@@ -109,3 +108,18 @@ def generate_email_draft(resume_text, job_role, email_type="Interview Invite"):
         return response.text
     except:
         return "Error generating email."
+
+def generate_learning_roadmap(resume_text, job_desc):
+    if not model: return "Error"
+    prompt = f"""
+    Identify the 3 biggest skill gaps between this Resume and Job Description.
+    Create a "4-Week Learning Roadmap" to help the candidate learn these missing skills.
+    Suggest specific topics to cover each week.
+    Resume: {resume_text[:4000]}
+    Job: {job_desc[:4000]}
+    """
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except:
+        return "Error generating roadmap."
