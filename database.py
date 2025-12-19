@@ -10,10 +10,28 @@ def create_tables():
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS users(username TEXT PRIMARY KEY, password TEXT, is_admin INTEGER DEFAULT 0)')
     c.execute('CREATE TABLE IF NOT EXISTS history(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, job_role TEXT, score INTEGER, date TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS detailed_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, job_role TEXT, feedback TEXT, resume_skills TEXT, job_skills TEXT, date TEXT)')
+    
+    # --- NEW TABLE FOR FULL ADMIN DATA ---
+    c.execute('''CREATE TABLE IF NOT EXISTS full_analysis (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    job_role TEXT,
+                    resume_text TEXT,
+                    job_desc TEXT,
+                    score INTEGER,
+                    feedback TEXT,
+                    cover_letter TEXT,
+                    interview_questions TEXT,
+                    market_analysis TEXT,
+                    roadmap TEXT,
+                    date TEXT
+                )''')
+    
     c.execute('CREATE TABLE IF NOT EXISTS user_preferences(username TEXT PRIMARY KEY, theme TEXT DEFAULT "light")')
     conn.commit()
     conn.close()
+
+# --- USER AUTH ---
 def login_user(username, password):
     conn = get_connection()
     c = conn.cursor()
@@ -35,67 +53,6 @@ def add_user(username, password):
     except:
         return False 
 
-def save_scan(username, job_role, score):
-    conn = get_connection()
-    c = conn.cursor()
-    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute('INSERT INTO history(username, job_role, score, date) VALUES (?,?,?,?)', (username, job_role, score, date))
-    conn.commit()
-    conn.close()
-
-def fetch_history(username):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT * FROM history WHERE username =? ORDER BY date DESC LIMIT 5', (username,))
-    data = c.fetchall()
-    conn.close()
-    return data
-
-def fetch_all_history(username, limit=100):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT * FROM history WHERE username =? ORDER BY date DESC LIMIT ?', (username, limit))
-    data = c.fetchall()
-    conn.close()
-    return data
-
-def save_detailed_feedback(username, job_role, feedback, resume_skills, job_skills):
-    conn = get_connection()
-    c = conn.cursor()
-    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    skills_str = ",".join(resume_skills)
-    job_skills_str = ",".join(job_skills)
-    c.execute('INSERT INTO detailed_feedback(username, job_role, feedback, resume_skills, job_skills, date) VALUES (?,?,?,?,?,?)',
-              (username, job_role, feedback, skills_str, job_skills_str, date))
-    conn.commit()
-    conn.close()
-
-def get_all_scans():
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT * FROM history ORDER BY date DESC')
-    data = c.fetchall()
-    conn.close()
-    return data
-
-def get_user_theme(username):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT theme FROM user_preferences WHERE username =?', (username,))
-    result = c.fetchone()
-    conn.close()
-    return result[0] if result else "light"
-
-def set_user_theme(username, theme):
-    conn = get_connection()
-    c = conn.cursor()
-    try:
-        c.execute('INSERT OR REPLACE INTO user_preferences(username, theme) VALUES (?,?)', (username, theme))
-        conn.commit()
-    except:
-        pass
-    conn.close()
-
 def set_admin(username):
     conn = get_connection()
     c = conn.cursor()
@@ -110,3 +67,43 @@ def is_admin(username):
     result = c.fetchone()
     conn.close()
     return result[0] if result else 0
+
+# --- DATA SAVING ---
+def save_scan(username, job_role, score):
+    """Saves basic stats for the User Dashboard graphs"""
+    conn = get_connection()
+    c = conn.cursor()
+    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    c.execute('INSERT INTO history(username, job_role, score, date) VALUES (?,?,?,?)', (username, job_role, score, date))
+    conn.commit()
+    conn.close()
+
+def save_full_analysis(username, job_role, resume_text, job_desc, score, feedback, cover_letter, interview_questions, market_analysis, roadmap):
+    """Saves EVERYTHING for the Admin Console"""
+    conn = get_connection()
+    c = conn.cursor()
+    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    c.execute('''INSERT INTO full_analysis 
+                 (username, job_role, resume_text, job_desc, score, feedback, cover_letter, interview_questions, market_analysis, roadmap, date) 
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)''', 
+                 (username, job_role, resume_text, job_desc, score, feedback, cover_letter, interview_questions, market_analysis, roadmap, date))
+    conn.commit()
+    conn.close()
+
+# --- DATA FETCHING ---
+def fetch_history(username):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM history WHERE username =? ORDER BY date DESC LIMIT 5', (username,))
+    data = c.fetchall()
+    conn.close()
+    return data
+
+def get_all_full_analysis():
+    """Fetches full details for Admin"""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM full_analysis ORDER BY date DESC')
+    data = c.fetchall()
+    conn.close()
+    return data
