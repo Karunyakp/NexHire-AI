@@ -101,7 +101,7 @@ with st.sidebar:
     st.subheader("Connect with Developer")
     
     # Replace these with your actual profile links
-    st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/your-id")
+    st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
     st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
     
     # Pushes the text to the bottom visually
@@ -257,4 +257,5 @@ else:
                         st.write(feedback)
         else:
             st.warning("Input required.")
+
 
