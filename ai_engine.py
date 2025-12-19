@@ -4,13 +4,16 @@ import os
 import time
 from google.api_core import exceptions
 
-# --- MODELS TO TRY ---
-# We try these in order. If one fails, we try the next.
+# --- MODELS TO TRY (Shotgun Approach) ---
+# We will try ALL of these until one works.
 AVAILABLE_MODELS = [
     'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-001',
     'gemini-1.5-pro',
-    'gemini-pro',
-    'gemini-1.0-pro'
+    'gemini-1.5-pro-latest',
+    'gemini-1.0-pro',
+    'gemini-pro'
 ]
 
 # --- API CONFIGURATION ---
@@ -21,15 +24,12 @@ def load_keys():
     """Load keys from secrets into the global list"""
     global API_KEYS
     API_KEYS = [] 
-    
-    # Check numbered keys
     try:
+        # Check numbered keys
         for i in range(1, 11):
             key = st.secrets.get(f"GOOGLE_API_KEY_{i}") or os.environ.get(f"GOOGLE_API_KEY_{i}")
-            if key:
-                API_KEYS.append(key.strip()) # .strip() removes accidental spaces
-    except:
-        pass
+            if key: API_KEYS.append(key.strip())
+    except: pass
     
     # Check single key
     single_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -38,16 +38,13 @@ def load_keys():
 
 def get_current_key():
     global API_KEYS, current_key_index
-    if not API_KEYS:
-        load_keys()
-    if not API_KEYS:
-        return None
+    if not API_KEYS: load_keys()
+    if not API_KEYS: return None
     return API_KEYS[current_key_index % len(API_KEYS)]
 
 def rotate_key():
     global current_key_index
-    if not API_KEYS:
-        load_keys()
+    if not API_KEYS: load_keys()
     if len(API_KEYS) > 1:
         current_key_index = (current_key_index + 1) % len(API_KEYS)
         st.toast(f"🔄 Switching to Key #{current_key_index + 1}", icon="🔄")
@@ -55,6 +52,7 @@ def rotate_key():
     return False
 
 # --- SAFETY SETTINGS ---
+# Disable safety filters to ensure report generates
 SAFETY_SETTINGS = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -64,7 +62,7 @@ SAFETY_SETTINGS = [
 
 def generate_smart(prompt):
     """
-    Universal generation function with DETAILED ERROR REPORTING
+    Tries multiple keys AND multiple models to get a result.
     """
     max_retries = 2
     last_error_msg = "Unknown Error"
@@ -88,12 +86,14 @@ def generate_smart(prompt):
                 )
                 return response
                 
-            except exceptions.NotFound:
-                # Model doesn't exist, try next one
+            except exceptions.NotFound as e:
+                # Capture error but keep trying other models
+                last_error_msg = f"Model {model_name} not found (404)"
                 continue 
                 
-            except exceptions.ResourceExhausted:
-                # Quota full, rotate key
+            except exceptions.ResourceExhausted as e:
+                last_error_msg = f"Quota Exceeded for {model_name}"
+                # If quota full, rotate key and retry the whole process
                 if rotate_key():
                     time.sleep(1)
                     break 
@@ -101,12 +101,11 @@ def generate_smart(prompt):
                     time.sleep(2)
                     continue
             except Exception as e:
-                # Capture the error to show the user
-                last_error_msg = str(e)
+                last_error_msg = f"Error with {model_name}: {str(e)}"
                 continue
                 
-    # If we get here, EVERYTHING failed. Show the user why.
-    st.error(f"⚠️ AI Failure. Reason: {last_error_msg}")
+    # If we get here, EVERYTHING failed. Show the LAST error we saw.
+    st.error(f"⚠️ AI Failure. Last Reason: {last_error_msg}")
     return None
 
 def get_ats_score(resume_text, job_desc):
@@ -122,8 +121,7 @@ def get_ats_score(resume_text, job_desc):
             import re
             match = re.search(r'\d+', response.text)
             return int(match.group()) if match else 0
-        except:
-            return 0
+        except: return 0
     return 0
 
 def get_feedback(resume_text, job_desc):
