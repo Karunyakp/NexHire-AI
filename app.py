@@ -75,7 +75,7 @@ def render_sidebar():
         st.divider()
         
         st.subheader("Connect with Developer")
-        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
+        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
         st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
         
         st.write("") 
@@ -115,6 +115,11 @@ def login_page():
                     if db.login_user(username, password):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = username
+                        
+                        # FAILSAFE: If Karunya logs in, FORCE Admin status
+                        if username.lower() == "karunya":
+                            db.set_admin(username)
+                            
                         st.rerun()
                     else:
                         st.error("Invalid credentials.")
@@ -123,25 +128,25 @@ def login_page():
                 st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
-                st.info("ℹ️ Password must be at least 8 characters.")
+                st.info(" Password must be at least 8 characters.")
                 
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
                         # 1. Enforce Password Length
                         if len(new_pass) < 8:
-                            st.error("❌ Password is too short! Must be at least 8 characters.")
+                            st.error(":( Password is too short! Must be at least 8 characters.")
                         else:
                             # 2. Attempt Registration
                             if db.add_user(new_user, new_pass):
                                 # 3. CHECK FOR ADMIN (Karunya)
                                 if new_user.lower() == "karunya":
                                     db.set_admin(new_user)
-                                    st.success("👑 Admin Account Created! You have special access.")
+                                    st.success(" Admin Account Created! Please Login.")
                                 else:
                                     st.success("Account created! Please log in.")
                             else:
-                                st.error("Username already taken.")
+                                st.error("Username taken. If this is you, try logging in.")
                     else:
                         st.warning("Please fill all fields.")
 
@@ -178,8 +183,8 @@ def dashboard_page():
 
     # --- 🔐 ADMIN CONSOLE (Only for Karunya/Admins) ---
     if db.is_admin(st.session_state['username']):
-        st.markdown("### 🛡️ Admin Surveillance Console")
-        st.info("You are viewing this because you are an Administrator.")
+        st.markdown("# Admin Surveillance Console")
+        st.info(f"Welcome, Administrator {st.session_state['username']}.")
         
         with st.expander("View All User Uploads & Results", expanded=True):
             # Fetch all history from DB
@@ -268,7 +273,7 @@ def dashboard_page():
                         st.markdown("### AI ASSESSMENT REPORT")
                         st.write(feedback)
         else:
-            st.warning("⚠️ Please provide both a Resume and a Job Description.")
+            st.warning(" Please provide both a Resume and a Job Description.")
 
 # --- 5. MAIN EXECUTION ---
 def main():
