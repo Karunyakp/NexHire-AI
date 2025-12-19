@@ -18,6 +18,7 @@ def setup_page():
             background-color: #F9FAFB;
         }
         
+        /* Links in Sidebar */
         .stMarkdown a {
             text-decoration: none;
             color: #4F46E5 !important;
@@ -54,19 +55,18 @@ def setup_page():
             transform: translateY(-2px);
         }
         
-        /* Hide Streamlit Elements */
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SIDEBAR (YOUR PROOF & LINKS) ---
+# --- 2. SIDEBAR (GLOBAL PROOF) ---
 def render_sidebar():
     with st.sidebar:
         try:
             st.image("logo.png", width=80) 
         except:
-            pass # Fail silently if logo missing
+            pass 
             
         st.title("NexHire")
         st.markdown("### Enterprise Recruitment Intelligence")
@@ -74,18 +74,18 @@ def render_sidebar():
         st.divider()
         
         st.subheader("Connect with Developer")
-        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
         st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
         
         st.write("") 
         st.divider()
         
-        # Footer Proof
+        # Sidebar Footer
         st.caption("Developed & Maintained by")
         st.markdown("### Karunya. K. P") 
         st.caption("© 2025 NexHire Systems")
 
-# --- 3. LOGIN PAGE LOGIC ---
+# --- 3. LOGIN PAGE (WITH FOOTER PROOF) ---
 def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     
@@ -131,11 +131,18 @@ def login_page():
                         else:
                             st.error("Username already taken.")
 
-        st.markdown("<p style='text-align: center; margin-top: 20px; color: #9CA3AF; font-size: 12px;'>© 2025 NexHire Systems. Secure Environment.</p>", unsafe_allow_html=True)
+            # --- MAIN SCREEN PROOF (Visible at bottom of login card) ---
+            st.write("")
+            st.divider()
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            st.caption("Application Developed by")
+            st.markdown("**Karunya. K. P**") 
+            st.caption("© 2025 NexHire Systems")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 4. DASHBOARD LOGIC ---
+# --- 4. DASHBOARD PAGE ---
 def dashboard_page():
-    # Header Section
+    # Header
     c_left, c_right = st.columns([6, 1])
     with c_left:
         cl1, cl2 = st.columns([1, 10])
@@ -155,7 +162,7 @@ def dashboard_page():
             
     st.divider()
 
-    # Metrics Section
+    # Metrics
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
@@ -175,7 +182,7 @@ def dashboard_page():
 
     st.write("")
     
-    # Main Input Section
+    # Input Area
     col_main, col_side = st.columns([2, 1])
     
     with col_main:
@@ -202,20 +209,18 @@ def dashboard_page():
 
     st.write("")
     
-    # AI Processing Section
+    # AI Engine Trigger
     if st.button("Initialize Intelligence Engine", type="primary"):
         if resume_text and job_desc:
             with st.spinner("Analyzing candidate profile against requirements..."):
-                time.sleep(1) # Visual pacing
+                time.sleep(1)
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 
-                # Save to database
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
-                # Results Display
                 r1, r2 = st.columns([1, 2])
                 with r1:
                     with st.container(border=True):
@@ -237,16 +242,14 @@ def main():
     setup_page()
     db.create_tables()
     
-    # Render sidebar ALWAYS (so proof is visible on login page too)
+    # This ensures the Sidebar is visible on ALL pages (Login & Dashboard)
     render_sidebar()
 
-    # Initialize Session State
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
     if 'username' not in st.session_state:
         st.session_state['username'] = ""
 
-    # Routing
     if not st.session_state['logged_in']:
         login_page()
     else:
