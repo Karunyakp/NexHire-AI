@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import database as db
 import ai_engine as ai
-import advanced_features as af  # <--- NEW IMPORT
+import advanced_features as af
 import PyPDF2
 import time
 
@@ -34,30 +34,17 @@ def setup_page():
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             padding: 40px;
         }
-
-        .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-            background-color: #FFFFFF;
-            border: 1px solid #D1D5DB;
-            border-radius: 8px;
-            padding: 14px;
-        }
-
-        div.stButton > button {
-            background-color: #4F46E5;
-            color: white;
-            border-radius: 8px;
-            padding: 14px 28px;
-            font-weight: 600;
-            border: none;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        div.stButton > button:hover {
-            background-color: #4338ca;
-            transform: translateY(-2px);
-        }
         
-        /* Custom Tag Styles for Skills */
+        /* Custom Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            border-bottom: 2px solid #E5E7EB;
+        }
+        .stTabs [aria-selected="true"] {
+            color: #4F46E5 !important;
+            border-bottom-color: #4F46E5 !important;
+        }
+
+        /* Skill Tags */
         .skill-tag {
             display: inline-block;
             padding: 5px 12px;
@@ -107,7 +94,6 @@ def login_page():
         st.write("")
         
         with st.container(border=True):
-            # Logo centered
             c1, c2, c3 = st.columns([1, 2, 1])
             with c2:
                 try:
@@ -144,7 +130,7 @@ def login_page():
                 if st.button("Create Profile"):
                     if new_user and new_pass:
                         if len(new_pass) < 8:
-                            st.error("❌ Password is too short! Must be at least 8 characters.")
+                            st.error("❌ Password is too short!")
                         else:
                             if db.add_user(new_user, new_pass):
                                 if new_user.lower() == "karunya":
@@ -153,7 +139,7 @@ def login_page():
                                 else:
                                     st.success("Account created! Please log in.")
                             else:
-                                st.error("Username taken. If this is you, try logging in.")
+                                st.error("Username taken.")
                     else:
                         st.warning("Please fill all fields.")
 
@@ -167,7 +153,6 @@ def login_page():
 
 # --- 4. DASHBOARD PAGE ---
 def dashboard_page():
-    # Header
     c_left, c_right = st.columns([6, 1])
     with c_left:
         cl1, cl2 = st.columns([1, 10])
@@ -190,17 +175,16 @@ def dashboard_page():
     # --- 🔐 ADMIN CONSOLE ---
     if db.is_admin(st.session_state['username']):
         st.markdown("### 🛡️ Admin Surveillance Console")
-        st.info(f"Welcome, Administrator {st.session_state['username']}.")
         with st.expander("View All User Uploads & Results", expanded=True):
             all_data = db.get_all_scans()
             if all_data:
                 df = pd.DataFrame(all_data, columns=['ID', 'User', 'Uploaded Role (Job)', 'Result (Score)', 'Date'])
                 st.dataframe(df[['Date', 'User', 'Uploaded Role (Job)', 'Result (Score)']], use_container_width=True)
             else:
-                st.warning("No data found in the system yet.")
+                st.warning("No data found.")
         st.divider()
 
-    # User Metrics
+    # Metrics
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][2] if history else 0
     
@@ -226,16 +210,14 @@ def dashboard_page():
     with col_main:
         with st.container(border=True):
             st.markdown("### 1. Document Processing")
-            st.info("Upload the candidate's PDF resume here.")
             uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed")
-            
             resume_text = ""
             if uploaded_file:
                 with st.spinner("Extracting text..."):
                     reader = PyPDF2.PdfReader(uploaded_file)
                     for page in reader.pages:
                         resume_text += page.extract_text()
-                st.success("Resume Extracted Successfully")
+                st.success("Resume Extracted")
             else:
                 resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
 
@@ -250,78 +232,73 @@ def dashboard_page():
     # AI Engine Trigger
     if st.button("Initialize Intelligence Engine", type="primary"):
         if resume_text and job_desc:
-            with st.spinner("Analyzing candidate profile against requirements..."):
+            with st.spinner("Analyzing candidate profile..."):
                 time.sleep(1)
                 
-                # 1. Get AI Score & Feedback
+                # Call AI Functions
                 score = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
-                
-                # 2. Extract Skills (NEW FEATURE)
                 resume_skills = af.extract_skills(resume_text)
                 job_skills = af.extract_skills(job_desc)
                 
-                # 3. Save to DB
+                # New Generative Features
+                cover_letter = ai.generate_cover_letter(resume_text, job_desc)
+                interview_q = ai.generate_interview_questions(resume_text, job_desc)
+                
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
                 
-                # --- RESULTS DISPLAY ---
-                r1, r2 = st.columns([1, 2])
-                with r1:
-                    with st.container(border=True):
-                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                        st.markdown("### COMPATIBILITY")
-                        color = "#EF4444" if score < 50 else "#4F46E5"
-                        st.markdown(f"<h1 style='font-size: 72px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-                        
-                        # PDF DOWNLOAD BUTTON (NEW FEATURE)
-                        st.write("")
-                        pdf_data = af.generate_pdf_report(
-                            st.session_state['username'], 
-                            job_role, 
-                            score, 
-                            feedback, 
-                            resume_skills, 
-                            job_skills
-                        )
-                        st.download_button(
-                            label="📄 Download Full Report",
-                            data=pdf_data,
-                            file_name=f"NexHire_Report_{st.session_state['username']}.pdf",
-                            mime="application/pdf"
-                        )
+                # --- RESULTS TABS ---
+                tab1, tab2, tab3 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep"])
                 
-                with r2:
+                with tab1:
+                    r1, r2 = st.columns([1, 2])
+                    with r1:
+                        with st.container(border=True):
+                            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                            st.markdown("### MATCH SCORE")
+                            color = "#EF4444" if score < 50 else "#4F46E5"
+                            st.markdown(f"<h1 style='font-size: 72px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                            
+                            st.write("")
+                            # PDF Download
+                            pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, score, feedback, resume_skills, job_skills)
+                            st.download_button("📄 Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
+                    
+                    with r2:
+                        with st.container(border=True):
+                            st.markdown("### 📊 SKILL GAP ANALYSIS")
+                            matched = [s for s in resume_skills if s in job_skills]
+                            missing = [s for s in job_skills if s not in resume_skills]
+                            
+                            if matched:
+                                st.markdown("**✅ Matched Skills**")
+                                html_matched = "".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched])
+                                st.markdown(html_matched, unsafe_allow_html=True)
+                            
+                            st.write("")
+                            if missing:
+                                st.markdown("**❌ Missing Skills**")
+                                html_missing = "".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing])
+                                st.markdown(html_missing, unsafe_allow_html=True)
+                            
+                            st.divider()
+                            st.write(feedback)
+                
+                with tab2:
                     with st.container(border=True):
-                        st.markdown("### 📊 SKILL GAP ANALYSIS")
+                        st.markdown("### 📝 AI-Generated Cover Letter")
+                        st.info("The AI has drafted a tailored cover letter based on the candidate's actual experience.")
+                        st.text_area("Copy this draft:", value=cover_letter, height=400)
+                
+                with tab3:
+                    with st.container(border=True):
+                        st.markdown("### 🎤 Interview Questions")
+                        st.info("Suggested questions to test the candidate on their specific gaps.")
+                        st.markdown(interview_q)
                         
-                        # Skill Logic
-                        matched = [s for s in resume_skills if s in job_skills]
-                        missing = [s for s in job_skills if s not in resume_skills]
-                        
-                        if matched:
-                            st.markdown("**✅ Matched Skills**")
-                            # Create HTML for matched tags
-                            html_matched = "".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched])
-                            st.markdown(html_matched, unsafe_allow_html=True)
-                        else:
-                            st.info("No direct keyword matches found.")
-                            
-                        st.write("") # Spacer
-                        
-                        if missing:
-                            st.markdown("**❌ Missing Skills (Critical)**")
-                            # Create HTML for missing tags
-                            html_missing = "".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing])
-                            st.markdown(html_missing, unsafe_allow_html=True)
-                        else:
-                            st.success("No critical skills missing!")
-                            
-                        st.divider()
-                        st.markdown("### AI ASSESSMENT REPORT")
-                        st.write(feedback)
         else:
             st.warning("⚠️ Please provide both a Resume and a Job Description.")
 
