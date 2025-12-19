@@ -339,3 +339,4 @@ else:
             st.markdown("### All Scans")
             all_df = pd.DataFrame(all_scans, columns=['ID', 'Username', 'Job Role', 'Score', 'Date'])
             st.dataframe(all_df, use_container_width=True)
+
