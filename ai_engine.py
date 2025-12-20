@@ -1,155 +1,131 @@
-import google.generativeai as genai
 import streamlit as st
-import random
+import google.generativeai as genai
+import json
 
-# --- KEY ROTATION LOGIC ---
-def configure_model():
-    """
-    Picks a random API key from the list to distribute load
-    """
-    api_key = None
+# --- CONFIGURATION ---
+def configure_genai():
     try:
-        # 1. Try to find a LIST of keys (Best for multiple users)
-        if "GOOGLE_API_KEYS" in st.secrets:
-            keys = st.secrets["GOOGLE_API_KEYS"]
-            if isinstance(keys, list) and len(keys) > 0:
-                api_key = random.choice(keys)
-        
-        # 2. Fallback to single key (Backward compatibility)
-        if not api_key and "GOOGLE_API_KEY" in st.secrets:
-            api_key = st.secrets["GOOGLE_API_KEY"]
-
-    except Exception as e:
-        st.error(f"Secret Error: {e}")
-        return None
-
-    if not api_key:
-        st.error("❌ No Google API Keys found in Secrets.")
-        return None
-        
-    try:
+        # Fetch API Key from Streamlit Secrets (The Cloud Vault)
+        api_key = st.secrets["general"]["gemini_api_key"]
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel('gemini-2.5-flash')
+        return True
     except Exception as e:
-        st.error(f"❌ API Connection Error: {e}")
+        st.error("🚨 SECURITY CHECK FAILED: API Key missing. Please configure secrets on Streamlit Cloud.")
+        return False
+
+# --- HELPER: GET PROMPTS ---
+def get_prompt(prompt_name):
+    try:
+        return st.secrets["prompts"][prompt_name]
+    except:
         return None
 
-# --- CORE FUNCTIONS ---
+# --- CORE AI FUNCTIONS ---
+
 def get_ats_score(resume_text, job_desc):
-    model = configure_model()
-    if not model: return 0
+    if not configure_genai(): return 0
     
-    prompt = f"""
-    You are an ATS (Applicant Tracking System). Compare the Resume to the Job Description.
-    Output ONLY a single integer from 0 to 100 representing the match percentage.
-    Do not output any text, just the number.
-    Resume: {resume_text[:4000]}
-    Job: {job_desc[:4000]}
-    """
+    sys_prompt = get_prompt("ats_prompt")
+    if not sys_prompt: return 0 
+
     try:
-        response = model.generate_content(prompt)
-        return int(''.join(filter(str.isdigit, response.text)))
-    except:
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        full_prompt = f"{sys_prompt}\n\nRESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{job_desc}"
+        
+        response = model.generate_content(
+            contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        data = json.loads(response.text)
+        return int(data.get("score", 0))
+    except Exception as e:
         return 0
 
 def get_feedback(resume_text, job_desc):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
+    if not configure_genai(): return "Security Error."
     
-    prompt = f"""
-    Act as a Senior Technical Recruiter. Provide detailed feedback.
-    1. Strong Matches
-    2. Missing Keywords
-    3. Final Verdict (Hire/No Hire)
-    Resume: {resume_text[:4000]}
-    Job: {job_desc[:4000]}
-    """
-    try:
-        response = model.generate_content(prompt)
-        return response.text
-    except:
-        return "Error generating feedback."
+    # We reuse the ATS prompt or you can add a specific 'feedback_prompt'
+    sys_prompt = get_prompt("ats_prompt") 
+    if not sys_prompt: return "Error: System Prompts Missing."
 
-# --- GENERATIVE SUITE ---
-def generate_cover_letter(resume_text, job_desc):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
-    
-    prompt = f"""
-    Write a professional cover letter for this candidate.
-    Highlight matching skills. Keep it under 300 words.
-    Resume: {resume_text[:4000]}
-    Job: {job_desc[:4000]}
-    """
     try:
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        full_prompt = f"{sys_prompt}\n\nRESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{job_desc}"
+        
+        response = model.generate_content(
+            contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        data = json.loads(response.text)
+        return data.get("summary", "Analysis failed.")
+    except:
+        return "Could not generate feedback."
+
+def generate_cover_letter(resume_text, job_desc):
+    if not configure_genai(): return "Security Error."
+    
+    sys_prompt = get_prompt("cover_letter_prompt")
+    if not sys_prompt: return "Cover Letter Module Locked."
+    
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        response = model.generate_content(f"{sys_prompt}\n\nCandidate Resume: {resume_text}\n\nTarget Job: {job_desc}")
         return response.text
     except:
-        return "Error generating cover letter."
+        return "Could not generate draft."
 
 def generate_interview_questions(resume_text, job_desc):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
+    if not configure_genai(): return "Security Error."
     
-    prompt = f"""
-    Generate 5 targeted interview questions (3 Technical, 2 Behavioral) based on this candidate's gaps.
-    Resume: {resume_text[:4000]}
-    Job: {job_desc[:4000]}
-    """
+    sys_prompt = get_prompt("interview_prompt")
+    if not sys_prompt: return "Interview Module Locked."
+    
     try:
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        response = model.generate_content(f"{sys_prompt}\n\nResume: {resume_text}\n\nJob: {job_desc}")
         return response.text
     except:
-        return "Error generating questions."
+        return "Could not generate questions."
 
-# --- STRATEGIC INSIGHTS ---
-def get_market_analysis(resume_text, job_role):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
-    
-    prompt = f"""
-    Act as a Compensation Analyst. Based on the skills and experience in this resume for the role of '{job_role}':
-    1. Estimate a competitive Salary Range (in USD and INR) for 2025.
-    2. Rate the Market Demand for these skills (High/Medium/Low) with a brief reason.
-    Output in clean markdown points.
-    Resume: {resume_text[:4000]}
-    """
-    try:
-        response = model.generate_content(prompt)
-        return response.text
-    except:
-        return "Error analyzing market."
+# --- STRATEGIC INSIGHTS (Now Fully Restored & Secured) ---
 
-def generate_email_draft(resume_text, job_role, email_type="Interview Invite"):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
+def get_market_analysis(resume_text, role):
+    if not configure_genai(): return "Security Error."
     
-    prompt = f"""
-    Write a professional email for a recruiter to send to this candidate.
-    Type: {email_type}
-    Job Role: {job_role}
-    Context: Use specific details from their resume to make it personal.
-    Resume: {resume_text[:4000]}
-    """
+    sys_prompt = get_prompt("market_prompt")
+    if not sys_prompt: return "Market Analysis Module Locked."
+
     try:
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        # Analyze salary and market demand
+        response = model.generate_content(f"{sys_prompt}\n\nJob Role: {role}\nResume Context: {resume_text[:2000]}") # Truncate resume for speed
         return response.text
     except:
-        return "Error generating email."
+        return "Market analysis unavailable."
 
 def generate_learning_roadmap(resume_text, job_desc):
-    model = configure_model()
-    if not model: return "Error: Service Unavailable"
+    if not configure_genai(): return "Security Error."
     
-    prompt = f"""
-    Identify the 3 biggest skill gaps between this Resume and Job Description.
-    Create a "4-Week Learning Roadmap" to help the candidate learn these missing skills.
-    Suggest specific topics to cover each week.
-    Resume: {resume_text[:4000]}
-    Job: {job_desc[:4000]}
-    """
+    sys_prompt = get_prompt("roadmap_prompt")
+    if not sys_prompt: return "Roadmap Module Locked."
+
     try:
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        response = model.generate_content(f"{sys_prompt}\n\nResume: {resume_text}\nJob Description: {job_desc}")
         return response.text
     except:
-        return "Error generating roadmap."
+        return "Roadmap unavailable."
+
+def generate_email_draft(resume_text, role, email_type):
+    if not configure_genai(): return "Security Error."
+    
+    sys_prompt = get_prompt("email_prompt")
+    if not sys_prompt: return "Email Module Locked."
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        response = model.generate_content(f"{sys_prompt}\n\nEmail Type: {email_type}\nRole: {role}\nResume Context: {resume_text[:1000]}")
+        return response.text
+    except:
+        return "Email draft unavailable."
