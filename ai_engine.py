@@ -25,17 +25,29 @@ def get_prompt(prompt_name):
 
 # --- CORE AI FUNCTIONS ---
 
+def check_resume_authenticity(resume_text):
+    """
+    Analyzes the resume to see if it looks AI-generated or Human-written.
+    Also checks basic ATS readability.
+    """
+    if not configure_genai(): return {"human_score": 0, "verdict": "Error", "analysis": "Security Error"}
+    
+    sys_prompt = get_prompt("authenticity_prompt")
+    if not sys_prompt: return {"human_score": 0, "verdict": "Error", "analysis": "Prompt Missing"}
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+        response = model.generate_content(
+            contents=[{"role": "user", "parts": [{"text": f"{sys_prompt}\n\nRESUME TEXT:\n{resume_text[:4000]}"}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        return json.loads(response.text)
+    except:
+        return {"human_score": 0, "verdict": "Error", "analysis": "Could not analyze text."}
+
 def categorize_resume(resume_text):
-    """
-    Categorizes the resume into a professional domain.
-    Uses 'category_prompt' from secrets.toml.
-    """
     if not configure_genai(): return "Uncategorized"
-    
-    # 🔒 SECURE PROMPT FETCHING
     sys_prompt = get_prompt("category_prompt")
-    
-    # Fallback/Safety Check
     if not sys_prompt: return "General Profile"
     
     try:
@@ -47,7 +59,6 @@ def categorize_resume(resume_text):
 
 def get_ats_score(resume_text, job_desc):
     if not configure_genai(): return 0, []
-    
     sys_prompt = get_prompt("ats_prompt")
     if not sys_prompt: return 0, []
 
@@ -67,7 +78,6 @@ def get_ats_score(resume_text, job_desc):
 
 def get_feedback(resume_text, job_desc):
     if not configure_genai(): return "Security Error."
-    
     sys_prompt = get_prompt("ats_prompt") 
     if not sys_prompt: return "Error: System Prompts Missing."
 
