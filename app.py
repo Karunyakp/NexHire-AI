@@ -91,7 +91,13 @@ def login_page():
                     if db.login_user(username, password):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = username
-                        if username.lower() == "karunya": db.set_admin(username)
+                        
+                        # --- 🔒 SECURE ADMIN CHECK ---
+                        # This verifies the username/password against your Secrets Vault
+                        # instead of checking if the name is just "karunya"
+                        if ai.validate_admin_login(username, password): 
+                            db.set_admin(username)
+                            
                         st.rerun()
                     else: st.error("Invalid credentials.")
             
@@ -106,9 +112,11 @@ def login_page():
                         if len(new_pass) < 8: st.error("❌ Password is too short!")
                         else:
                             if db.add_user(new_user, new_pass):
-                                if new_user.lower() == "karunya":
+                                # Note: New registrations cannot automatically become admin 
+                                # unless they match the secrets.toml credentials exactly
+                                if ai.validate_admin_login(new_user, new_pass):
                                     db.set_admin(new_user)
-                                    st.success("👑 Admin Account Created! Please Login.")
+                                    st.success("👑 Admin Credentials Verified! Please Login.")
                                 else: st.success("Account created! Please log in.")
                             else: st.error("Username taken.")
                     else: st.warning("Please fill all fields.")
@@ -198,7 +206,6 @@ def dashboard_page():
     with col_main:
         with st.container(border=True):
             st.markdown("### 1. Document Processing")
-            # Added unique key to prevent ID collision
             uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed", key="resume_uploader")
             resume_text = ""
             if uploaded_file:
@@ -219,10 +226,9 @@ def dashboard_page():
     if st.button("Initialize Intelligence Engine", type="primary"):
         if resume_text and job_desc:
             
-            # --- NEW STATUS BAR (REPLACES SPINNER) ---
             with st.status("🚀 Launching NexHire Intelligence Engine...", expanded=True) as status:
-                
                 st.warning("⏳ Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
+                
                 st.write("🔍 Analyzing Resume & Job Description...")
                 # Core AI
                 score = ai.get_ats_score(resume_text, job_desc)
