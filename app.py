@@ -6,7 +6,7 @@ import advanced_features as af
 import PyPDF2
 import time
 
-# --- 1. CONFIGURATION & STYLING ---
+
 def setup_page():
     st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     st.markdown("""
@@ -55,7 +55,6 @@ def setup_page():
         </style>
     """, unsafe_allow_html=True)
 
-# --- 2. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
         try: st.image("logo.png", width=150) 
@@ -71,7 +70,7 @@ def render_sidebar():
         st.markdown("### Karunya. K. P") 
         st.caption("© 2025 NexHire Systems")
 
-# --- 3. LOGIN PAGE ---
+
 def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
@@ -120,7 +119,7 @@ def login_page():
             st.caption("© 2025 NexHire Systems")
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 4. DASHBOARD PAGE ---
+
 def dashboard_page():
     c_left, c_right = st.columns([6, 1])
     with c_left:
@@ -137,7 +136,6 @@ def dashboard_page():
             st.rerun()
     st.divider()
 
-    # --- 🛡️ SUPER ADMIN CONSOLE ---
     if db.is_admin(st.session_state['username']):
         st.markdown("### 🛡️ Super Admin Console")
         st.info("Full Access to User Data, Resumes, and AI Outputs.")
@@ -174,7 +172,7 @@ def dashboard_page():
                 st.warning("No analysis data recorded yet.")
         st.divider()
 
-    # --- METRICS SECTION ---
+ 
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][3] if history else 0
     m1, m2 = st.columns(2)
@@ -186,7 +184,7 @@ def dashboard_page():
             st.metric(label="TOTAL SCANS", value=len(history), delta="Lifetime Usage")
     st.write("")
     
-    # Input Area
+   
     col_main, col_side = st.columns([2, 1])
     with col_main:
         with st.container(border=True):
@@ -198,13 +196,13 @@ def dashboard_page():
                     reader = PyPDF2.PdfReader(uploaded_file)
                     for page in reader.pages: resume_text += page.extract_text()
                 
-                # --- NEW: AUTO-CATEGORIZATION ---
+             
                 with st.spinner("Categorizing profile..."):
                     category = ai.categorize_resume(resume_text)
                     st.success("Resume Extracted & Categorized!")
                     st.markdown(f"<span class='category-badge'>{category}</span>", unsafe_allow_html=True)
                     
-                # --- NEW: AI & ATS SCANNER BUTTON ---
+
                 st.write("")
                 if st.button("🛡️ Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
                     with st.spinner("Scanning for AI patterns and ATS readability..."):
@@ -237,7 +235,6 @@ def dashboard_page():
             job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
     st.write("")
     
-    # AI Engine Trigger (Split into Quick and Full)
     btn_col1, btn_col2 = st.columns([1, 1])
     with btn_col1:
         run_quick_scan = st.button("📊 Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
@@ -354,7 +351,7 @@ def dashboard_page():
         else:
             st.warning("⚠️ Please provide both a Resume and a Job Description.")
 
-# --- 5. MAIN EXECUTION ---
+
 def main():
     setup_page()
     db.create_tables()
@@ -366,3 +363,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
