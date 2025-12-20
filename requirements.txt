@@ -1,6 +1,5 @@
-
 streamlit
-google-generativeai
-pypdf2
 pandas
-reportlab
+google-generativeai
+PyPDF2
+fpdf
