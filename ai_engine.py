@@ -64,10 +64,10 @@ def check_resume_authenticity(resume_text):
     if not sys_prompt: return {"human_score": 0, "verdict": "Error", "analysis": "Prompt Missing from Secrets."}
 
     try:
-        # Use Rotation Helper
+        # Use Rotation Helper with temperature=0.0 for consistent detection
         response = generate_response_with_rotation(
             contents=[{"role": "user", "parts": [{"text": f"{sys_prompt}\n\nRESUME TEXT:\n{resume_text[:4000]}"}]}],
-            generation_config={"response_mime_type": "application/json"}
+            generation_config={"response_mime_type": "application/json", "temperature": 0.0}
         )
         
         if not response: return {"human_score": 0, "verdict": "Error", "analysis": "API Error"}
@@ -87,8 +87,10 @@ def categorize_resume(resume_text):
     if not sys_prompt: return "General Profile"
     
     try:
+        # Use temperature=0.0 for consistent categorization
         response = generate_response_with_rotation(
-            contents=f"{sys_prompt}\n\nResume Snippet:\n{resume_text[:2000]}"
+            contents=f"{sys_prompt}\n\nResume Snippet:\n{resume_text[:2000]}",
+            generation_config={"temperature": 0.0}
         )
         return response.text.strip() if response else "General Professional"
     except:
@@ -101,9 +103,10 @@ def get_ats_score(resume_text, job_desc):
     try:
         full_prompt = f"{sys_prompt}\n\nRESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{job_desc}"
         
+        # Use temperature=0.0 to ensure the score doesn't change between runs
         response = generate_response_with_rotation(
             contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
-            generation_config={"response_mime_type": "application/json"}
+            generation_config={"response_mime_type": "application/json", "temperature": 0.0}
         )
         
         if not response: return 0, []
@@ -128,7 +131,7 @@ def get_feedback(resume_text, job_desc):
         
         response = generate_response_with_rotation(
             contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
-            generation_config={"response_mime_type": "application/json"}
+            generation_config={"response_mime_type": "application/json", "temperature": 0.0}
         )
         
         if not response: return "Analysis Failed."
@@ -148,6 +151,7 @@ def generate_cover_letter(resume_text, job_desc):
     sys_prompt = get_prompt("cover_letter_prompt")
     if not sys_prompt: return "Cover Letter Module Locked."
     try:
+        # Default temperature (creative) is fine for writing
         response = generate_response_with_rotation(
             contents=f"{sys_prompt}\n\nCandidate Resume: {resume_text}\n\nTarget Job: {job_desc}"
         )
@@ -159,6 +163,7 @@ def generate_interview_questions(resume_text, job_desc):
     sys_prompt = get_prompt("interview_prompt")
     if not sys_prompt: return "Interview Module Locked."
     try:
+        # Default temperature (creative) is fine for questions
         response = generate_response_with_rotation(
             contents=f"{sys_prompt}\n\nResume: {resume_text}\n\nJob: {job_desc}"
         )
