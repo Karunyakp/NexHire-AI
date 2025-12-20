@@ -240,7 +240,7 @@ def dashboard_page():
     # AI Engine Trigger (Split into Quick and Full)
     btn_col1, btn_col2 = st.columns([1, 1])
     with btn_col1:
-        run_quick_scan = st.button("⚡ Quick Scan (Score Only)", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
+        run_quick_scan = st.button("📊 Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
     with btn_col2:
         run_full_scan = st.button("🚀 Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
 
@@ -252,7 +252,7 @@ def dashboard_page():
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
-                st.markdown("### ⚡ Quick Scan Results")
+                st.markdown("### 📊 ATS Score Analysis")
                 q1, q2 = st.columns([1, 2])
                 with q1:
                     # Displaying score like the Latest Score metric
