@@ -27,12 +27,16 @@ def get_prompt(prompt_name):
 
 def categorize_resume(resume_text):
     """
-    Categorizes the resume into a professional domain (e.g., 'Data Science', 'Sales').
+    Categorizes the resume into a professional domain.
+    Uses 'category_prompt' from secrets.toml.
     """
     if not configure_genai(): return "Uncategorized"
     
-    # We use a hardcoded safe prompt here to avoid needing to update secrets.toml immediately
-    sys_prompt = "You are an expert HR Classifier. Analyze the resume text and classify the candidate into a SINGLE, specific job category (e.g., 'Full Stack Developer', 'Data Scientist', 'Marketing Manager', 'Financial Analyst'). Output ONLY the category name."
+    # 🔒 SECURE PROMPT FETCHING
+    sys_prompt = get_prompt("category_prompt")
+    
+    # Fallback/Safety Check
+    if not sys_prompt: return "General Profile"
     
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
@@ -57,7 +61,6 @@ def get_ats_score(resume_text, job_desc):
         )
         
         data = json.loads(response.text)
-        # Returns both SCORE and MISSING KEYWORDS
         return int(data.get("score", 0)), data.get("missing_keywords", [])
     except Exception as e:
         return 0, []
