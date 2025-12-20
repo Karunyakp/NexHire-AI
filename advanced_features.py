@@ -1,205 +1,100 @@
-import json
-from datetime import datetime, timedelta
-import pandas as pd
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+import re
+from fpdf import FPDF
+import io
 
-# ============ SKILL EXTRACTION ============
 def extract_skills(text):
-    """Extract common technical skills from resume/job description"""
-    common_skills = {
-        'Python', 'JavaScript', 'Java', 'C++', 'C#', 'TypeScript', 'Ruby', 'PHP',
-        'React', 'Vue', 'Angular', 'Django', 'Flask', 'FastAPI', 'Node.js',
-        'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Firebase',
-        'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Git',
-        'REST API', 'GraphQL', 'Microservices', 'CI/CD', 'DevOps',
-        'Machine Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Computer Vision',
-        'HTML', 'CSS', 'SASS', 'Bootstrap', 'Tailwind',
-        'Agile', 'Scrum', 'Jira', 'Slack', 'Figma', 'Adobe XD'
-    }
-    
-    found_skills = []
-    for skill in common_skills:
-        if skill.lower() in text.lower():
-            found_skills.append(skill)
-    return list(set(found_skills))
-
-# ============ ANALYTICS ============
-def calculate_score_stats(scores):
-    if not scores:
-        return {"avg": 0, "median": 0, "max": 0, "min": 0}
-    import statistics
-    return {
-        "avg": round(statistics.mean(scores), 1),
-        "median": statistics.median(scores),
-        "max": max(scores),
-        "min": min(scores)
-    }
-
-def get_score_distribution(scores):
-    distribution = {
-        "Excellent (70+)": len([s for s in scores if s >= 70]),
-        "Good (50-69)": len([s for s in scores if 50 <= s < 70]),
-        "Needs Work (<50)": len([s for s in scores if s < 50])
-    }
-    return distribution
-
-def get_trend_data(history):
-    if not history:
-        return [], []
-    dates = [row[3] for row in history]
-    scores = [row[2] for row in history]
-    return dates, scores
-
-# ============ REPORT GENERATION ============
-def generate_pdf_report(username, job_role, score, feedback, resume_skills, job_skills):
-    """Generate PDF report of analysis with Creator Proof"""
-    buffer = BytesIO()
-    
-    # 1. Set Title & Author Metadata
-    doc = SimpleDocTemplate(
-        buffer, 
-        pagesize=letter, 
-        title=f"NexHire Analysis - {job_role}",
-        author="Karunya. K. P"  # <--- METADATA PROOF
-    )
-    
-    styles = getSampleStyleSheet()
-    
-    # Custom Styles
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#4F46E5'),
-        spaceAfter=10,
-        alignment=1
-    )
-    
-    subtitle_style = ParagraphStyle(
-        'CustomSubtitle',
-        parent=styles['Normal'],
-        fontSize=10,
-        textColor=colors.HexColor('#6B7280'),
-        spaceAfter=30,
-        alignment=1
-    )
-    
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor('#1F2937'),
-        spaceAfter=12,
-        spaceBefore=12
-    )
-    
-    footer_style = ParagraphStyle(
-        'Footer',
-        parent=styles['Normal'],
-        fontSize=8,
-        textColor=colors.grey,
-        alignment=1
-    )
-    
-    story = []
-    
-    # --- HEADER ---
-    story.append(Paragraph("NexHire Intelligence Report", title_style))
-    # 2. Add Developer Name in Subtitle
-    story.append(Paragraph("Developed by Karunya. K. P | Enterprise Edition", subtitle_style))
-    story.append(Spacer(1, 0.2*inch))
-    
-    # --- DETAILS TABLE ---
-    details = [
-        ["Candidate", username.title()],
-        ["Position", job_role or "Not specified"],
-        ["Date", datetime.now().strftime("%Y-%m-%d %H:%M")],
-        ["Match Score", f"{score}%"]
+    # Basic keyword extraction (This would ideally use a proper NLP model or large skill database)
+    # For now, we simulate extraction by looking for common tech/professional keywords
+    common_skills = [
+        "python", "java", "sql", "react", "aws", "docker", "kubernetes", "machine learning",
+        "data analysis", "project management", "communication", "leadership", "agile", "scrum",
+        "html", "css", "javascript", "typescript", "figma", "design", "marketing", "sales",
+        "finance", "accounting", "hr", "recruiting", "tensorflow", "pytorch", "pandas", "numpy"
     ]
     
-    details_table = Table(details, colWidths=[2*inch, 4*inch])
-    details_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F3F4F6')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E5E7EB'))
-    ]))
-    story.append(details_table)
-    story.append(Spacer(1, 0.3*inch))
+    found_skills = []
+    text_lower = text.lower()
     
-    # --- SKILLS ---
-    story.append(Paragraph("Skill Gap Analysis", heading_style))
+    for skill in common_skills:
+        # Check for whole words to avoid partial matches
+        if re.search(r'\b' + re.escape(skill) + r'\b', text_lower):
+            found_skills.append(skill.title())
+            
+    return list(set(found_skills))
+
+def generate_pdf_report(username, role, score, feedback, resume_skills, job_skills):
+    class PDF(FPDF):
+        def header(self):
+            # Logo placeholder
+            self.set_font('Arial', 'B', 15)
+            self.cell(0, 10, 'NexHire Platinum Analysis Report', 0, 1, 'C')
+            self.ln(5)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.set_text_color(128)
+            # --- BRANDING FOOTER ---
+            self.cell(0, 10, f'Generated by NexHire | Developed by Karunya K. P. | linkedin.com/in/karunyakp', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.add_page()
     
+    # Title Section
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=f"Candidate: {username}", ln=True)
+    pdf.cell(200, 10, txt=f"Target Role: {role}", ln=True)
+    pdf.ln(5)
+    
+    # Score Section
+    pdf.set_font("Arial", 'B', size=24)
+    color = (79, 70, 229) # Purple
+    pdf.set_text_color(*color)
+    pdf.cell(200, 20, txt=f"ATS Match Score: {score}%", ln=True, align='C')
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(10)
+    
+    # Feedback Section
+    pdf.set_font("Arial", 'B', size=14)
+    pdf.cell(200, 10, txt="AI Analysis & Feedback", ln=True)
+    pdf.set_font("Arial", size=11)
+    
+    # Handle potentially long feedback text
+    pdf.multi_cell(0, 7, txt=feedback.replace("*", "")) # Remove markdown bolding for PDF
+    pdf.ln(10)
+    
+    # Skills Section
     matched = [s for s in resume_skills if s in job_skills]
     missing = [s for s in job_skills if s not in resume_skills]
     
-    matched_text = ", ".join(matched) if matched else "No direct matches found"
-    missing_text = ", ".join(missing) if missing else "No critical skills missing"
+    col_width = 90
     
-    # Wrap text for table
-    skills_data = [
-        ["Matched Skills", Paragraph(matched_text, styles['Normal'])],
-        ["Missing Skills", Paragraph(missing_text, styles['Normal'])]
-    ]
+    pdf.set_font("Arial", 'B', size=12)
+    pdf.cell(col_width, 10, "Matched Skills", border=1)
+    pdf.cell(col_width, 10, "Missing Skills", border=1)
+    pdf.ln()
     
-    skills_table = Table(skills_data, colWidths=[1.5*inch, 5*inch])
-    skills_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, 1), colors.HexColor('#4F46E5')),
-        ('TEXTCOLOR', (0, 0), (0, 1), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('FONTNAME', (0, 0), (0, 1), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E5E7EB')),
-        ('topPadding', (0,0), (-1,-1), 10),
-        ('bottomPadding', (0,0), (-1,-1), 10),
-    ]))
-    story.append(skills_table)
-    story.append(Spacer(1, 0.3*inch))
+    pdf.set_font("Arial", size=10)
     
-    # --- AI FEEDBACK ---
-    story.append(Paragraph("AI Executive Summary", heading_style))
-    feedback_para = Paragraph(feedback.replace('\n', '<br/>'), styles['Normal'])
-    story.append(feedback_para)
+    # Find max length to iterate
+    max_len = max(len(matched), len(missing))
     
-    story.append(Spacer(1, 1*inch))
+    for i in range(max_len):
+        m_skill = matched[i] if i < len(matched) else ""
+        miss_skill = missing[i] if i < len(missing) else ""
+        
+        pdf.set_text_color(0, 100, 0) # Green for match
+        pdf.cell(col_width, 8, m_skill, border=1)
+        
+        pdf.set_text_color(150, 0, 0) # Red for missing
+        pdf.cell(col_width, 8, miss_skill, border=1)
+        pdf.ln()
+        
+    # Reset text color
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(10)
     
-    # --- FOOTER WITH NAME ---
-    story.append(Paragraph("__________________________________________________________________", footer_style))
-    story.append(Paragraph("© 2025 NexHire Systems | Developed & Maintained by Karunya. K. P", footer_style))
+    pdf.set_font("Arial", 'I', size=10)
+    pdf.multi_cell(0, 5, "Note: This report was generated by AI. Please verify all details manually.")
     
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
-
-def generate_csv_report(history):
-    df = pd.DataFrame(history, columns=['Username', 'Job Role', 'Score', 'Date'])
-    csv_buffer = BytesIO()
-    df.to_csv(csv_buffer, index=False)
-    csv_buffer.seek(0)
-    return csv_buffer
-
-def get_platform_stats(all_history):
-    if not all_history: return {}
-    scores = [row[2] for row in all_history]
-    return {
-        "total_scans": len(all_history),
-        "avg_score": round(sum(scores) / len(scores), 1),
-        "unique_users": len(set([row[0] for row in all_history])),
-        "best_score": max(scores),
-        "worst_score": min(scores)
-    }
-
-def get_top_positions(all_history):
-    roles = {}
-    for row in all_history:
-        role = row[1] or "Not specified"
-        roles[role] = roles.get(role, 0) + 1
-    return sorted(roles.items(), key=lambda x: x[1], reverse=True)[:10]
+    return pdf.output(dest='S').encode('latin-1')
