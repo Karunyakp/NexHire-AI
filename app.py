@@ -6,7 +6,6 @@ import advanced_features as af
 import PyPDF2
 import time
 
-
 def setup_page():
     st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     st.markdown("""
@@ -63,13 +62,12 @@ def render_sidebar():
         st.markdown("### Enterprise Recruitment Intelligence")
         st.divider()
         st.subheader("Connect with Developer")
-        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
         st.link_button("GitHub Profile", "https://github.com/karunyakp")
         st.divider()
         st.caption("Developed & Maintained by")
-        st.markdown(" Karunya. K. P ") 
+        st.markdown("### Karunya. K. P") 
         st.caption("© 2025 NexHire Systems")
-
 
 def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
@@ -99,16 +97,16 @@ def login_page():
                 st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
-                st.info("!Password must be at least 8 characters.")
+                st.info("Password must be at least 8 characters.")
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
-                        if len(new_pass) < 8: st.error("❌ Password is too short!")
+                        if len(new_pass) < 8: st.error("Password is too short!")
                         else:
                             if db.add_user(new_user, new_pass):
                                 if ai.validate_admin_login(new_user, new_pass):
                                     db.set_admin(new_user)
-                                    st.success(" Admin Credentials Verified! Please Login.")
+                                    st.success("Admin Credentials Verified! Please Login.")
                                 else: st.success("Account created! Please log in.")
                             else: st.error("Username taken.")
                     else: st.warning("Please fill all fields.")
@@ -119,14 +117,13 @@ def login_page():
             st.caption("© 2025 NexHire Systems")
             st.markdown("</div>", unsafe_allow_html=True)
 
-
 def dashboard_page():
     c_left, c_right = st.columns([6, 1])
     with c_left:
         cl1, cl2 = st.columns([1, 10])
         with cl1:
             try: st.image("logo.png", width=100)
-            except: st.write(" ")
+            except: st.write("")
         with cl2:
             st.markdown(f"### Hello, {st.session_state['username']}")
             st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your recruitment analytics overview</p>", unsafe_allow_html=True)
@@ -137,20 +134,20 @@ def dashboard_page():
     st.divider()
 
     if db.is_admin(st.session_state['username']):
-        st.markdown("###  Super Admin Console")
+        st.markdown("### Super Admin Console")
         st.info("Full Access to User Data, Resumes, and AI Outputs.")
-        with st.expander(" View Full Database (Click to Expand)", expanded=True):
+        with st.expander("View Full Database (Click to Expand)", expanded=True):
             all_data = db.get_all_full_analysis()
             if all_data:
                 df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
                 st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
                 st.divider()
-                st.markdown("###  Deep Inspection")
+                st.markdown("### Deep Inspection")
                 selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
                 if selected_id:
                     record = df[df['ID'] == selected_id].iloc[0]
                     st.success(f"Inspecting Record #{selected_id} | User: {record['User']}")
-                    with st.expander("📄 Resume & Job Description (Inputs)"):
+                    with st.expander("Resume & Job Description (Inputs)"):
                         c1, c2 = st.columns(2)
                         with c1: 
                             st.caption("Resume Text")
@@ -158,11 +155,11 @@ def dashboard_page():
                         with c2: 
                             st.caption("Job Description")
                             st.text_area("JD", record['JD'], height=200, key="adm_jd")
-                    with st.expander(" AI Feedback & Analysis (Outputs)"):
+                    with st.expander("AI Feedback & Analysis (Outputs)"):
                         st.metric(label="Match Score", value=f"{record['Score']}%")
                         st.markdown("---")
                         st.markdown(record['Feedback'])
-                    with st.expander(" Generated Content (Drafts)"):
+                    with st.expander("Generated Content (Drafts)"):
                         t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
                         with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
                         with t2: st.markdown(record['Interview'])
@@ -172,7 +169,6 @@ def dashboard_page():
                 st.warning("No analysis data recorded yet.")
         st.divider()
 
- 
     history = db.fetch_history(st.session_state['username'])
     last_score = history[0][3] if history else 0
     m1, m2 = st.columns(2)
@@ -184,49 +180,42 @@ def dashboard_page():
             st.metric(label="TOTAL SCANS", value=len(history), delta="Lifetime Usage")
     st.write("")
     
-   
     col_main, col_side = st.columns([2, 1])
     with col_main:
         with st.container(border=True):
             st.markdown("### 1. Document Processing")
             uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed", key="resume_uploader")
             resume_text = ""
+            category = "Manual Entry"
+            
             if uploaded_file:
                 with st.spinner("Extracting text..."):
                     reader = PyPDF2.PdfReader(uploaded_file)
                     for page in reader.pages: resume_text += page.extract_text()
                 
-             
                 with st.spinner("Categorizing profile..."):
                     category = ai.categorize_resume(resume_text)
                     st.success("Resume Extracted & Categorized!")
                     st.markdown(f"<span class='category-badge'>{category}</span>", unsafe_allow_html=True)
-                    
+            else: 
+                resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
 
+            if resume_text:
                 st.write("")
-                if st.button(" Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
+                if st.button("Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
                     with st.spinner("Scanning for AI patterns and ATS readability..."):
-                        # Call the new scan function
                         auth_data = ai.check_resume_authenticity(resume_text)
-                        
                         st.write("---")
-                        st.markdown("###  Authenticity Report")
-                        
+                        st.markdown("### Authenticity Report")
                         s1, s2 = st.columns(2)
                         with s1:
-                            # 100% means definitely human, 0% means definitely AI
                             h_score = auth_data.get('human_score', 0)
                             color = "normal" if h_score > 70 else "inverse"
                             st.metric("Human-Written Score", f"{h_score}%", help="Lower score means high likelihood of AI generation.")
                         with s2:
                             st.caption("ATS Verdict")
                             st.info(auth_data.get('verdict', 'N/A'))
-                        
                         st.warning(auth_data.get('analysis', ''))
-                        
-            else: 
-                resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
-                category = "Manual Entry"
 
     with col_side:
         with st.container(border=True):
@@ -237,59 +226,54 @@ def dashboard_page():
     
     btn_col1, btn_col2 = st.columns([1, 1])
     with btn_col1:
-        run_quick_scan = st.button(" Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
+        run_quick_scan = st.button("Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
     with btn_col2:
-        run_full_scan = st.button(" Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
+        run_full_scan = st.button("Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
 
     if run_quick_scan:
         if resume_text and job_desc:
             with st.spinner("Calculating ATS Match Score..."):
                 score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
-                # Save scan so it updates the Latest Score history
                 db.save_scan(st.session_state['username'], job_role, score)
-                
                 st.divider()
-                st.markdown("###  ATS Score Analysis")
+                st.markdown("### ATS Score Analysis")
                 q1, q2 = st.columns([1, 2])
                 with q1:
-                    # Displaying score like the Latest Score metric
                     st.metric(label="ATS Match Score", value=f"{score}%", delta="Instant Result")
                 with q2:
                     if missing_keywords:
                         st.error(f"**Missing Critical Keywords:**\n{', '.join(missing_keywords)}")
                     else:
-                        st.success(" Excellent Match! No critical keywords missing.")
+                        st.success("Excellent Match! No critical keywords missing.")
         else:
-             st.warning(" Please provide both a Resume and a Job Description.")
+             st.warning("Please provide both a Resume and a Job Description.")
 
     if run_full_scan:
         if resume_text and job_desc:
-            with st.status(" Launching NexHire Intelligence Engine...", expanded=True) as status:
-                st.warning(" Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
-                st.write(" Analyzing Resume & Job Description...")
+            with st.status("Launching NexHire Intelligence Engine...", expanded=True) as status:
+                st.warning("Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
+                st.write("Analyzing Resume & Job Description...")
                 
-                # --- CORE AI (Updated to unpack keywords) ---
                 score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
                 feedback = ai.get_feedback(resume_text, job_desc)
                 
-                # Use regex for matched, but AI for missing (hybrid approach)
                 resume_skills = af.extract_skills(resume_text)
                 job_skills = af.extract_skills(job_desc)
                 
-                st.write(" Drafting Cover Letter & Interview Questions...")
+                st.write("Drafting Cover Letter & Interview Questions...")
                 cover_letter = ai.generate_cover_letter(resume_text, job_desc)
                 interview_q = ai.generate_interview_questions(resume_text, job_desc)
                 
-                st.write(" Calculating Market Value & Learning Roadmap...")
+                st.write("Calculating Market Value & Learning Roadmap...")
                 market_analysis = ai.get_market_analysis(resume_text, job_role)
                 roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
                 
                 db.save_scan(st.session_state['username'], job_role, score)
                 db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
-                status.update(label=" Analysis Complete!", state="complete", expanded=False)
+                status.update(label="Analysis Complete!", state="complete", expanded=False)
             
             st.divider()
-            tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "🚀 Strategic Insights"])
+            tab1, tab2, tab3, tab4 = st.tabs(["Analysis Report", "Cover Letter", "Interview Prep", "Strategic Insights"])
             
             with tab1:
                 r1, r2 = st.columns([1, 2])
@@ -300,57 +284,53 @@ def dashboard_page():
                         st.metric(label="", value=f"{score}%", help="Strict ATS Calculation")
                         st.markdown("</div>", unsafe_allow_html=True)
                         st.write("")
-                        # --- PASS NEW DATA TO PDF (Missing Keywords + Category) ---
                         pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, score, feedback, resume_skills, missing_keywords, category)
-                        st.download_button("📄 Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
+                        st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
                 with r2:
                     with st.container(border=True):
-                        st.markdown("### 📊 SKILL GAP ANALYSIS")
-                        # UI Visualization still uses regex lists for quick view
+                        st.markdown("### SKILL GAP ANALYSIS")
                         matched = [s for s in resume_skills if s in job_skills]
                         missing_regex = [s for s in job_skills if s not in resume_skills]
                         
                         if matched:
-                            st.markdown("**✅ Matched Skills**")
+                            st.markdown("**Matched Skills**")
                             st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
                         st.write("")
-                        # We display AI detected missing keywords if regex list is empty, or both
                         if missing_keywords:
-                            st.markdown("**❌ Missing Skills (AI Detected)**")
+                            st.markdown("**Missing Skills (AI Detected)**")
                             st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing_keywords[:10]]), unsafe_allow_html=True)
                         st.divider()
                         st.write(feedback)
             with tab2:
                 with st.container(border=True):
-                    st.markdown("### 📝 AI-Generated Cover Letter")
+                    st.markdown("### AI-Generated Cover Letter")
                     st.text_area("Copy this draft:", value=cover_letter, height=400)
             with tab3:
                 with st.container(border=True):
-                    st.markdown("### 🎤 Interview Questions")
+                    st.markdown("### Interview Questions")
                     st.markdown(interview_q)
             with tab4:
                 d1, d2 = st.columns([1.5, 1])
                 with d1:
                     with st.container(border=True):
-                        st.markdown("###  Market Value & Salary")
+                        st.markdown("### Market Value & Salary")
                         st.info("Based on 2025 Market Trends.")
                         st.markdown(market_analysis)
                     st.write("")
                     with st.container(border=True):
-                        st.markdown("### 📈 Candidate Upskilling Roadmap")
+                        st.markdown("### Candidate Upskilling Roadmap")
                         st.success("Suggested 4-Week Plan to bridge skill gaps:")
                         st.markdown(roadmap)
                 with d2:
                     with st.container(border=True):
-                        st.markdown("### 📧 Recruiter Outreach")
+                        st.markdown("### Recruiter Outreach")
                         email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
                         if st.button("Generate Email Draft"):
                             with st.spinner("Drafting..."):
                                 email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
                                 st.text_area("Email Draft:", value=email_draft, height=250)
         else:
-            st.warning("! Please provide both a Resume and a Job Description.")
-
+            st.warning("Please provide both a Resume and a Job Description.")
 
 def main():
     setup_page()
@@ -363,5 +343,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
