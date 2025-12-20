@@ -56,7 +56,9 @@ def setup_page():
 # --- 2. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
-        try: st.image("logo.png", width=80) 
+        try: 
+            # Increased Logo Size
+            st.image("logo.png", width=150) 
         except: pass 
         st.title("NexHire")
         st.markdown("### Enterprise Recruitment Intelligence")
@@ -93,8 +95,6 @@ def login_page():
                         st.session_state['username'] = username
                         
                         # --- 🔒 SECURE ADMIN CHECK ---
-                        # This verifies the username/password against your Secrets Vault
-                        # instead of checking if the name is just "karunya"
                         if ai.validate_admin_login(username, password): 
                             db.set_admin(username)
                             
@@ -112,8 +112,6 @@ def login_page():
                         if len(new_pass) < 8: st.error("❌ Password is too short!")
                         else:
                             if db.add_user(new_user, new_pass):
-                                # Note: New registrations cannot automatically become admin 
-                                # unless they match the secrets.toml credentials exactly
                                 if ai.validate_admin_login(new_user, new_pass):
                                     db.set_admin(new_user)
                                     st.success("👑 Admin Credentials Verified! Please Login.")
@@ -133,7 +131,9 @@ def dashboard_page():
     with c_left:
         cl1, cl2 = st.columns([1, 10])
         with cl1:
-            try: st.image("logo.png", width=50)
+            try: 
+                # Increased Logo Size
+                st.image("logo.png", width=100)
             except: st.write("🔹")
         with cl2:
             st.markdown(f"### Hello, {st.session_state['username']}")
@@ -172,7 +172,8 @@ def dashboard_page():
                             st.text_area("JD", record['JD'], height=200, key="adm_jd")
                     
                     with st.expander("🤖 AI Feedback & Analysis (Outputs)"):
-                        st.markdown(f"**Score:** {record['Score']}%")
+                        # Using st.metric here too for clarity
+                        st.metric(label="Match Score", value=f"{record['Score']}%")
                         st.markdown("---")
                         st.markdown(record['Feedback'])
                         
@@ -193,12 +194,11 @@ def dashboard_page():
     m1, m2 = st.columns(2)
     with m1:
         with st.container(border=True):
-            st.markdown("### LATEST SCORE")
-            st.markdown(f"<h1 style='margin: 0; color: #4F46E5;'>{last_score}%</h1>", unsafe_allow_html=True)
+            # Replaced custom HTML with native metric for reliability
+            st.metric(label="LATEST SCORE", value=f"{last_score}%", delta="Most Recent Scan")
     with m2:
         with st.container(border=True):
-            st.markdown("### TOTAL SCANS")
-            st.markdown(f"<h1 style='margin: 0; color: #111827;'>{len(history)}</h1>", unsafe_allow_html=True)
+            st.metric(label="TOTAL SCANS", value=len(history), delta="Lifetime Usage")
     st.write("")
     
     # Input Area
@@ -264,8 +264,8 @@ def dashboard_page():
                     with st.container(border=True):
                         st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
                         st.markdown("### MATCH SCORE")
-                        color = "#EF4444" if score < 50 else "#4F46E5"
-                        st.markdown(f"<h1 style='font-size: 72px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
+                        # Using st.metric here guarantees visibility
+                        st.metric(label="", value=f"{score}%", help="Strict ATS Calculation")
                         st.markdown("</div>", unsafe_allow_html=True)
                         st.write("")
                         pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, score, feedback, resume_skills, job_skills)
