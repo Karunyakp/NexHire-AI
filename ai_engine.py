@@ -3,7 +3,7 @@ import google.generativeai as genai
 import json
 import random
 
-# --- CONFIGURATION ---
+
 def configure_genai():
     try:
         keys = st.secrets["general"]["gemini_api_key"]
@@ -23,7 +23,7 @@ def get_prompt(prompt_name):
     except:
         return None
 
-# --- CORE AI FUNCTIONS ---
+
 
 def check_resume_authenticity(resume_text):
     """
@@ -158,3 +158,4 @@ def validate_admin_login(username, password):
         return False
     except:
         return False
+
