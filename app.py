@@ -120,7 +120,6 @@ def login_page():
             st.markdown("</div>", unsafe_allow_html=True)
 
 # --- 4. DASHBOARD PAGE ---
-# --- 4. DASHBOARD PAGE ---
 def dashboard_page():
     c_left, c_right = st.columns([6, 1])
     with c_left:
@@ -199,7 +198,8 @@ def dashboard_page():
     with col_main:
         with st.container(border=True):
             st.markdown("### 1. Document Processing")
-            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed")
+            # Added unique key to prevent ID collision
+            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed", key="resume_uploader")
             resume_text = ""
             if uploaded_file:
                 with st.spinner("Extracting text..."):
@@ -315,190 +315,6 @@ def dashboard_page():
                                 st.text_area("Email Draft:", value=email_draft, height=250)
         else:
             st.warning("⚠️ Please provide both a Resume and a Job Description.")
-    # --- 🛡️ SUPER ADMIN CONSOLE ---
-    if db.is_admin(st.session_state['username']):
-        st.markdown("### 🛡️ Super Admin Console")
-        st.info("Full Access to User Data, Resumes, and AI Outputs.")
-        
-        with st.expander("📂 View Full Database (Click to Expand)", expanded=True):
-            # Fetch ALL detailed data
-            all_data = db.get_all_full_analysis()
-            
-            if all_data:
-                # Convert to DataFrame
-                # Mapping database columns to friendly names
-                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
-                
-                # Show Summary Table first
-                st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
-                
-                st.divider()
-                st.markdown("### 🔍 Deep Inspection")
-                
-                # Dropdown to select a specific scan to inspect
-                selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
-                
-                if selected_id:
-                    # Get the row for that ID
-                    record = df[df['ID'] == selected_id].iloc[0]
-                    
-                    st.success(f"Inspecting Record #{selected_id} | User: {record['User']}")
-                    
-                    # 1. Inputs
-                    with st.expander("📄 Resume & Job Description (Inputs)"):
-                        c1, c2 = st.columns(2)
-                        with c1: 
-                            st.caption("Resume Text")
-                            st.text_area("Resume", record['Resume'], height=200, key="adm_res")
-                        with c2: 
-                            st.caption("Job Description")
-                            st.text_area("JD", record['JD'], height=200, key="adm_jd")
-                    
-                    # 2. Outputs
-                    with st.expander("🤖 AI Feedback & Analysis (Outputs)"):
-                        st.markdown(f"**Score:** {record['Score']}%")
-                        st.markdown("---")
-                        st.markdown(record['Feedback'])
-                        
-                    # 3. Generated Content
-                    with st.expander("📝 Generated Content (Drafts)"):
-                        t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
-                        with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
-                        with t2: st.markdown(record['Interview'])
-                        with t3: st.markdown(record['Market'])
-                        with t4: st.markdown(record['Roadmap'])
-            else:
-                st.warning("No analysis data recorded yet.")
-        st.divider()
-
-    # --- METRICS SECTION ---
-    history = db.fetch_history(st.session_state['username'])
-    last_score = history[0][2] if history else 0
-    
-    m1, m2 = st.columns(2)
-    with m1:
-        with st.container(border=True):
-            st.markdown("### LATEST SCORE")
-            st.markdown(f"<h1 style='margin: 0; color: #4F46E5;'>{last_score}%</h1>", unsafe_allow_html=True)
-    with m2:
-        with st.container(border=True):
-            st.markdown("### TOTAL SCANS")
-            st.markdown(f"<h1 style='margin: 0; color: #111827;'>{len(history)}</h1>", unsafe_allow_html=True)
-    st.write("")
-    
-    # Input Area
-    col_main, col_side = st.columns([2, 1])
-    with col_main:
-        with st.container(border=True):
-            st.markdown("### 1. Document Processing")
-            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed")
-            resume_text = ""
-            if uploaded_file:
-                with st.spinner("Extracting text..."):
-                    reader = PyPDF2.PdfReader(uploaded_file)
-                    for page in reader.pages: resume_text += page.extract_text()
-                st.success("Resume Extracted")
-            else: resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
-
-    with col_side:
-        with st.container(border=True):
-            st.markdown("### 2. Job Requisition")
-            job_role = st.text_input("Role Title", placeholder="e.g. Product Designer")
-            job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
-    st.write("")
-    
-    # AI Engine Trigger
-    if st.button("Initialize Intelligence Engine", type="primary"):
-        if resume_text and job_desc:
-            with st.spinner("Analyzing candidate profile..."):
-                time.sleep(1)
-                
-                # --- CORE AI ---
-                score = ai.get_ats_score(resume_text, job_desc)
-                feedback = ai.get_feedback(resume_text, job_desc)
-                resume_skills = af.extract_skills(resume_text)
-                job_skills = af.extract_skills(job_desc)
-                
-                # --- STRATEGIC INSIGHTS ---
-                cover_letter = ai.generate_cover_letter(resume_text, job_desc)
-                interview_q = ai.generate_interview_questions(resume_text, job_desc)
-                market_analysis = ai.get_market_analysis(resume_text, job_role)
-                roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
-                
-                # SAVE DATA (Basic + Admin Full)
-                db.save_scan(st.session_state['username'], job_role, score)
-                db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
-                
-                st.divider()
-                
-                # --- RESULTS TABS ---
-                tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "🚀 Strategic Insights"])
-                
-                # TAB 1: REPORT
-                with tab1:
-                    r1, r2 = st.columns([1, 2])
-                    with r1:
-                        with st.container(border=True):
-                            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                            st.markdown("### MATCH SCORE")
-                            color = "#EF4444" if score < 50 else "#4F46E5"
-                            st.markdown(f"<h1 style='font-size: 72px; color: {color}; margin: 0;'>{score}%</h1>", unsafe_allow_html=True)
-                            st.markdown("</div>", unsafe_allow_html=True)
-                            st.write("")
-                            pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, score, feedback, resume_skills, job_skills)
-                            st.download_button("📄 Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
-                    with r2:
-                        with st.container(border=True):
-                            st.markdown("### 📊 SKILL GAP ANALYSIS")
-                            matched = [s for s in resume_skills if s in job_skills]
-                            missing = [s for s in job_skills if s not in resume_skills]
-                            if matched:
-                                st.markdown("**✅ Matched Skills**")
-                                st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
-                            st.write("")
-                            if missing:
-                                st.markdown("**❌ Missing Skills**")
-                                st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing]), unsafe_allow_html=True)
-                            st.divider()
-                            st.write(feedback)
-                
-                # TAB 2: COVER LETTER
-                with tab2:
-                    with st.container(border=True):
-                        st.markdown("### 📝 AI-Generated Cover Letter")
-                        st.text_area("Copy this draft:", value=cover_letter, height=400)
-                
-                # TAB 3: INTERVIEW
-                with tab3:
-                    with st.container(border=True):
-                        st.markdown("### 🎤 Interview Questions")
-                        st.markdown(interview_q)
-
-                # TAB 4: STRATEGIC INSIGHTS
-                with tab4:
-                    d1, d2 = st.columns([1.5, 1])
-                    with d1:
-                        with st.container(border=True):
-                            st.markdown("### 💰 Market Value & Salary")
-                            st.info("Based on 2025 Market Trends.")
-                            st.markdown(market_analysis)
-                        
-                        st.write("")
-                        with st.container(border=True):
-                            st.markdown("### 📈 Candidate Upskilling Roadmap")
-                            st.success("Suggested 4-Week Plan to bridge skill gaps:")
-                            st.markdown(roadmap)
-                            
-                    with d2:
-                        with st.container(border=True):
-                            st.markdown("### 📧 Recruiter Outreach")
-                            email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
-                            if st.button("Generate Email Draft"):
-                                with st.spinner("Drafting..."):
-                                    email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
-                                    st.text_area("Email Draft:", value=email_draft, height=250)
-        else:
-            st.warning("⚠️ Please provide both a Resume and a Job Description.")
 
 # --- 5. MAIN EXECUTION ---
 def main():
@@ -514,4 +330,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
