@@ -3,7 +3,7 @@ import google.generativeai as genai
 import json
 import random
 
-
+# --- CONFIGURATION ---
 def configure_genai():
     try:
         keys = st.secrets["general"]["gemini_api_key"]
@@ -14,7 +14,7 @@ def configure_genai():
         genai.configure(api_key=api_key)
         return True
     except Exception as e:
-        st.error(f"🚨 SECURITY CHECK FAILED: API Key missing. Error: {str(e)}")
+        st.error(f"Security Check Failed: API Key missing. Error: {str(e)}")
         return False
 
 def get_prompt(prompt_name):
@@ -23,17 +23,13 @@ def get_prompt(prompt_name):
     except:
         return None
 
-
+# --- CORE AI FUNCTIONS ---
 
 def check_resume_authenticity(resume_text):
-    """
-    Analyzes the resume to see if it looks AI-generated or Human-written.
-    Also checks basic ATS readability.
-    """
     if not configure_genai(): return {"human_score": 0, "verdict": "Error", "analysis": "Security Error"}
     
     sys_prompt = get_prompt("authenticity_prompt")
-    if not sys_prompt: return {"human_score": 0, "verdict": "Error", "analysis": "Prompt Missing"}
+    if not sys_prompt: return {"human_score": 0, "verdict": "Error", "analysis": "Prompt Missing from Secrets."}
 
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
@@ -41,9 +37,17 @@ def check_resume_authenticity(resume_text):
             contents=[{"role": "user", "parts": [{"text": f"{sys_prompt}\n\nRESUME TEXT:\n{resume_text[:4000]}"}]}],
             generation_config={"response_mime_type": "application/json"}
         )
-        return json.loads(response.text)
-    except:
-        return {"human_score": 0, "verdict": "Error", "analysis": "Could not analyze text."}
+        
+        # Clean Markdown formatting if present
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
+            
+        return json.loads(text_out)
+    except Exception as e:
+        return {"human_score": 0, "verdict": "Error", "analysis": f"Analysis Failed: {str(e)}"}
 
 def categorize_resume(resume_text):
     if not configure_genai(): return "Uncategorized"
@@ -71,7 +75,13 @@ def get_ats_score(resume_text, job_desc):
             generation_config={"response_mime_type": "application/json"}
         )
         
-        data = json.loads(response.text)
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
+            
+        data = json.loads(text_out)
         return int(data.get("score", 0)), data.get("missing_keywords", [])
     except Exception as e:
         return 0, []
@@ -89,7 +99,14 @@ def get_feedback(resume_text, job_desc):
             contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
             generation_config={"response_mime_type": "application/json"}
         )
-        data = json.loads(response.text)
+        
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
+            
+        data = json.loads(text_out)
         return data.get("summary", "Analysis failed.")
     except:
         return "Could not generate feedback."
@@ -158,4 +175,3 @@ def validate_admin_login(username, password):
         return False
     except:
         return False
-
