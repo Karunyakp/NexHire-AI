@@ -237,8 +237,35 @@ def dashboard_page():
             job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
     st.write("")
     
-    # AI Engine Trigger
-    if st.button("Initialize Intelligence Engine", type="primary"):
+    # AI Engine Trigger (Split into Quick and Full)
+    btn_col1, btn_col2 = st.columns([1, 1])
+    with btn_col1:
+        run_quick_scan = st.button("⚡ Quick Scan (Score Only)", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
+    with btn_col2:
+        run_full_scan = st.button("🚀 Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
+
+    if run_quick_scan:
+        if resume_text and job_desc:
+            with st.spinner("Calculating ATS Match Score..."):
+                score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
+                # Save scan so it updates the Latest Score history
+                db.save_scan(st.session_state['username'], job_role, score)
+                
+                st.divider()
+                st.markdown("### ⚡ Quick Scan Results")
+                q1, q2 = st.columns([1, 2])
+                with q1:
+                    # Displaying score like the Latest Score metric
+                    st.metric(label="ATS Match Score", value=f"{score}%", delta="Instant Result")
+                with q2:
+                    if missing_keywords:
+                        st.error(f"**Missing Critical Keywords:**\n{', '.join(missing_keywords)}")
+                    else:
+                        st.success("✅ Excellent Match! No critical keywords missing.")
+        else:
+             st.warning("⚠️ Please provide both a Resume and a Job Description.")
+
+    if run_full_scan:
         if resume_text and job_desc:
             with st.status("🚀 Launching NexHire Intelligence Engine...", expanded=True) as status:
                 st.warning("⏳ Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
