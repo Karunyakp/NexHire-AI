@@ -130,6 +130,11 @@ def dashboard_page():
     with c_right:
         if st.button("Sign Out"):
             st.session_state['logged_in'] = False
+            # Clear session state on logout
+            keys_to_remove = ['analysis_result', 'analysis_complete']
+            for key in keys_to_remove:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
     st.divider()
 
@@ -230,6 +235,7 @@ def dashboard_page():
     with btn_col2:
         run_full_scan = st.button("Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
 
+    # --- QUICK SCAN LOGIC ---
     if run_quick_scan:
         if resume_text and job_desc:
             with st.spinner("Calculating ATS Match Score..."):
@@ -248,6 +254,7 @@ def dashboard_page():
         else:
              st.warning("Please provide both a Resume and a Job Description.")
 
+    # --- FULL SCAN LOGIC (PERSISTENT STATE) ---
     if run_full_scan:
         if resume_text and job_desc:
             with st.status("Launching NexHire Intelligence Engine...", expanded=True) as status:
@@ -271,66 +278,84 @@ def dashboard_page():
                 db.save_scan(st.session_state['username'], job_role, score)
                 db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
                 status.update(label="Analysis Complete!", state="complete", expanded=False)
-            
-            st.divider()
-            tab1, tab2, tab3, tab4 = st.tabs(["Analysis Report", "Cover Letter", "Interview Prep", "Strategic Insights"])
-            
-            with tab1:
-                r1, r2 = st.columns([1, 2])
-                with r1:
-                    with st.container(border=True):
-                        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                        st.markdown("### MATCH SCORE")
-                        st.metric(label="", value=f"{score}%", help="Strict ATS Calculation")
-                        st.markdown("</div>", unsafe_allow_html=True)
-                        st.write("")
-                        pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, score, feedback, resume_skills, missing_keywords, category)
-                        st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
-                with r2:
-                    with st.container(border=True):
-                        st.markdown("### SKILL GAP ANALYSIS")
-                        matched = [s for s in resume_skills if s in job_skills]
-                        missing_regex = [s for s in job_skills if s not in resume_skills]
-                        
-                        if matched:
-                            st.markdown("**Matched Skills**")
-                            st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
-                        st.write("")
-                        if missing_keywords:
-                            st.markdown("**Missing Skills (AI Detected)**")
-                            st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in missing_keywords[:10]]), unsafe_allow_html=True)
-                        st.divider()
-                        st.write(feedback)
-            with tab2:
-                with st.container(border=True):
-                    st.markdown("### AI-Generated Cover Letter")
-                    st.text_area("Copy this draft:", value=cover_letter, height=400)
-            with tab3:
-                with st.container(border=True):
-                    st.markdown("### Interview Questions")
-                    st.markdown(interview_q)
-            with tab4:
-                d1, d2 = st.columns([1.5, 1])
-                with d1:
-                    with st.container(border=True):
-                        st.markdown("### Market Value & Salary")
-                        st.info("Based on 2025 Market Trends.")
-                        st.markdown(market_analysis)
-                    st.write("")
-                    with st.container(border=True):
-                        st.markdown("### Candidate Upskilling Roadmap")
-                        st.success("Suggested 4-Week Plan to bridge skill gaps:")
-                        st.markdown(roadmap)
-                with d2:
-                    with st.container(border=True):
-                        st.markdown("### Recruiter Outreach")
-                        email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
-                        if st.button("Generate Email Draft"):
-                            with st.spinner("Drafting..."):
-                                email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
-                                st.text_area("Email Draft:", value=email_draft, height=250)
+                
+                # STORE RESULTS IN SESSION STATE
+                st.session_state['analysis_complete'] = True
+                st.session_state['analysis_result'] = {
+                    'score': score,
+                    'feedback': feedback,
+                    'resume_skills': resume_skills,
+                    'job_skills': job_skills,
+                    'missing_keywords': missing_keywords,
+                    'cover_letter': cover_letter,
+                    'interview_q': interview_q,
+                    'market_analysis': market_analysis,
+                    'roadmap': roadmap,
+                    'category': category
+                }
         else:
             st.warning("Please provide both a Resume and a Job Description.")
+
+    # --- DISPLAY RESULTS FROM SESSION STATE ---
+    if st.session_state.get('analysis_complete', False) and 'analysis_result' in st.session_state:
+        res = st.session_state['analysis_result']
+        
+        st.divider()
+        tab1, tab2, tab3, tab4 = st.tabs(["Analysis Report", "Cover Letter", "Interview Prep", "Strategic Insights"])
+        
+        with tab1:
+            r1, r2 = st.columns([1, 2])
+            with r1:
+                with st.container(border=True):
+                    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                    st.markdown("### MATCH SCORE")
+                    st.metric(label="", value=f"{res['score']}%", help="Strict ATS Calculation")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.write("")
+                    pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, res['score'], res['feedback'], res['resume_skills'], res['missing_keywords'], res['category'])
+                    st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
+            with r2:
+                with st.container(border=True):
+                    st.markdown("### SKILL GAP ANALYSIS")
+                    matched = [s for s in res['resume_skills'] if s in res['job_skills']]
+                    
+                    if matched:
+                        st.markdown("**Matched Skills**")
+                        st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
+                    st.write("")
+                    if res['missing_keywords']:
+                        st.markdown("**Missing Skills (AI Detected)**")
+                        st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in res['missing_keywords'][:10]]), unsafe_allow_html=True)
+                    st.divider()
+                    st.write(res['feedback'])
+        with tab2:
+            with st.container(border=True):
+                st.markdown("### AI-Generated Cover Letter")
+                st.text_area("Copy this draft:", value=res['cover_letter'], height=400)
+        with tab3:
+            with st.container(border=True):
+                st.markdown("### Interview Questions")
+                st.markdown(res['interview_q'])
+        with tab4:
+            d1, d2 = st.columns([1.5, 1])
+            with d1:
+                with st.container(border=True):
+                    st.markdown("### Market Value & Salary")
+                    st.info("Based on 2025 Market Trends.")
+                    st.markdown(res['market_analysis'])
+                st.write("")
+                with st.container(border=True):
+                    st.markdown("### Candidate Upskilling Roadmap")
+                    st.success("Suggested 4-Week Plan to bridge skill gaps:")
+                    st.markdown(res['roadmap'])
+            with d2:
+                with st.container(border=True):
+                    st.markdown("### Recruiter Outreach")
+                    email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
+                    if st.button("Generate Email Draft"):
+                        with st.spinner("Drafting..."):
+                            email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
+                            st.text_area("Email Draft:", value=email_draft, height=250)
 
 def main():
     setup_page()
