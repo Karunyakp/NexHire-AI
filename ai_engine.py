@@ -1,16 +1,24 @@
 import streamlit as st
 import google.generativeai as genai
 import json
+import random
 
 # --- CONFIGURATION ---
 def configure_genai():
     try:
-        # Fetch API Key from Streamlit Secrets (The Cloud Vault)
-        api_key = st.secrets["general"]["gemini_api_key"]
+        # Fetch API Key from Streamlit Secrets
+        # Supports both single string OR list of keys (Rotation)
+        keys = st.secrets["general"]["gemini_api_key"]
+        
+        if isinstance(keys, list):
+            api_key = random.choice(keys) # Pick a random key from the list
+        else:
+            api_key = keys # Use the single key provided
+            
         genai.configure(api_key=api_key)
         return True
     except Exception as e:
-        st.error("🚨 SECURITY CHECK FAILED: API Key missing. Please configure secrets on Streamlit Cloud.")
+        st.error(f"🚨 SECURITY CHECK FAILED: API Key missing or invalid. Error: {str(e)}")
         return False
 
 # --- HELPER: GET PROMPTS ---
@@ -45,7 +53,6 @@ def get_ats_score(resume_text, job_desc):
 def get_feedback(resume_text, job_desc):
     if not configure_genai(): return "Security Error."
     
-    # We reuse the ATS prompt or you can add a specific 'feedback_prompt'
     sys_prompt = get_prompt("ats_prompt") 
     if not sys_prompt: return "Error: System Prompts Missing."
 
@@ -88,7 +95,7 @@ def generate_interview_questions(resume_text, job_desc):
     except:
         return "Could not generate questions."
 
-# --- STRATEGIC INSIGHTS (Now Fully Restored & Secured) ---
+# --- STRATEGIC INSIGHTS ---
 
 def get_market_analysis(resume_text, role):
     if not configure_genai(): return "Security Error."
@@ -98,8 +105,7 @@ def get_market_analysis(resume_text, role):
 
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-        # Analyze salary and market demand
-        response = model.generate_content(f"{sys_prompt}\n\nJob Role: {role}\nResume Context: {resume_text[:2000]}") # Truncate resume for speed
+        response = model.generate_content(f"{sys_prompt}\n\nJob Role: {role}\nResume Context: {resume_text[:2000]}")
         return response.text
     except:
         return "Market analysis unavailable."
