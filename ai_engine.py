@@ -28,6 +28,24 @@ def get_prompt(prompt_name):
     except:
         return None
 
+# --- ADMIN SECURITY (NEW) ---
+def validate_admin_login(username, password):
+    """
+    Verifies admin credentials against the secure cloud vault (secrets.toml).
+    This hides the admin username/password from the public code.
+    """
+    try:
+        secure_user = st.secrets["admin"]["username"]
+        secure_pass = st.secrets["admin"]["password"]
+        
+        # Check for exact match
+        if username == secure_user and password == secure_pass:
+            return True
+        return False
+    except Exception as e:
+        # If secrets are missing or incorrect, admin login fails securely
+        return False
+
 # --- CORE AI FUNCTIONS ---
 
 def get_ats_score(resume_text, job_desc):
