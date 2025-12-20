@@ -189,7 +189,8 @@ def dashboard_page():
 
     # --- METRICS SECTION ---
     history = db.fetch_history(st.session_state['username'])
-    last_score = history[0][2] if history else 0
+    # FIX: Column index 3 is score, index 2 was Role.
+    last_score = history[0][3] if history else 0
     
     m1, m2 = st.columns(2)
     with m1:
