@@ -222,6 +222,7 @@ def dashboard_page():
             # --- NEW STATUS BAR (REPLACES SPINNER) ---
             with st.status("🚀 Launching NexHire Intelligence Engine...", expanded=True) as status:
                 
+                st.warning("⏳ Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
                 st.write("🔍 Analyzing Resume & Job Description...")
                 # Core AI
                 score = ai.get_ats_score(resume_text, job_desc)
