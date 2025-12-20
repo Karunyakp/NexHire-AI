@@ -4,23 +4,13 @@ Supported Versions
 
 NexHire Platinum is a proprietary, live production system. Security updates are applied continuously to the official deployment.
 
-Version
+✅ Live Production: Supported
 
-Status
+Description: The version currently deployed on Streamlit Cloud.
 
-Description
+❌ Local / Forks: Not Supported
 
-Live Production
-
-:white_check_mark: Supported
-
-The version currently deployed on Streamlit Cloud.
-
-Local / Forks
-
-:x: Not Supported
-
-Unauthorized copies or local clones are not supported.
+Description: Unauthorized copies or local clones are not supported.
 
 Reporting a Vulnerability
 
@@ -30,7 +20,7 @@ How to Report
 
 Please report security issues directly to the developer, Karunya K. P., via:
 
-LinkedIn: linkedin.com/in/karunya-kp
+LinkedIn: linkedin.com/in/karunyakp
 
 GitHub: github.com/karunyakp
 
