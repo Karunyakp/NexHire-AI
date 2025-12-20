@@ -203,6 +203,29 @@ def dashboard_page():
                     category = ai.categorize_resume(resume_text)
                     st.success("Resume Extracted & Categorized!")
                     st.markdown(f"<span class='category-badge'>{category}</span>", unsafe_allow_html=True)
+                    
+                # --- NEW: AI & ATS SCANNER BUTTON ---
+                st.write("")
+                if st.button("🛡️ Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
+                    with st.spinner("Scanning for AI patterns and ATS readability..."):
+                        # Call the new scan function
+                        auth_data = ai.check_resume_authenticity(resume_text)
+                        
+                        st.write("---")
+                        st.markdown("### 🛡️ Authenticity Report")
+                        
+                        s1, s2 = st.columns(2)
+                        with s1:
+                            # 100% means definitely human, 0% means definitely AI
+                            h_score = auth_data.get('human_score', 0)
+                            color = "normal" if h_score > 70 else "inverse"
+                            st.metric("Human-Written Score", f"{h_score}%", help="Lower score means high likelihood of AI generation.")
+                        with s2:
+                            st.caption("ATS Verdict")
+                            st.info(auth_data.get('verdict', 'N/A'))
+                        
+                        st.warning(auth_data.get('analysis', ''))
+                        
             else: 
                 resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
                 category = "Manual Entry"
