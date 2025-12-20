@@ -1,37 +1,68 @@
-# 💜 NexHire Platinum - AI Recruitment Intelligence
+NexHire Platinum: Enterprise Recruitment Intelligence 💜
 
-**NexHire Platinum** is an enterprise-grade recruitment analytics platform powered by **Google Gemini 1.5**. It bridges the gap between talent and opportunity by providing real-time ATS scoring, gap analysis, and generative feedback for candidates and recruiters.
+Status: 🟢 Live Production System
+Access: Click here to launch NexHire (Requires Admin Credentials)
 
-### 🚀 Key Features
+💼 Executive Summary
 
-#### 🧠 AI Intelligence Engine
-* **ATS Scoring System:** Instantly evaluates resumes against job descriptions (0-100% Match).
-* **Gap Analysis:** Identifies missing critical skills and keywords.
-* **Generative Feedback:** Provides detailed "Recruiter-style" feedback on strong points and weak areas.
+NexHire Platinum is an advanced AI-powered Applicant Tracking System (ATS) and career strategy engine. Unlike traditional keyword matchers, NexHire uses Google Gemini 2.5 Flash to perform semantic analysis, understanding the context of a candidate's experience rather than just matching words.
 
-#### ⚡ Generative Suite (New)
-* **📝 AI Cover Letters:** Automatically drafts tailored cover letters based on candidate experience.
-* **🎤 Interview Prep:** Generates technical and behavioral interview questions specific to the candidate's gaps.
+This application demonstrates enterprise-grade Python development, prompt engineering, and secure cloud architecture.
 
-#### 🔐 Security & Admin
-* **Role-Based Access:** Secure Login and Registration system.
-* **Admin Console:** Hidden surveillance dashboard for Administrators to monitor all system activity.
-* **Privacy:** Secure password hashing and session management.
+🚀 Key Capabilities
 
-#### 📄 Reporting
-* **PDF Generation:** Downloadable professional reports with "Developed by Karunya. K. P" proof-of-work.
-* **Data Visualization:** Interactive skill-match tags (Green/Red chips).
+1. Intelligent ATS Scoring
 
-### 🛠️ Tech Stack
-* **Frontend:** Streamlit (Python)
-* **AI Model:** Google Gemini 1.5 Flash
-* **Database:** SQLite3
-* **Processing:** PyPDF2, ReportLab, Pandas
+Semantic Analysis: Deep learning evaluation of Resume vs. Job Description.
 
-### 👨‍💻 Developed By
-**Karunya. K. P**
-* [LinkedIn Profile](https://www.linkedin.com/in/karunya-kp)
-* [GitHub Profile](https://github.com/karunyakp)
+Skill Gap Visualization: Instant identification of missing critical skills.
 
----
-*© 2025 NexHire Systems. All Rights Reserved.*
+Strict Scoring Logic: Non-lenient, zero-bias matching algorithms.
+
+2. Generative Recruitment Assets
+
+Smart Cover Letters: Auto-generates tailored cover letters bridging specific experience gaps.
+
+Dynamic Interview Scripting: Creates tough, technical interview questions based on the specific weaknesses found in the resume.
+
+3. Strategic Market Insights
+
+Salary Benchmarking: Real-time estimation of candidate market value based on 2025 trends.
+
+Upskilling Roadmaps: Generates 4-week learning schedules to help candidates qualify for reach roles.
+
+Automated Outreach: Drafts professional Offer Letters, Rejections, and Interview Invites.
+
+🔒 Security Architecture
+
+This application utilizes a "Headless" Security Architecture.
+
+Proprietary Logic: The core decision-making algorithms and system prompts are decoupled from the source code and stored in a secure, encrypted cloud vault.
+
+Zero-Trust Admin: Administrative privileges are verified against independent secrets, not hardcoded logic.
+
+API Rotation: Implements round-robin key rotation for high availability.
+
+🛠️ Tech Stack
+
+Core: Python 3.10+
+
+Frontend: Streamlit Enterprise
+
+AI Model: Google Gemini 2.5 Flash
+
+Data Processing: PyPDF2, Pandas, JSON
+
+Database: SQLite (Session-based) / Firestore (Production)
+
+© Copyright & License
+
+Copyright (c) 2025 Karunya K. P. All Rights Reserved.
+
+This source code is the intellectual property of the author.
+
+No License is granted to use, copy, modify, or distribute this software.
+
+Unauthorized reproduction or deployment of this code is strictly prohibited.
+
+The "System Prompts" required to run this application are proprietary trade secrets.
