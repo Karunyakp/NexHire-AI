@@ -63,11 +63,11 @@ def render_sidebar():
         st.markdown("### Enterprise Recruitment Intelligence")
         st.divider()
         st.subheader("Connect with Developer")
-        st.link_button("🔗 LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
-        st.link_button("💻 GitHub Profile", "https://github.com/karunyakp")
+        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunya-kp")
+        st.link_button("GitHub Profile", "https://github.com/karunyakp")
         st.divider()
         st.caption("Developed & Maintained by")
-        st.markdown("### Karunya. K. P") 
+        st.markdown(" Karunya. K. P ") 
         st.caption("© 2025 NexHire Systems")
 
 
@@ -99,7 +99,7 @@ def login_page():
                 st.write("")
                 new_user = st.text_input("Choose Username", key="new_user")
                 new_pass = st.text_input("Choose Password", type="password", key="new_pass")
-                st.info("ℹ️ Password must be at least 8 characters.")
+                st.info("!Password must be at least 8 characters.")
                 st.write("")
                 if st.button("Create Profile"):
                     if new_user and new_pass:
@@ -108,7 +108,7 @@ def login_page():
                             if db.add_user(new_user, new_pass):
                                 if ai.validate_admin_login(new_user, new_pass):
                                     db.set_admin(new_user)
-                                    st.success("👑 Admin Credentials Verified! Please Login.")
+                                    st.success(" Admin Credentials Verified! Please Login.")
                                 else: st.success("Account created! Please log in.")
                             else: st.error("Username taken.")
                     else: st.warning("Please fill all fields.")
@@ -126,7 +126,7 @@ def dashboard_page():
         cl1, cl2 = st.columns([1, 10])
         with cl1:
             try: st.image("logo.png", width=100)
-            except: st.write("🔹")
+            except: st.write(" ")
         with cl2:
             st.markdown(f"### Hello, {st.session_state['username']}")
             st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your recruitment analytics overview</p>", unsafe_allow_html=True)
@@ -137,15 +137,15 @@ def dashboard_page():
     st.divider()
 
     if db.is_admin(st.session_state['username']):
-        st.markdown("### 🛡️ Super Admin Console")
+        st.markdown("###  Super Admin Console")
         st.info("Full Access to User Data, Resumes, and AI Outputs.")
-        with st.expander("📂 View Full Database (Click to Expand)", expanded=True):
+        with st.expander(" View Full Database (Click to Expand)", expanded=True):
             all_data = db.get_all_full_analysis()
             if all_data:
                 df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
                 st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
                 st.divider()
-                st.markdown("### 🔍 Deep Inspection")
+                st.markdown("###  Deep Inspection")
                 selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
                 if selected_id:
                     record = df[df['ID'] == selected_id].iloc[0]
@@ -158,11 +158,11 @@ def dashboard_page():
                         with c2: 
                             st.caption("Job Description")
                             st.text_area("JD", record['JD'], height=200, key="adm_jd")
-                    with st.expander("🤖 AI Feedback & Analysis (Outputs)"):
+                    with st.expander(" AI Feedback & Analysis (Outputs)"):
                         st.metric(label="Match Score", value=f"{record['Score']}%")
                         st.markdown("---")
                         st.markdown(record['Feedback'])
-                    with st.expander("📝 Generated Content (Drafts)"):
+                    with st.expander(" Generated Content (Drafts)"):
                         t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
                         with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
                         with t2: st.markdown(record['Interview'])
@@ -204,13 +204,13 @@ def dashboard_page():
                     
 
                 st.write("")
-                if st.button("🛡️ Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
+                if st.button(" Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
                     with st.spinner("Scanning for AI patterns and ATS readability..."):
                         # Call the new scan function
                         auth_data = ai.check_resume_authenticity(resume_text)
                         
                         st.write("---")
-                        st.markdown("### 🛡️ Authenticity Report")
+                        st.markdown("###  Authenticity Report")
                         
                         s1, s2 = st.columns(2)
                         with s1:
@@ -237,9 +237,9 @@ def dashboard_page():
     
     btn_col1, btn_col2 = st.columns([1, 1])
     with btn_col1:
-        run_quick_scan = st.button("📊 Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
+        run_quick_scan = st.button(" Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
     with btn_col2:
-        run_full_scan = st.button("🚀 Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
+        run_full_scan = st.button(" Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
 
     if run_quick_scan:
         if resume_text and job_desc:
@@ -249,7 +249,7 @@ def dashboard_page():
                 db.save_scan(st.session_state['username'], job_role, score)
                 
                 st.divider()
-                st.markdown("### 📊 ATS Score Analysis")
+                st.markdown("###  ATS Score Analysis")
                 q1, q2 = st.columns([1, 2])
                 with q1:
                     # Displaying score like the Latest Score metric
@@ -258,15 +258,15 @@ def dashboard_page():
                     if missing_keywords:
                         st.error(f"**Missing Critical Keywords:**\n{', '.join(missing_keywords)}")
                     else:
-                        st.success("✅ Excellent Match! No critical keywords missing.")
+                        st.success(" Excellent Match! No critical keywords missing.")
         else:
-             st.warning("⚠️ Please provide both a Resume and a Job Description.")
+             st.warning(" Please provide both a Resume and a Job Description.")
 
     if run_full_scan:
         if resume_text and job_desc:
-            with st.status("🚀 Launching NexHire Intelligence Engine...", expanded=True) as status:
-                st.warning("⏳ Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
-                st.write("🔍 Analyzing Resume & Job Description...")
+            with st.status(" Launching NexHire Intelligence Engine...", expanded=True) as status:
+                st.warning(" Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
+                st.write(" Analyzing Resume & Job Description...")
                 
                 # --- CORE AI (Updated to unpack keywords) ---
                 score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
@@ -276,17 +276,17 @@ def dashboard_page():
                 resume_skills = af.extract_skills(resume_text)
                 job_skills = af.extract_skills(job_desc)
                 
-                st.write("📝 Drafting Cover Letter & Interview Questions...")
+                st.write(" Drafting Cover Letter & Interview Questions...")
                 cover_letter = ai.generate_cover_letter(resume_text, job_desc)
                 interview_q = ai.generate_interview_questions(resume_text, job_desc)
                 
-                st.write("💎 Calculating Market Value & Learning Roadmap...")
+                st.write(" Calculating Market Value & Learning Roadmap...")
                 market_analysis = ai.get_market_analysis(resume_text, job_role)
                 roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
                 
                 db.save_scan(st.session_state['username'], job_role, score)
                 db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
-                status.update(label="✅ Analysis Complete!", state="complete", expanded=False)
+                status.update(label=" Analysis Complete!", state="complete", expanded=False)
             
             st.divider()
             tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis Report", "📝 Cover Letter", "🎤 Interview Prep", "🚀 Strategic Insights"])
@@ -332,7 +332,7 @@ def dashboard_page():
                 d1, d2 = st.columns([1.5, 1])
                 with d1:
                     with st.container(border=True):
-                        st.markdown("### 💰 Market Value & Salary")
+                        st.markdown("###  Market Value & Salary")
                         st.info("Based on 2025 Market Trends.")
                         st.markdown(market_analysis)
                     st.write("")
@@ -349,7 +349,7 @@ def dashboard_page():
                                 email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
                                 st.text_area("Email Draft:", value=email_draft, height=250)
         else:
-            st.warning("⚠️ Please provide both a Resume and a Job Description.")
+            st.warning("! Please provide both a Resume and a Job Description.")
 
 
 def main():
@@ -363,4 +363,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
