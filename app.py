@@ -54,16 +54,13 @@ st.markdown("""
         border: 1px solid #E5E7EB;
     }
     
-    /* Badges */
-    .category-badge {
-        background-color: #EEF2FF;
-        color: #4F46E5;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 12px;
-        letter-spacing: 0.025em;
-        border: 1px solid #C7D2FE;
+    /* Chat Message Styling */
+    .stChatMessage {
+        background-color: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 10px;
     }
 
     /* Hide Footer only, keep header for settings */
@@ -80,7 +77,6 @@ def extract_text(uploaded_file):
 
 # --- 3. LOGIN PAGE ---
 def login_page():
-    # Centered Layout
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.write("")
@@ -95,7 +91,6 @@ def login_page():
                 except:
                     st.error("logo.png not found")
 
-            # Header Text
             st.markdown("""
                 <div style="text-align: center; margin-bottom: 24px; margin-top: 10px;">
                     <h2 style="margin: 0; font-weight: 700; color: #111827; font-size: 24px;">NexHire</h2>
@@ -103,14 +98,12 @@ def login_page():
                 </div>
             """, unsafe_allow_html=True)
             
-            # Auth Tabs - HIDDEN ADMIN TAB
             tab_login, tab_reg = st.tabs(["Sign In", "Create Account"])
             
             with tab_login:
                 u = st.text_input("Username", key="l_user")
                 p = st.text_input("Password", type="password", key="l_pwd")
                 if st.button("Sign In", type="primary", use_container_width=True):
-                    # 1. Check if it's the Admin trying to login
                     if ai.validate_admin_login(u, p):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = u
@@ -118,12 +111,10 @@ def login_page():
                         st.session_state['is_guest'] = False
                         st.session_state['admin_unlocked'] = True
                         st.rerun()
-                    
-                    # 2. If not Admin, check normal database
                     elif db.login_user(u, p):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = u
-                        st.session_state['role'] = 'User' # Default user role
+                        st.session_state['role'] = 'User'
                         st.session_state['is_guest'] = False
                         st.session_state['admin_unlocked'] = False
                         st.rerun()
@@ -152,7 +143,7 @@ def login_page():
                 if st.button("Guest Candidate", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Candidate"
-                    st.session_state['role'] = "Candidate" # Explicit Role
+                    st.session_state['role'] = "Candidate"
                     st.session_state['is_guest'] = True
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
@@ -160,7 +151,7 @@ def login_page():
                 if st.button("Guest Recruiter", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Recruiter"
-                    st.session_state['role'] = "Recruiter" # Explicit Role
+                    st.session_state['role'] = "Recruiter"
                     st.session_state['is_guest'] = True
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
@@ -168,13 +159,17 @@ def login_page():
 # --- 4. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
-        # Use logo.png here as well
         try: st.image("logo.png", use_container_width=True) 
         except: pass 
         
         st.markdown(f"### {st.session_state.get('username', 'Guest')}")
         st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
         
+        # API Provider Swap (Admin/Dev Feature)
+        with st.expander("Settings"):
+            provider = st.selectbox("AI Provider", ["Gemini (Google)", "OpenAI (Coming Soon)", "Anthropic (Coming Soon)"])
+            st.caption(f"Active: {provider}")
+
         st.write("")
         if st.button("Sign Out", type="secondary", use_container_width=True):
             st.session_state.clear()
@@ -182,11 +177,25 @@ def render_sidebar():
         
         st.divider()
         st.markdown("### Resources")
-        st.markdown("[Documentation](#)")
-        st.markdown("[Support](#)")
         
+        if st.button("📄 Documentation", use_container_width=True):
+            @st.dialog("Documentation")
+            def show_docs():
+                st.write("**NexHire User Guide**")
+                st.write("1. **Candidates**: Upload your resume to check ATS scores and get job fit analysis.")
+                st.write("2. **Recruiters**: Upload bulk resumes to screen them against job descriptions.")
+                st.write("3. **Security**: All data is processed securely.")
+            show_docs()
+
+        if st.button("💬 Support", use_container_width=True):
+            @st.dialog("Contact Support")
+            def show_support():
+                st.write("Need help? Contact our team:")
+                st.write("📧 **Email**: support@nexhire.ai")
+                st.write("📞 **Phone**: +1 (555) 123-4567")
+            show_support()
+            
         st.markdown("---")
-        # ADDED DEVELOPER CREDIT HERE
         st.markdown("**Developed by**")
         st.markdown("Karunya K. P.")
         st.caption("© 2025 NexHire Inc.")
@@ -196,7 +205,6 @@ def candidate_mode():
     st.markdown("### 🎓 Candidate Dashboard")
     st.caption("Optimize your profile to get hired faster.")
     
-    # DISTINCT LAYOUT
     c1, c2 = st.columns([1, 1])
     with c1: 
         resume = st.file_uploader("Upload Your Resume (PDF)", type="pdf", key="c_res")
@@ -207,7 +215,6 @@ def candidate_mode():
         st.write("")
         st.markdown("#### Actions")
         
-        # DISTINCT BUTTONS FOR CANDIDATE ACTIONS
         col_act1, col_act2, col_act3 = st.columns(3)
         
         with col_act1:
@@ -219,14 +226,12 @@ def candidate_mode():
         with col_act3:
             ats_score_btn = st.button("📊 Check ATS Score", use_container_width=True)
 
-        # Logic for "Analyze Job Fit" (General Analysis)
         if analyze_fit_btn:
              with st.spinner("Analyzing profile fit..."):
                 text = extract_text(resume)
                 st.session_state['c_data'] = ai.analyze_fit(text, jd)
                 st.session_state['c_text'] = text
                 st.session_state['c_jd'] = jd
-                # Reset specific views
                 st.session_state['view_mode'] = 'fit'
                 
                 db.save_scan(
@@ -234,32 +239,26 @@ def candidate_mode():
                     st.session_state['c_data'].get('score', 0), st.session_state['c_data']
                 )
 
-        # Logic for "Skill Gap"
         if skill_gap_btn:
              with st.spinner("Extracting skills..."):
                 text = extract_text(resume)
-                # Reuse analyze_fit for skills but set view mode
                 st.session_state['c_data'] = ai.analyze_fit(text, jd) 
                 st.session_state['c_text'] = text
                 st.session_state['c_jd'] = jd
                 st.session_state['view_mode'] = 'skills'
 
-        # Logic for "ATS Score"
         if ats_score_btn:
              with st.spinner("Calculating ATS score..."):
                 text = extract_text(resume)
-                # Use recruiter screening logic but display differently for candidate
                 st.session_state['c_ats_data'] = ai.run_screening(text, jd) 
                 st.session_state['c_text'] = text
                 st.session_state['c_jd'] = jd
                 st.session_state['view_mode'] = 'ats'
 
 
-    # DISPLAY RESULTS BASED ON VIEW MODE
     if 'view_mode' in st.session_state:
         st.divider()
         
-        # VIEW: JOB FIT
         if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
             c_score, c_text = st.columns([1, 3])
@@ -270,7 +269,6 @@ def candidate_mode():
             with st.expander("Show Improvement Plan", expanded=True):
                 st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
 
-        # VIEW: SKILLS
         elif st.session_state['view_mode'] == 'skills' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
             st.subheader("Skill Gap Analysis")
@@ -287,7 +285,6 @@ def candidate_mode():
                 
             st.info("💡 **Tip:** Add the missing skills to your resume if you have experience with them!")
 
-        # VIEW: ATS SCORE
         elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
             data = st.session_state['c_ats_data']
             st.subheader("ATS Compatibility Check")
@@ -307,22 +304,18 @@ def recruiter_mode():
     st.markdown("### 🧑‍💼 Recruiter Workspace")
     st.caption("Bulk screen candidates and identify top talent instantly.")
     
-    # 1. INPUTS
     c1, c2 = st.columns([1, 1])
     with c1: 
-        # UPDATED: accept_multiple_files=True
         resumes = st.file_uploader("Upload Resumes (PDF)", type="pdf", key="r_res", accept_multiple_files=True)
     with c2: 
         jd = st.text_area("Job Requirements", height=150, key="r_jd")
     
     bias_free = st.toggle("Enable Bias-Free Screening (Hide Name/Gender)")
     
-    # 2. BULK PROCESSING
     if st.button("Run Bulk Screening", type="primary"):
         if resumes and jd:
             results_list = []
             
-            # Progress bar for bulk processing
             progress_bar = st.progress(0)
             status_text = st.empty()
             
@@ -333,10 +326,8 @@ def recruiter_mode():
                 
                 text = extract_text(res)
                 if text:
-                    # Run AI Screening
                     ai_data = ai.run_screening(text, jd, bias_free)
                     
-                    # Store Results
                     results_list.append({
                         "Filename": res.name,
                         "ATS Score": ai_data.get('ats_score', 0),
@@ -345,7 +336,6 @@ def recruiter_mode():
                         "Summary": ai_data.get('summary', 'No summary provided')
                     })
                     
-                    # Save to DB individually
                     db.save_scan(
                         st.session_state['username'], 
                         "Recruiter", 
@@ -354,7 +344,6 @@ def recruiter_mode():
                         ai_data 
                     )
                 
-                # Update progress
                 progress_bar.progress((i + 1) / total_files)
                 
             st.session_state['r_bulk_data'] = results_list
@@ -368,18 +357,13 @@ def recruiter_mode():
         elif not jd:
             st.error("Please provide a job description.")
 
-    # 3. DISPLAY RESULTS (Summary Table)
     if 'r_bulk_data' in st.session_state and st.session_state['r_bulk_data']:
         st.divider()
         st.subheader("Screening Results")
         
-        # Convert to DataFrame for sorting/display
         df_results = pd.DataFrame(st.session_state['r_bulk_data'])
-        
-        # Sort by ATS Score (Descending) - Best candidates first
         df_results = df_results.sort_values(by="ATS Score", ascending=False).reset_index(drop=True)
         
-        # Display as an interactive table
         st.dataframe(
             df_results,
             column_config={
@@ -395,8 +379,6 @@ def recruiter_mode():
             use_container_width=True
         )
         
-        # 4. DOWNLOAD REPORT
-        # Simple CSV download for the results
         csv = df_results.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="Download Results CSV",
@@ -405,48 +387,67 @@ def recruiter_mode():
             mime="text/csv",
         )
 
-# --- 7. ADMIN CONSOLE ---
+# --- 7. CHATBOT MODE ---
+def chatbot_mode():
+    st.markdown("### 🤖 NexHire Assistant")
+    st.caption("Ask questions about recruitment strategies, interview tips, or analyzing resumes.")
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("How can I help you today?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                response = ai.chat_response(prompt)
+                st.markdown(response)
+        
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+# --- 8. ADMIN CONSOLE ---
 def admin_console():
     st.markdown("### System Administration")
     data = db.get_all_full_analysis()
     if data:
-        # Added 'Details' to the column headers
         df = pd.DataFrame(data, columns=["Timestamp", "Username", "Mode", "Action", "Score", "Details"])
         st.dataframe(df, use_container_width=True)
     else: st.info("No system activity recorded.")
 
-# --- 8. MAIN APP LOGIC ---
+# --- 9. MAIN APP LOGIC ---
 def main():
     db.create_tables()
     
-    # Check for Login Status
     if not st.session_state.get('logged_in'):
         login_page()
     else:
         render_sidebar()
         
-        # IF ADMIN
         if st.session_state.get('admin_unlocked'):
             admin_console()
             
-        # IF USER or GUEST
         else:
             role = st.session_state.get('role', 'User')
             
-            # Logic: 
-            # If Candidate Role -> Show ONLY Candidate Tools
-            # If Recruiter Role -> Show ONLY Recruiter Tools
-            # If standard 'User' -> Show BOTH (e.g. standard registered user)
-            
             if role == "Candidate":
-                candidate_mode()
+                tab1, tab2 = st.tabs(["Dashboard", "AI Assistant"])
+                with tab1: candidate_mode()
+                with tab2: chatbot_mode()
             elif role == "Recruiter":
-                recruiter_mode()
+                tab1, tab2 = st.tabs(["Dashboard", "AI Assistant"])
+                with tab1: recruiter_mode()
+                with tab2: chatbot_mode()
             else:
-                # Default User sees both via tabs
-                tab1, tab2 = st.tabs(["Candidate Tools", "Recruiter Tools"])
+                tab1, tab2, tab3 = st.tabs(["Candidate Tools", "Recruiter Tools", "AI Assistant"])
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
+                with tab3: chatbot_mode()
 
 if __name__ == "__main__":
     main()
