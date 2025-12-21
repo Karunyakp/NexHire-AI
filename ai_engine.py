@@ -25,7 +25,6 @@ def generate_json(prompt_name, content, **kwargs):
     sys_prompt = get_prompt(prompt_name)
     if not sys_prompt: return None
     
-    # Format prompt with extras if needed (for simulator)
     if kwargs: sys_prompt = sys_prompt.format(**kwargs)
 
     try:
