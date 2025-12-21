@@ -142,7 +142,8 @@ def login_page():
             
             col_g1, col_g2 = st.columns(2)
             with col_g1:
-                if st.button("Guest Candidate", use_container_width=True):
+                # Updated text for Candidate Guest
+                if st.button("Explore as Candidate", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Candidate"
                     st.session_state['role'] = "Candidate"
@@ -150,7 +151,7 @@ def login_page():
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
             with col_g2:
-                if st.button("Guest Recruiter", use_container_width=True):
+                if st.button("Explore as Recruiter", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Recruiter"
                     st.session_state['role'] = "Recruiter"
