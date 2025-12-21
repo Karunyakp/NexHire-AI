@@ -365,6 +365,10 @@ def candidate_mode():
                 cat = ai.categorize_resume(text)
                 auth = ai.check_authenticity(text)
                 
+                # SAFETY FIX: Check if auth is None (API failure)
+                if auth is None:
+                    auth = {'human_score': 0, 'verdict': 'Error (API)', 'analysis': 'Could not analyze.'}
+                
                 st.session_state['c_quick'] = {'category': cat, 'auth': auth}
                 st.session_state['c_text_stored'] = text
                 st.session_state['view_mode'] = 'quick'
@@ -461,8 +465,11 @@ def candidate_mode():
                 st.metric("Detected Category", res['category'])
             with c2:
                 auth = res['auth']
-                st.metric("Authenticity Score", f"{auth.get('human_score', 0)}%")
-                st.caption(f"Verdict: {auth.get('verdict', 'Unknown')}")
+                # Added safety check for None auth here as well if needed
+                score = auth.get('human_score', 0) if auth else 0
+                verdict = auth.get('verdict', 'Unknown') if auth else 'Unknown'
+                st.metric("Authenticity Score", f"{score}%")
+                st.caption(f"Verdict: {verdict}")
             
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
