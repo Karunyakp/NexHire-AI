@@ -40,28 +40,24 @@ def candidate_mode():
         if resume and jd:
             with st.spinner("Analyzing profile..."):
                 text = extract_text(resume)
-                # Save to session state to prevent reload loss
                 st.session_state['c_data'] = ai.analyze_fit(text, jd)
                 st.session_state['c_text'] = text
                 st.session_state['c_jd'] = jd
-                # Reset extra states
                 st.session_state['show_interview'] = False
                 st.session_state['show_roadmap'] = False
                 st.session_state['show_sim'] = False
-                # Silent Save
+                st.session_state['show_compare'] = False
                 db.save_scan("Candidate", "Job Fit Analysis", st.session_state['c_data'].get('score', 0))
 
-    # 2. OUTPUT (Fixed Order)
+    # 2. OUTPUT
     if 'c_data' in st.session_state and st.session_state['c_data']:
         data = st.session_state['c_data']
         
         st.divider()
-        # A. SCORE
         c_score, c_text = st.columns([1, 3])
         with c_score: st.metric("Readiness Score", f"{data['score']}%")
         with c_text: st.info(f"💡 {data['summary']}")
         
-        # B. SKILLS
         st.subheader("Skill Match Breakdown")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -75,30 +71,20 @@ def candidate_mode():
             for s in data['skills']['missing']: st.markdown(f"<span class='skill-badge missing'>{s}</span>", unsafe_allow_html=True)
             
         st.divider()
-        
-        # C. INSIGHTS (Always Visible)
         st.subheader("🔍 Experience Alignment")
-        with st.spinner("Loading insights..."):
-            st.write(ai.get_insights(st.session_state['c_text'], st.session_state['c_jd']))
-            
+        st.write(ai.get_insights(st.session_state['c_text'], st.session_state['c_jd']))
         st.subheader("💡 Improvement Suggestions")
-        with st.spinner("Loading suggestions..."):
-            st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
+        st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
             
         st.divider()
-        
-        # D. EXTRA FEATURES (Buttons)
         st.markdown("### 🛠️ Preparation Tools")
-        b1, b2, b3 = st.columns(3)
+        b1, b2, b3, b4 = st.columns(4)
         
-        if b1.button("🎤 Generate Interview Prep"):
-            st.session_state['show_interview'] = True
-        if b2.button("📅 Generate 30-Day Plan"):
-            st.session_state['show_roadmap'] = True
-        if b3.button("🔮 What-If Skill Simulator"):
-            st.session_state['show_sim'] = True
+        if b1.button("🎤 Interview Prep"): st.session_state['show_interview'] = True
+        if b2.button("📅 30-Day Plan"): st.session_state['show_roadmap'] = True
+        if b3.button("🔮 What-If Simulator"): st.session_state['show_sim'] = True
+        if b4.button("⚖️ Compare Version"): st.session_state['show_compare'] = True
             
-        # Display Extras
         if st.session_state.get('show_interview'):
             st.success("### Interview Questions")
             st.write(ai.get_interview_prep(st.session_state['c_text'], st.session_state['c_jd']))
@@ -114,6 +100,21 @@ def candidate_mode():
                 sim_res = ai.simulate_skill(st.session_state['c_text'], st.session_state['c_jd'], data['score'], new_skill)
                 st.metric("Simulated New Score", f"{sim_res['new_score']}%", delta=f"{sim_res['new_score'] - data['score']}%")
                 st.write(sim_res['comment'])
+                
+        if st.session_state.get('show_compare'):
+            st.info("### Compare Resume Versions")
+            res_v2 = st.file_uploader("Upload Modified Resume (V2)", type="pdf", key="v2_res")
+            if res_v2:
+                if st.button("Compare V1 vs V2"):
+                    text_v2 = extract_text(res_v2)
+                    comp_data = ai.compare_versions(st.session_state['c_text'], text_v2, st.session_state['c_jd'])
+                    cc1, cc2 = st.columns(2)
+                    with cc1: st.metric("V1 Score", f"{comp_data['v1_score']}%")
+                    with cc2: st.metric("V2 Score", f"{comp_data['v2_score']}%", delta=f"{comp_data['v2_score'] - comp_data['v1_score']}%")
+                    st.write(f"**Verdict:** {comp_data['improvement']}")
+                    st.write("**Key Changes:**")
+                    for k in comp_data['key_changes']: st.write(f"- {k}")
+                    st.write(f"**Advice:** {comp_data['advice']}")
 
 # --- 🧑‍💼 RECRUITER MODE ---
 def recruiter_mode():
@@ -124,22 +125,22 @@ def recruiter_mode():
     with c1: resume = st.file_uploader("Upload Resume", type="pdf", key="r_res")
     with c2: jd = st.text_area("Paste Job Description", height=100, key="r_jd")
     
+    # BIAS FREE TOGGLE
+    bias_free = st.toggle("Enable Bias-Free Evaluation (Hide Name/Gender/Location)")
+    
     if st.button("Run Screening", type="primary", use_container_width=True):
         if resume and jd:
             with st.spinner("Screening..."):
                 text = extract_text(resume)
-                st.session_state['r_data'] = ai.run_screening(text, jd)
+                st.session_state['r_data'] = ai.run_screening(text, jd, bias_free)
                 st.session_state['r_text'] = text
                 st.session_state['r_jd'] = jd
-                st.session_state['show_explain'] = False
-                # Silent Save
                 db.save_scan("Recruiter", "Screening", st.session_state['r_data'].get('ats_score', 0))
 
     if 'r_data' in st.session_state and st.session_state['r_data']:
         data = st.session_state['r_data']
         st.divider()
         
-        # 1. METRICS
         m1, m2, m3 = st.columns(3)
         with m1: st.metric("ATS Match Score", f"{data['ats_score']}%")
         with m2: 
@@ -152,11 +153,9 @@ def recruiter_mode():
                 for f in data['red_flags']: st.error(f)
             else: st.success("None Detected")
             
-        # 2. SUMMARY
         st.subheader("Candidate Summary")
         st.write(data['summary'])
         
-        # 3. EXTRA
         if st.button("🤔 Why this score?"):
             with st.spinner("Analyzing logic..."):
                 st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
@@ -176,9 +175,8 @@ def hidden_admin():
 # --- MAIN ---
 def main():
     db.create_tables()
-    hidden_admin() # Checks URL first
+    hidden_admin()
     
-    # Public View
     c1, c2 = st.columns([1, 5])
     with c1: st.image("logo.png", width=100)
     with c2: 
