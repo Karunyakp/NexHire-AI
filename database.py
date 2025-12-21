@@ -13,6 +13,7 @@ def create_tables():
     conn = get_connection()
     c = conn.cursor()
     # Create tables if they don't exist
+    # explicitly defining schema to avoid mismatches
     c.execute('''CREATE TABLE IF NOT EXISTS activity_logs
                  (timestamp TEXT, username TEXT, mode TEXT, action TEXT, score INTEGER, details TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS users
@@ -32,6 +33,7 @@ def add_user(username, password):
         if c.fetchone():
             return False
             
+        # Use explicit column names to prevent OperationalError if schema drifts
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hash_password(password)))
         conn.commit()
         return True
