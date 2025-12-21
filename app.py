@@ -22,14 +22,14 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     
-    /* Login Page Styling */
     .login-container { text-align: center; margin-bottom: 20px; }
+    div[data-testid="stMetricValue"] { font-size: 32px !important; color: #4F46E5; }
     
-    /* Badges */
     .skill-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 5px; display: inline-block; }
     .match { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
     .partial { background: #FEF9C3; color: #854D0E; border: 1px solid #FDE047; }
     .missing { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .category-badge { background-color: #EEF2FF; color: #4F46E5; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 14px; border: 1px solid #C7D2FE; }
     
     #MainMenu, footer, header {visibility: hidden;}
     </style>
@@ -41,7 +41,7 @@ def extract_text(uploaded_file):
         return "".join([page.extract_text() for page in reader.pages])
     except: return None
 
-# --- AUTHENTICATION PAGE ---
+# --- AUTHENTICATION ---
 def login_page():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
@@ -54,7 +54,6 @@ def login_page():
                 st.caption("Enterprise Recruitment Intelligence")
             
             st.divider()
-            
             tab_login, tab_reg = st.tabs(["🔐 Login", "📝 Register"])
             
             with tab_login:
@@ -73,12 +72,9 @@ def login_page():
                 new_u = st.text_input("Choose Username", key="r_user")
                 new_p = st.text_input("Choose Password", type="password", key="r_pwd")
                 if st.button("Create Account", use_container_width=True):
-                    if len(new_p) < 4:
-                        st.error("Password too short")
-                    elif db.add_user(new_u, new_p):
-                        st.success("Account Created! Please Sign In.")
-                    else:
-                        st.error("Username taken.")
+                    if len(new_p) < 4: st.error("Password too short")
+                    elif db.add_user(new_u, new_p): st.success("Account Created! Please Sign In.")
+                    else: st.error("Username taken.")
 
             st.markdown("---")
             if st.button("🚀 Continue as Guest", use_container_width=True):
@@ -94,10 +90,7 @@ def render_sidebar():
         except: pass 
         
         st.write(f"Logged in as: **{st.session_state.get('username', 'Guest')}**")
-        
-        if st.session_state.get('is_guest'):
-            st.info("ℹ️ Guest Mode: History not saved.")
-        else:
+        if not st.session_state.get('is_guest'):
             if st.button("Logout"):
                 st.session_state.clear()
                 st.rerun()
@@ -106,40 +99,63 @@ def render_sidebar():
         st.subheader("Connect")
         st.link_button("🔗 LinkedIn", "https://www.linkedin.com/in/karunyakp")
         st.link_button("💻 GitHub", "https://github.com/karunyakp")
-        
         st.markdown("---")
-        st.caption("Developed & Maintained by")
-        st.markdown("**Karunya. K. P**") 
+        st.caption("Developed by **Karunya. K. P**") 
         st.caption("© 2025 NexHire Systems")
 
 # --- 🎓 CANDIDATE MODE ---
 def candidate_mode():
     st.markdown("## 🎓 Candidate Preparation")
-    st.caption("Analyze your job fit and generate improvement plans.")
+    st.caption("Analyze your job fit, check authenticity, and get improvements.")
     
     # 1. INPUT
     c1, c2 = st.columns([1, 1])
     with c1: resume = st.file_uploader("Upload Resume", type="pdf", key="c_res")
     with c2: jd = st.text_area("Paste Job Description", height=100, key="c_jd")
     
+    # Process Resume Logic (Category + Authenticity)
+    if resume:
+        text = extract_text(resume)
+        if text:
+            # Categorization
+            if 'cat' not in st.session_state or st.session_state.get('last_res') != resume.name:
+                with st.spinner("Processing..."):
+                    st.session_state['cat'] = ai.categorize_resume(text)
+                    st.session_state['last_res'] = resume.name
+            
+            st.markdown(f"**Detected Profile:** <span class='category-badge'>{st.session_state['cat']}</span>", unsafe_allow_html=True)
+            
+            # Authenticity Check (RESTORED BUTTON)
+            if st.button("🛡️ Check Authenticity & ATS Readability"):
+                with st.spinner("Scanning for AI patterns..."):
+                    auth_data = ai.check_authenticity(text)
+                    if auth_data:
+                        st.info("### Authenticity Report")
+                        a1, a2 = st.columns(2)
+                        with a1: 
+                            score = auth_data.get('human_score', 0)
+                            st.metric("Human-Written Score", f"{score}%")
+                        with a2: 
+                            st.write(f"**Verdict:** {auth_data.get('verdict')}")
+                            st.caption(auth_data.get('analysis'))
+                    else: st.error("Scan failed.")
+
+    st.divider()
+    
+    # Main Analysis Button
     if st.button("Analyze Job Fit", type="primary", use_container_width=True):
         if resume and jd:
             with st.spinner("Analyzing profile..."):
                 text = extract_text(resume)
-                if text:
-                    st.session_state['c_data'] = ai.analyze_fit(text, jd)
-                    st.session_state['c_text'] = text
-                    st.session_state['c_jd'] = jd
-                    st.session_state['show_interview'] = False
-                    st.session_state['show_roadmap'] = False
-                    st.session_state['show_sim'] = False
-                    st.session_state['show_compare'] = False
-                    st.session_state.pop('comp_data', None)
-                    
-                    # Save scan with username
-                    db.save_scan(st.session_state['username'], "Candidate", "Job Fit Analysis", st.session_state['c_data'].get('score', 0))
-                else:
-                    st.error("Could not read PDF.")
+                st.session_state['c_data'] = ai.analyze_fit(text, jd)
+                st.session_state['c_text'] = text
+                st.session_state['c_jd'] = jd
+                # Reset tool states
+                for key in ['show_interview', 'show_roadmap', 'show_sim', 'show_compare']:
+                    st.session_state[key] = False
+                
+                # Save scan
+                db.save_scan(st.session_state['username'], "Candidate", "Job Fit Analysis", st.session_state['c_data'].get('score', 0))
 
     # 2. OUTPUT
     if 'c_data' in st.session_state and st.session_state['c_data']:
@@ -201,8 +217,7 @@ def candidate_mode():
                     text_v2 = extract_text(res_v2)
                     if text_v2:
                         st.session_state['comp_data'] = ai.compare_versions(st.session_state['c_text'], text_v2, st.session_state['c_jd'])
-                    else:
-                        st.error("Error reading V2 resume.")
+                    else: st.error("Error reading V2 resume.")
                 
                 if 'comp_data' in st.session_state:
                     comp_data = st.session_state['comp_data']
@@ -234,13 +249,11 @@ def recruiter_mode():
                     st.session_state['r_text'] = text
                     st.session_state['r_jd'] = jd
                     db.save_scan(st.session_state['username'], "Recruiter", "Screening", st.session_state['r_data'].get('ats_score', 0))
-                else:
-                    st.error("Could not read PDF.")
+                else: st.error("Could not read PDF.")
 
     if 'r_data' in st.session_state and st.session_state['r_data']:
         data = st.session_state['r_data']
         st.divider()
-        
         m1, m2, m3 = st.columns(3)
         with m1: st.metric("ATS Match Score", f"{data['ats_score']}%")
         with m2: 
@@ -260,7 +273,7 @@ def recruiter_mode():
             with st.spinner("Analyzing logic..."):
                 st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
 
-# --- ADMIN CONSOLE (HIDDEN) ---
+# --- ADMIN CONSOLE ---
 def admin_console():
     st.markdown("## 🛡️ Admin Console")
     st.info("Authorized Access Only")
@@ -268,22 +281,17 @@ def admin_console():
     if data:
         df = pd.DataFrame(data, columns=["Timestamp", "Username", "Mode", "Action", "Score"])
         st.dataframe(df, use_container_width=True)
-    else:
-        st.warning("No data found.")
+    else: st.warning("No data found.")
 
 # --- MAIN ---
 def main():
     db.create_tables()
     
-    # 🕵️ HIDDEN ADMIN ROUTE CHECK
-    try:
-        secret_mode = st.secrets["admin"]["hidden_route"]
-    except:
-        secret_mode = "secure_admin_view"
-        
-    query_params = st.query_params
+    # 🕵️ HIDDEN ADMIN ROUTE
+    try: secret_mode = st.secrets["admin"]["hidden_route"]
+    except: secret_mode = "secure_admin_view"
     
-    if query_params.get("mode") == secret_mode:
+    if st.query_params.get("mode") == secret_mode:
         st.empty()
         st.header("🛡️ Secure Admin Login")
         u = st.text_input("Admin Username")
@@ -292,14 +300,12 @@ def main():
             if ai.validate_admin_login(u, p):
                 st.session_state['admin_unlocked'] = True
                 st.rerun()
-            else:
-                st.error("Access Denied.")
-        
+            else: st.error("Access Denied.")
         if st.session_state.get('admin_unlocked'):
             admin_console()
             return
 
-    # --- STANDARD APP FLOW ---
+    # --- STANDARD APP ---
     if not st.session_state.get('logged_in'):
         login_page()
     else:
@@ -310,12 +316,21 @@ def main():
             st.title("NexHire")
             st.caption("Role Readiness & Recruitment Intelligence")
         
+        # --- RESTORED DASHBOARD METRICS ---
+        if not st.session_state.get('is_guest'):
+            history = db.fetch_user_history(st.session_state['username'])
+            if history:
+                m1, m2 = st.columns(2)
+                with m1: st.metric("Total Scans", len(history))
+                with m2: st.metric("Latest Score", f"{history[0][4]}%")
+                st.divider()
+
         tab1, tab2 = st.tabs(["🎓 Candidate Mode", "🧑‍💼 Recruiter Mode"])
         with tab1: candidate_mode()
         with tab2: recruiter_mode()
         
         st.divider()
-        st.caption("🔒 Privacy Note: Documents are processed in-memory and not stored. Decisions should be made by humans, not AI.")
+        st.caption("🔒 Privacy Note: Documents are processed in-memory and not stored.")
 
 if __name__ == "__main__":
     main()
