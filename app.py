@@ -306,6 +306,9 @@ def candidate_mode():
                  st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
                  with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
                     text = resume_text
+                    # Store the Title specifically for the PDF report
+                    st.session_state['c_role_title'] = target_role if target_role else "Target Role"
+                    
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
                     
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
@@ -393,9 +396,12 @@ def candidate_mode():
             # --- PDF DOWNLOAD BUTTON ---
             if st.button("📥 Download Report (PDF)"):
                 try:
+                    # Pass only the ROLE TITLE, not the full JD
+                    role_title = st.session_state.get('c_role_title', 'Target Role')
+                    
                     pdf_bytes = af.generate_pdf_report(
                         st.session_state['username'],
-                        st.session_state.get('c_jd_stored', 'Job Role'),
+                        role_title, # FIXED: Uses short title
                         data['score'],
                         data['summary'] + "\n\nROADMAP:\n" + roadmap,
                         ", ".join(data['skills']['matched']),
