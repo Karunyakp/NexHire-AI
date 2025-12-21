@@ -7,7 +7,7 @@ import PyPDF2
 import time
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="NexHire", page_icon="💼", layout="wide")
+st.set_page_config(page_title="NexHire", page_icon=None, layout="wide")
 
 st.markdown("""
     <style>
@@ -86,23 +86,41 @@ def login_page():
         st.write("")
         st.write("")
         with st.container(border=True):
-            # Header
+            
+            # --- IMAGE LOGO SECTION (No Emojis) ---
+            c_img1, c_img2, c_img3 = st.columns([1, 2, 1])
+            with c_img2:
+                try:
+                    st.image("logo.png", use_container_width=True)
+                except:
+                    st.error("logo.png not found")
+
+            # Header Text
             st.markdown("""
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="font-size: 40px; margin-bottom: 10px;">💼</div>
+                <div style="text-align: center; margin-bottom: 24px; margin-top: 10px;">
                     <h2 style="margin: 0; font-weight: 700; color: #111827; font-size: 24px;">NexHire</h2>
                     <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 14px;">Enterprise Recruitment Intelligence</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Auth Tabs - ADDED ADMIN TAB HERE
-            tab_login, tab_reg, tab_admin = st.tabs(["Sign In", "Create Account", "Admin"])
+            # Auth Tabs - HIDDEN ADMIN TAB
+            tab_login, tab_reg = st.tabs(["Sign In", "Create Account"])
             
             with tab_login:
                 u = st.text_input("Username", key="l_user")
                 p = st.text_input("Password", type="password", key="l_pwd")
                 if st.button("Sign In", type="primary", use_container_width=True):
-                    if db.login_user(u, p):
+                    # 1. Check if it's the Admin trying to login
+                    if ai.validate_admin_login(u, p):
+                        st.session_state['logged_in'] = True
+                        st.session_state['username'] = u
+                        st.session_state['role'] = 'Admin'
+                        st.session_state['is_guest'] = False
+                        st.session_state['admin_unlocked'] = True
+                        st.rerun()
+                    
+                    # 2. If not Admin, check normal database
+                    elif db.login_user(u, p):
                         st.session_state['logged_in'] = True
                         st.session_state['username'] = u
                         st.session_state['role'] = 'User' # Default user role
@@ -122,21 +140,6 @@ def login_page():
                         st.success("Account created! Please Sign In.")
                     else: 
                         st.error("Username already exists.")
-            
-            with tab_admin:
-                st.markdown("**Administrator Access**")
-                admin_u = st.text_input("Admin Username", key="a_user")
-                admin_p = st.text_input("Admin Password", type="password", key="a_pwd")
-                if st.button("Access Admin Console", type="primary", use_container_width=True):
-                    if ai.validate_admin_login(admin_u, admin_p):
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = admin_u
-                        st.session_state['role'] = 'Admin'
-                        st.session_state['is_guest'] = False
-                        st.session_state['admin_unlocked'] = True
-                        st.rerun()
-                    else:
-                        st.error("Access Denied.")
 
             st.markdown("""
                 <div style="text-align: center; margin: 20px 0;">
@@ -165,7 +168,8 @@ def login_page():
 # --- 4. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
-        try: st.image("logo.png", width=120) 
+        # Use logo.png here as well
+        try: st.image("logo.png", use_container_width=True) 
         except: pass 
         
         st.markdown(f"### {st.session_state.get('username', 'Guest')}")
