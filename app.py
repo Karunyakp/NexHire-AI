@@ -189,135 +189,129 @@ def render_sidebar():
 
 # --- 5. CANDIDATE MODE ---
 def candidate_mode():
-    st.markdown("### Candidate Dashboard")
-    st.caption("Optimize your profile for specific roles.")
+    st.markdown("### 🎓 Candidate Dashboard")
+    st.caption("Optimize your profile to get hired faster.")
     
+    # DISTINCT LAYOUT
     c1, c2 = st.columns([1, 1])
-    with c1: resume = st.file_uploader("Upload Resume (PDF)", type="pdf", key="c_res")
-    with c2: jd = st.text_area("Job Description", height=200, key="c_jd", placeholder="Paste the job description here...")
+    with c1: 
+        resume = st.file_uploader("Upload Your Resume (PDF)", type="pdf", key="c_res")
+    with c2: 
+        jd = st.text_area("Paste Job Description", height=150, key="c_jd", placeholder="Paste the job description you are applying for...")
     
-    if resume:
-        text = extract_text(resume)
-        if text:
-            if 'cat' not in st.session_state or st.session_state.get('last_res') != resume.name:
-                with st.spinner("Analyzing document structure..."):
-                    st.session_state['cat'] = ai.categorize_resume(text)
-                    st.session_state['last_res'] = resume.name
+    if resume and jd:
+        st.write("")
+        st.markdown("#### Actions")
+        
+        # DISTINCT BUTTONS FOR CANDIDATE ACTIONS
+        col_act1, col_act2, col_act3 = st.columns(3)
+        
+        with col_act1:
+            analyze_fit_btn = st.button("🚀 Analyze Job Fit", type="primary", use_container_width=True)
             
-            st.markdown(f"Profile Detected: <span class='category-badge'>{st.session_state['cat']}</span>", unsafe_allow_html=True)
+        with col_act2:
+            skill_gap_btn = st.button("🔍 Skill Gap Analysis", use_container_width=True)
             
-            if st.button("Verify Authenticity", type="secondary"):
-                with st.spinner("Verifying content origin..."):
-                    auth_data = ai.check_authenticity(text)
-                    if auth_data:
-                        st.info(f"Authenticity Score: {auth_data.get('human_score', 0)}% - {auth_data.get('verdict')}")
-                    else: st.error("Verification failed.")
+        with col_act3:
+            ats_score_btn = st.button("📊 Check ATS Score", use_container_width=True)
 
-    st.write("")
-    if st.button("Analyze Fit", type="primary"):
-        if resume and jd:
-            with st.spinner("Processing analysis..."):
+        # Logic for "Analyze Job Fit" (General Analysis)
+        if analyze_fit_btn:
+             with st.spinner("Analyzing profile fit..."):
                 text = extract_text(resume)
                 st.session_state['c_data'] = ai.analyze_fit(text, jd)
                 st.session_state['c_text'] = text
                 st.session_state['c_jd'] = jd
+                # Reset specific views
+                st.session_state['view_mode'] = 'fit'
                 
-                for key in ['show_interview', 'show_roadmap', 'show_sim', 'show_compare']:
-                    st.session_state[key] = False
-                
-                # SAVE FULL DATA HERE
                 db.save_scan(
-                    st.session_state['username'], 
-                    "Candidate", 
-                    "Analysis", 
-                    st.session_state['c_data'].get('score', 0),
-                    st.session_state['c_data'] # Passes the entire AI result
+                    st.session_state['username'], "Candidate", "Job Fit Analysis", 
+                    st.session_state['c_data'].get('score', 0), st.session_state['c_data']
                 )
 
-    if 'c_data' in st.session_state and st.session_state['c_data']:
-        data = st.session_state['c_data']
-        
+        # Logic for "Skill Gap"
+        if skill_gap_btn:
+             with st.spinner("Extracting skills..."):
+                text = extract_text(resume)
+                # Reuse analyze_fit for skills but set view mode
+                st.session_state['c_data'] = ai.analyze_fit(text, jd) 
+                st.session_state['c_text'] = text
+                st.session_state['c_jd'] = jd
+                st.session_state['view_mode'] = 'skills'
+
+        # Logic for "ATS Score"
+        if ats_score_btn:
+             with st.spinner("Calculating ATS score..."):
+                text = extract_text(resume)
+                # Use recruiter screening logic but display differently for candidate
+                st.session_state['c_ats_data'] = ai.run_screening(text, jd) 
+                st.session_state['c_text'] = text
+                st.session_state['c_jd'] = jd
+                st.session_state['view_mode'] = 'ats'
+
+
+    # DISPLAY RESULTS BASED ON VIEW MODE
+    if 'view_mode' in st.session_state:
         st.divider()
-        c_score, c_text = st.columns([1, 3])
-        with c_score: 
-            st.metric("Match Score", f"{data['score']}%")
-        with c_text: 
-            st.markdown("#### Summary")
+        
+        # VIEW: JOB FIT
+        if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
+            data = st.session_state['c_data']
+            c_score, c_text = st.columns([1, 3])
+            with c_score: st.metric("Overall Match", f"{data['score']}%")
+            with c_text: 
+                st.info(f"**Summary:** {data['summary']}")
+            
+            with st.expander("Show Improvement Plan", expanded=True):
+                st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
+
+        # VIEW: SKILLS
+        elif st.session_state['view_mode'] == 'skills' and 'c_data' in st.session_state:
+            data = st.session_state['c_data']
+            st.subheader("Skill Gap Analysis")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown("✅ **You Have**")
+                for s in data['skills']['matched']: st.success(s)
+            with col2:
+                st.markdown("⚠️ **Partial Match**")
+                for s in data['skills']['partial']: st.warning(s)
+            with col3:
+                st.markdown("❌ **Missing**")
+                for s in data['skills']['missing']: st.error(s)
+                
+            st.info("💡 **Tip:** Add the missing skills to your resume if you have experience with them!")
+
+        # VIEW: ATS SCORE
+        elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
+            data = st.session_state['c_ats_data']
+            st.subheader("ATS Compatibility Check")
+            
+            m1, m2 = st.columns(2)
+            with m1: st.metric("ATS Parse Score", f"{data['ats_score']}%")
+            with m2: 
+                if data['ats_score'] > 80: st.success("Your resume is highly readable by ATS.")
+                elif data['ats_score'] > 50: st.warning("Your resume needs formatting improvements.")
+                else: st.error("Your resume may be rejected by automated systems.")
+            
+            st.write("### How an ATS sees your resume:")
             st.write(data['summary'])
-        
-        st.markdown("#### Skills Analysis")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("**Matched**")
-            for s in data['skills']['matched']: st.caption(f"• {s}")
-        with col2:
-            st.markdown("**Partial Match**")
-            for s in data['skills']['partial']: st.caption(f"• {s}")
-        with col3:
-            st.markdown("**Missing**")
-            for s in data['skills']['missing']: st.caption(f"• {s}")
-            
-        st.divider()
-        
-        with st.expander("Detailed Insights"):
-            st.write(ai.get_insights(st.session_state['c_text'], st.session_state['c_jd']))
-            
-        with st.expander("Recommendations"):
-            st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
-            
-        st.write("")
-        st.markdown("#### Tools")
-        b1, b2, b3, b4 = st.columns(4)
-        
-        if b1.button("Interview Questions"): st.session_state['show_interview'] = True
-        if b2.button("Learning Roadmap"): st.session_state['show_roadmap'] = True
-        if b3.button("Skill Simulator"): st.session_state['show_sim'] = True
-        if b4.button("Compare Versions"): st.session_state['show_compare'] = True
-            
-        if st.session_state.get('show_interview'):
-            st.markdown("##### Interview Preparation")
-            st.write(ai.get_interview_prep(st.session_state['c_text'], st.session_state['c_jd']))
-            
-        if st.session_state.get('show_roadmap'):
-            st.markdown("##### 30-Day Plan")
-            st.write(ai.get_roadmap(st.session_state['c_text'], st.session_state['c_jd']))
-            
-        if st.session_state.get('show_sim'):
-            st.markdown("##### Simulator")
-            new_skill = st.text_input("Simulate adding a skill:")
-            if new_skill:
-                sim_res = ai.simulate_skill(st.session_state['c_text'], st.session_state['c_jd'], data['score'], new_skill)
-                st.metric("Projected Score", f"{sim_res['new_score']}%", delta=f"{sim_res['new_score'] - data['score']}%")
-                st.write(sim_res['comment'])
-                
-        if st.session_state.get('show_compare'):
-            st.markdown("##### Version Comparison")
-            res_v2 = st.file_uploader("Upload Secondary Resume", type="pdf", key="v2_res")
-            if res_v2 and st.button("Compare"):
-                text_v2 = extract_text(res_v2)
-                st.session_state['comp_data'] = ai.compare_versions(st.session_state['c_text'], text_v2, st.session_state['c_jd'])
-                
-                if 'comp_data' in st.session_state:
-                    comp_data = st.session_state['comp_data']
-                    cc1, cc2 = st.columns(2)
-                    with cc1: st.metric("Primary Score", f"{comp_data['v1_score']}%")
-                    with cc2: st.metric("Secondary Score", f"{comp_data['v2_score']}%")
-                    st.write(f"**Verdict:** {comp_data['improvement']}")
 
 # --- 6. RECRUITER MODE ---
 def recruiter_mode():
-    st.markdown("### Recruiter Workspace")
-    st.caption("Efficiently screen and evaluate candidates.")
+    st.markdown("### 🧑‍💼 Recruiter Workspace")
+    st.caption("Screen candidates and detect red flags efficiently.")
     
     c1, c2 = st.columns([1, 1])
     with c1: resume = st.file_uploader("Upload Candidate Resume", type="pdf", key="r_res")
-    with c2: jd = st.text_area("Job Requirements", height=200, key="r_jd")
+    with c2: jd = st.text_area("Job Requirements", height=150, key="r_jd")
     
-    bias_free = st.toggle("Enable Bias-Free Screening")
+    bias_free = st.toggle("Enable Bias-Free Screening (Hide Name/Gender)")
     
-    if st.button("Screen Candidate", type="primary"):
+    if st.button("Run Candidate Screening", type="primary"):
         if resume and jd:
-            with st.spinner("Screening..."):
+            with st.spinner("Screening candidate..."):
                 text = extract_text(resume)
                 if text:
                     st.session_state['r_data'] = ai.run_screening(text, jd, bias_free)
@@ -329,28 +323,34 @@ def recruiter_mode():
                         "Recruiter", 
                         "Screening", 
                         st.session_state['r_data'].get('ats_score', 0),
-                        st.session_state['r_data'] # Passes the entire AI result
+                        st.session_state['r_data'] 
                     )
                 else: st.error("Processing failed.")
 
     if 'r_data' in st.session_state and st.session_state['r_data']:
         data = st.session_state['r_data']
         st.divider()
+        
+        # DISTINCT RECRUITER METRICS
         m1, m2, m3 = st.columns(3)
         with m1: st.metric("ATS Score", f"{data['ats_score']}%")
-        with m2: st.markdown(f"**Authenticity:** {data['auth_badge']}")
+        with m2: 
+            badge_color = "green" if "Human" in data['auth_badge'] else "red"
+            st.markdown(f"**Authenticity:** :{badge_color}[{data['auth_badge']}]")
         with m3: 
-            st.markdown("**Flags:**")
-            if data['red_flags']:
-                for f in data['red_flags']: st.error(f)
-            else: st.success("No flags detected")
+            flags_count = len(data['red_flags'])
+            st.metric("Red Flags Detected", flags_count, delta_color="inverse")
             
-        st.markdown("#### Evaluation Summary")
+        st.subheader("⚠️ Risk Assessment")
+        if data['red_flags']:
+            for f in data['red_flags']: st.error(f"🚩 {f}")
+        else: st.success("No critical red flags detected.")
+            
+        st.subheader("Candidate Summary")
         st.write(data['summary'])
         
-        if st.button("View Score Logic"):
-            with st.spinner("Generating logic explanation..."):
-                st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
+        with st.expander("View Logic Explanation"):
+            st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
 
 # --- 7. ADMIN CONSOLE ---
 def admin_console():
