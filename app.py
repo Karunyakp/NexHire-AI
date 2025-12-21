@@ -85,13 +85,12 @@ def login_page():
         with st.container(border=True):
             
             # --- IMAGE LOGO SECTION ---
-            # Adjusted to center better and use fixed width for consistency
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
                     st.image("logo.png", width=100)
                 else:
-                    st.header("💼") # Fallback if image missing
+                    st.header("💼")
 
             st.markdown("""
                 <div style="text-align: center; margin-bottom: 24px; margin-top: 10px;">
@@ -142,7 +141,7 @@ def login_page():
             
             col_g1, col_g2 = st.columns(2)
             with col_g1:
-                if st.button("Guest Candidate", use_container_width=True):
+                if st.button("Explore as Candidate", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Candidate"
                     st.session_state['role'] = "Candidate"
@@ -150,7 +149,7 @@ def login_page():
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
             with col_g2:
-                if st.button("Guest Recruiter", use_container_width=True):
+                if st.button("Explore as Recruiter", use_container_width=True):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = "Guest Recruiter"
                     st.session_state['role'] = "Recruiter"
@@ -223,7 +222,6 @@ def render_nexbot_button():
                 with st.chat_message("user"):
                     st.markdown(prompt)
                 
-                # Use chat.png for assistant response avatar as well
                 avatar = "chat.png" if os.path.exists("chat.png") else None
                 with st.chat_message("assistant", avatar=avatar):
                     with st.spinner("Thinking..."):
@@ -277,18 +275,28 @@ def candidate_mode():
              if not jd:
                  st.error("Please provide a Job Description for a Complete AI Scan.")
              else:
-                 # Added Waiting Message
                  st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
                  with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
                     text = resume_text
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
                     
+                    # 1. Analyze Fit (Score, Skills, Summary)
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
-                    st.session_state['c_text_stored'] = text # Renamed to avoid key collision
-                    st.session_state['c_jd_stored'] = full_jd # Renamed to avoid key collision
+                    
+                    # 2. Generate Roadmap (Explicit Call & Storage)
+                    st.session_state['c_roadmap'] = ai.get_roadmap(text, full_jd)
+                    
+                    # Store Text/JD
+                    st.session_state['c_text_stored'] = text
+                    st.session_state['c_jd_stored'] = full_jd
+                    
                     st.session_state['view_mode'] = 'fit'
                     
-                    db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), st.session_state['c_data'])
+                    # Save Scan with full data including roadmap in details
+                    full_details = st.session_state['c_data']
+                    full_details['roadmap'] = st.session_state['c_roadmap']
+                    
+                    db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), full_details)
 
         # Logic for "Quick Scan"
         if quick_scan_btn:
@@ -356,8 +364,8 @@ def candidate_mode():
                 for s in data['skills']['missing']: st.error(s)
 
             with st.expander("📅 4-Week Improvement Plan (Timetable)", expanded=True):
-                 # Use stored variables (c_text_stored) instead of widget keys (c_res_text)
-                 roadmap = ai.get_roadmap(st.session_state.get('c_text_stored', ''), st.session_state.get('c_jd_stored', ''))
+                 # Retrieve stored roadmap
+                 roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
 
         # 2. QUICK SCAN
