@@ -5,7 +5,7 @@ import random
 import time
 
 def get_keys():
-  
+    """Retrieves API keys from secrets."""
     try:
         keys = st.secrets["general"]["gemini_api_key"]
         if not isinstance(keys, list):
@@ -55,7 +55,8 @@ def generate_with_retry(system_prompt, user_content, response_mime_type="text/pl
                 contents=[{"role": "user", "parts": [{"text": f"{system_prompt}\n\nDATA:\n{user_content}"}]}],
                 generation_config=generation_config
             )
-         
+            
+            # If successful, return the result immediately
             return resp.text
             
         except Exception as e:
@@ -63,13 +64,13 @@ def generate_with_retry(system_prompt, user_content, response_mime_type="text/pl
             # print(f"Key failed: {e}") # Debugging
             continue
             
-
+    # If all keys failed
     return None
 
 def generate_json(prompt_name, user_content):
     sys_prompt = get_prompt(prompt_name)
     if not sys_prompt: 
-      
+        # Fallback defaults if secret prompt is missing
         if "cand_score_skills" in prompt_name:
             sys_prompt = "Analyze the resume. Output JSON: { 'score': 0, 'skills': {'matched':[], 'partial':[], 'missing':[]}, 'summary': '' }"
         elif "rec_screen" in prompt_name:
@@ -96,6 +97,7 @@ def generate_text(prompt_name, user_content):
         return result_text
     return "Service Unavailable (All API keys exhausted or invalid)."
 
+# --- Specific Functions Wrapper ---
 
 def categorize_resume(resume_text):
     sys_prompt = "Classify this resume into a SINGLE job category. Output only the name."
@@ -103,7 +105,8 @@ def categorize_resume(resume_text):
     return res.strip() if res else "General"
 
 def check_authenticity(resume_text):
-    return generate_json("authenticity_prompt", f"RESUME: {resume_text[:4000]}")
+    # Ensure this calls the correct prompt name from secrets or fallback
+    return generate_json("rec_screen", f"Analyze for AI generation patterns.\nRESUME: {resume_text[:4000]}")
 
 def analyze_fit(resume, jd):
     return generate_json("cand_score_skills", f"RESUME: {resume}\nJD: {jd}")
@@ -130,10 +133,11 @@ def compare_versions(res_v1, res_v2, jd):
 
 def run_screening(resume, jd, bias_free=False):
     bias_note = "Ignore Name, Gender, Location." if bias_free else ""
-
+    # Inject bias note into prompt if needed, or append to content
+    # Ideally fetch raw prompt, but for simplicity append instruction to content
     content = f"{bias_note}\nRESUME: {resume}\nJD: {jd}"
     
- 
+    # Special handling: if rec_screen prompt has placeholder
     raw_prompt = get_prompt("rec_screen")
     if raw_prompt and "{bias_instruction}" in raw_prompt:
         formatted_sys_prompt = raw_prompt.replace("{bias_instruction}", bias_note)
@@ -160,4 +164,3 @@ def validate_admin_login(username, password):
             return True
         return False
     except: return False
-
