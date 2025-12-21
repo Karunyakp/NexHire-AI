@@ -5,8 +5,13 @@ import random
 
 def configure_genai():
     try:
+        # Fetching keys from your specific structure: [general] -> gemini_api_key
         keys = st.secrets["general"]["gemini_api_key"]
-        if not isinstance(keys, list): keys = [keys]
+        
+        # Ensure it's treated as a list even if a single string is returned
+        if not isinstance(keys, list): 
+            keys = [keys]
+            
         random.shuffle(keys)
         for key in keys:
             try:
@@ -14,10 +19,13 @@ def configure_genai():
                 return True
             except: continue
         return False
-    except: return False
+    except Exception as e:
+        # Silent fail or log for debug if needed
+        return False
 
 def get_prompt(name):
     try:
+        # Fetching prompts from your specific structure: [prompts] -> name
         return st.secrets["prompts"][name]
     except:
         return ""
@@ -32,13 +40,15 @@ def clean_json_text(text):
 
 def generate_json(prompt_name, user_content):
     if not configure_genai(): return None
+    
     sys_prompt = get_prompt(prompt_name)
-    # Default fallback prompts if secrets are missing
+    
+    # Fallback if secret is missing (Safety Net)
     if not sys_prompt: 
         if "cand_score_skills" in prompt_name:
-            sys_prompt = "Analyze the resume against the JD. Return JSON with 'score' (0-100), 'summary', 'skills' object containing 'matched', 'partial', 'missing' lists."
-        elif "authenticity" in prompt_name:
-            sys_prompt = "Analyze text for AI generation patterns. Return JSON with 'human_score', 'verdict', 'analysis'."
+            sys_prompt = """You are a Career Coach. Analyze the Resume vs JD. Output JSON ONLY: { "score": int (0-100), "skills": { "matched": [], "partial": [], "missing": [] }, "summary": "2 sentence summary." }"""
+        elif "rec_screen" in prompt_name:
+             sys_prompt = """You are a Senior Recruiter. Screen this candidate. Output JSON ONLY: { "ats_score": int, "auth_badge": "Human"|"AI", "red_flags": [], "summary": "Text" }"""
         else:
             return None
 
@@ -52,9 +62,11 @@ def generate_json(prompt_name, user_content):
     except: return None
 
 def generate_text(prompt_name, user_content):
-    if not configure_genai(): return "Service Unavailable."
+    if not configure_genai(): return "Service Unavailable (Check API Key)."
+    
     sys_prompt = get_prompt(prompt_name)
     if not sys_prompt: sys_prompt = "You are a helpful recruitment AI assistant."
+    
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
         resp = model.generate_content(f"{sys_prompt}\n\nDATA:\n{user_content}")
@@ -62,6 +74,7 @@ def generate_text(prompt_name, user_content):
     except: return "Generation Error."
 
 def categorize_resume(resume_text):
+    # This specific prompt wasn't in your secrets list, so we keep a default or add it if you update secrets
     sys_prompt = "Classify this resume into a SINGLE job category. Output only the name."
     try:
         if configure_genai():
@@ -72,7 +85,8 @@ def categorize_resume(resume_text):
     except: return "General"
 
 def check_authenticity(resume_text):
-    return generate_json("authenticity_prompt", f"RESUME: {resume_text[:4000]}")
+    # Mapping to your secret structure if available, or using a default for now since 'authenticity_prompt' wasn't in your snippet
+    return generate_json("rec_screen", f"Analyze for AI generation patterns.\nRESUME: {resume_text[:4000]}")
 
 def analyze_fit(resume, jd):
     return generate_json("cand_score_skills", f"RESUME: {resume}\nJD: {jd}")
@@ -99,22 +113,39 @@ def compare_versions(res_v1, res_v2, jd):
 
 def run_screening(resume, jd, bias_free=False):
     bias_note = "Ignore Name, Gender, Location." if bias_free else ""
-    content = f"{bias_note}\nRESUME: {resume}\nJD: {jd}"
-    return generate_json("rec_screen", content)
+    # Using python f-string to insert the instruction into your prompt text if needed, 
+    # but since your prompt template has {bias_instruction}, we format it here:
+    raw_prompt = get_prompt("rec_screen")
+    if raw_prompt:
+        formatted_prompt = raw_prompt.replace("{bias_instruction}", bias_note)
+        # We manually call generate here because we modified the prompt content
+        if not configure_genai(): return None
+        try:
+            model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+            resp = model.generate_content(
+                contents=[{"role": "user", "parts": [{"text": f"{formatted_prompt}\n\nDATA:\nRESUME: {resume}\nJD: {jd}"}]}],
+                generation_config={"response_mime_type": "application/json"}
+            )
+            return json.loads(clean_json_text(resp.text))
+        except: return None
+    
+    return generate_json("rec_screen", f"{bias_note}\nRESUME: {resume}\nJD: {jd}")
 
 def explain_score(resume, jd, score):
     content = f"Current Score: {score}\nRESUME: {resume}\nJD: {jd}"
     return generate_text("rec_explain", content)
 
 def chat_response(user_message):
-    sys_prompt = "You are NexHire's AI Assistant. Help candidates with resume tips and interview advice, or help recruiters with screening strategies. Keep answers concise and professional."
     return generate_text("chatbot_prompt", user_message)
 
 def validate_admin_login(username, password):
     try:
+        # Fetching specific admin credentials from [admin] section
         secure_user = st.secrets["admin"]["username"]
         secure_pass = st.secrets["admin"]["password"]
-        if username == secure_user and password == secure_pass:
+        
+        # Strict matching
+        if username.strip() == secure_user and password.strip() == secure_pass:
             return True
         return False
     except: return False
