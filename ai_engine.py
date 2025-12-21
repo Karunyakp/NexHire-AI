@@ -2,19 +2,19 @@ import streamlit as st
 import google.generativeai as genai
 import json
 import random
+import time
 
-def configure_genai():
+def get_keys():
+    """Retrieves API keys from secrets."""
     try:
         keys = st.secrets["general"]["gemini_api_key"]
-        if not isinstance(keys, list): keys = [keys]
+        if not isinstance(keys, list):
+            return [keys]
+        # Shuffle to distribute load
         random.shuffle(keys)
-        for key in keys:
-            try:
-                genai.configure(api_key=key)
-                return True
-            except: continue
-        return False
-    except: return False
+        return keys
+    except:
+        return []
 
 def get_prompt(name):
     try:
@@ -30,45 +30,79 @@ def clean_json_text(text):
         text = text.split("```")[1].split("```")[0]
     return text
 
+def generate_with_retry(system_prompt, user_content, response_mime_type="text/plain"):
+    """
+    Tries to generate content using available keys. 
+    If a key fails (quota exceeded), it tries the next one.
+    """
+    keys = get_keys()
+    if not keys:
+        return None
+
+    for key in keys:
+        try:
+            # Configure with the current key attempt
+            genai.configure(api_key=key)
+            
+            model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+            
+            generation_config = {"temperature": 0.0}
+            if response_mime_type == "application/json":
+                generation_config["response_mime_type"] = "application/json"
+
+            # Attempt generation
+            resp = model.generate_content(
+                contents=[{"role": "user", "parts": [{"text": f"{system_prompt}\n\nDATA:\n{user_content}"}]}],
+                generation_config=generation_config
+            )
+            
+            # If successful, return the result immediately
+            return resp.text
+            
+        except Exception as e:
+            # If error is quota related (429) or other API issue, log/continue to next key
+            # print(f"Key failed: {e}") # Debugging
+            continue
+            
+    # If all keys failed
+    return None
+
 def generate_json(prompt_name, user_content):
-    if not configure_genai(): return None
     sys_prompt = get_prompt(prompt_name)
     if not sys_prompt: 
+        # Fallback defaults
         if "cand_score_skills" in prompt_name:
-            sys_prompt = "Analyze the resume against the JD. Return JSON with 'score' (0-100), 'summary', 'skills' object containing 'matched', 'partial', 'missing' lists."
-        elif "authenticity" in prompt_name:
-            sys_prompt = "Analyze text for AI generation patterns. Return JSON with 'human_score', 'verdict', 'analysis'."
+            sys_prompt = "Analyze the resume. Output JSON: { 'score': 0, 'skills': {'matched':[], 'partial':[], 'missing':[]}, 'summary': '' }"
+        elif "rec_screen" in prompt_name:
+            sys_prompt = "Screen candidate. Output JSON: { 'ats_score': 0, 'auth_badge': 'Unknown', 'red_flags': [], 'summary': '' }"
         else:
             return None
 
-    try:
-        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-        resp = model.generate_content(
-            contents=[{"role": "user", "parts": [{"text": f"{sys_prompt}\n\nDATA:\n{user_content}"}]}],
-            generation_config={"response_mime_type": "application/json", "temperature": 0.0}
-        )
-        return json.loads(clean_json_text(resp.text))
-    except: return None
+    result_text = generate_with_retry(sys_prompt, user_content, response_mime_type="application/json")
+    
+    if result_text:
+        try:
+            return json.loads(clean_json_text(result_text))
+        except:
+            return None
+    return None
 
 def generate_text(prompt_name, user_content):
-    if not configure_genai(): return "Service Unavailable."
     sys_prompt = get_prompt(prompt_name)
     if not sys_prompt: sys_prompt = "You are a helpful recruitment AI assistant."
-    try:
-        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-        resp = model.generate_content(f"{sys_prompt}\n\nDATA:\n{user_content}")
-        return resp.text
-    except: return "Generation Error."
+    
+    result_text = generate_with_retry(sys_prompt, user_content, response_mime_type="text/plain")
+    
+    if result_text:
+        return result_text
+    return "Service Unavailable (All API keys exhausted or invalid)."
+
+# --- Specific Functions Wrapper ---
 
 def categorize_resume(resume_text):
     sys_prompt = "Classify this resume into a SINGLE job category. Output only the name."
-    try:
-        if configure_genai():
-            model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-            resp = model.generate_content(f"{sys_prompt}\n\nRESUME: {resume_text[:2000]}")
-            return resp.text.strip()
-        return "General"
-    except: return "General"
+    res = generate_with_retry(sys_prompt, f"RESUME: {resume_text[:2000]}")
+    return res.strip() if res else "General"
 
 def check_authenticity(resume_text):
     return generate_json("authenticity_prompt", f"RESUME: {resume_text[:4000]}")
@@ -98,7 +132,20 @@ def compare_versions(res_v1, res_v2, jd):
 
 def run_screening(resume, jd, bias_free=False):
     bias_note = "Ignore Name, Gender, Location." if bias_free else ""
+    # Inject bias note into prompt if needed, or append to content
+    # Ideally fetch raw prompt, but for simplicity append instruction to content
     content = f"{bias_note}\nRESUME: {resume}\nJD: {jd}"
+    
+    # Special handling: if rec_screen prompt has placeholder
+    raw_prompt = get_prompt("rec_screen")
+    if raw_prompt and "{bias_instruction}" in raw_prompt:
+        formatted_sys_prompt = raw_prompt.replace("{bias_instruction}", bias_note)
+        # Call low-level generation directly with formatted prompt
+        res_text = generate_with_retry(formatted_sys_prompt, f"RESUME: {resume}\nJD: {jd}", "application/json")
+        if res_text:
+            return json.loads(clean_json_text(res_text))
+        return None
+        
     return generate_json("rec_screen", content)
 
 def explain_score(resume, jd, score):
@@ -106,7 +153,6 @@ def explain_score(resume, jd, score):
     return generate_text("rec_explain", content)
 
 def chat_response(user_message):
-    sys_prompt = "You are NexHire's AI Assistant. Help candidates with resume tips and interview advice, or help recruiters with screening strategies. Keep answers concise and professional."
     return generate_text("chatbot_prompt", user_message)
 
 def validate_admin_login(username, password):
