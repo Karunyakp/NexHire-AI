@@ -305,56 +305,105 @@ def candidate_mode():
 # --- 6. RECRUITER MODE ---
 def recruiter_mode():
     st.markdown("### 🧑‍💼 Recruiter Workspace")
-    st.caption("Screen candidates and detect red flags efficiently.")
+    st.caption("Bulk screen candidates and identify top talent instantly.")
     
+    # 1. INPUTS
     c1, c2 = st.columns([1, 1])
-    with c1: resume = st.file_uploader("Upload Candidate Resume", type="pdf", key="r_res")
-    with c2: jd = st.text_area("Job Requirements", height=150, key="r_jd")
+    with c1: 
+        # UPDATED: accept_multiple_files=True
+        resumes = st.file_uploader("Upload Resumes (PDF)", type="pdf", key="r_res", accept_multiple_files=True)
+    with c2: 
+        jd = st.text_area("Job Requirements", height=150, key="r_jd")
     
     bias_free = st.toggle("Enable Bias-Free Screening (Hide Name/Gender)")
     
-    if st.button("Run Candidate Screening", type="primary"):
-        if resume and jd:
-            with st.spinner("Screening candidate..."):
-                text = extract_text(resume)
+    # 2. BULK PROCESSING
+    if st.button("Run Bulk Screening", type="primary"):
+        if resumes and jd:
+            results_list = []
+            
+            # Progress bar for bulk processing
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            total_files = len(resumes)
+            
+            for i, res in enumerate(resumes):
+                status_text.text(f"Processing {res.name} ({i+1}/{total_files})...")
+                
+                text = extract_text(res)
                 if text:
-                    st.session_state['r_data'] = ai.run_screening(text, jd, bias_free)
-                    st.session_state['r_text'] = text
-                    st.session_state['r_jd'] = jd
-                    # SAVE FULL DATA HERE
+                    # Run AI Screening
+                    ai_data = ai.run_screening(text, jd, bias_free)
+                    
+                    # Store Results
+                    results_list.append({
+                        "Filename": res.name,
+                        "ATS Score": ai_data.get('ats_score', 0),
+                        "Authenticity": ai_data.get('auth_badge', 'Unknown'),
+                        "Red Flags": len(ai_data.get('red_flags', [])),
+                        "Summary": ai_data.get('summary', 'No summary provided')
+                    })
+                    
+                    # Save to DB individually
                     db.save_scan(
                         st.session_state['username'], 
                         "Recruiter", 
-                        "Screening", 
-                        st.session_state['r_data'].get('ats_score', 0),
-                        st.session_state['r_data'] 
+                        f"Bulk Screen: {res.name}", 
+                        ai_data.get('ats_score', 0),
+                        ai_data 
                     )
-                else: st.error("Processing failed.")
+                
+                # Update progress
+                progress_bar.progress((i + 1) / total_files)
+                
+            st.session_state['r_bulk_data'] = results_list
+            status_text.text("Screening Complete!")
+            time.sleep(1)
+            status_text.empty()
+            progress_bar.empty()
+            
+        elif not resumes:
+            st.error("Please upload at least one resume.")
+        elif not jd:
+            st.error("Please provide a job description.")
 
-    if 'r_data' in st.session_state and st.session_state['r_data']:
-        data = st.session_state['r_data']
+    # 3. DISPLAY RESULTS (Summary Table)
+    if 'r_bulk_data' in st.session_state and st.session_state['r_bulk_data']:
         st.divider()
+        st.subheader("Screening Results")
         
-        # DISTINCT RECRUITER METRICS
-        m1, m2, m3 = st.columns(3)
-        with m1: st.metric("ATS Score", f"{data['ats_score']}%")
-        with m2: 
-            badge_color = "green" if "Human" in data['auth_badge'] else "red"
-            st.markdown(f"**Authenticity:** :{badge_color}[{data['auth_badge']}]")
-        with m3: 
-            flags_count = len(data['red_flags'])
-            st.metric("Red Flags Detected", flags_count, delta_color="inverse")
-            
-        st.subheader("⚠️ Risk Assessment")
-        if data['red_flags']:
-            for f in data['red_flags']: st.error(f"🚩 {f}")
-        else: st.success("No critical red flags detected.")
-            
-        st.subheader("Candidate Summary")
-        st.write(data['summary'])
+        # Convert to DataFrame for sorting/display
+        df_results = pd.DataFrame(st.session_state['r_bulk_data'])
         
-        with st.expander("View Logic Explanation"):
-            st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
+        # Sort by ATS Score (Descending) - Best candidates first
+        df_results = df_results.sort_values(by="ATS Score", ascending=False).reset_index(drop=True)
+        
+        # Display as an interactive table
+        st.dataframe(
+            df_results,
+            column_config={
+                "ATS Score": st.column_config.ProgressColumn(
+                    "Match Score",
+                    help="ATS Compatibility Score",
+                    format="%d%%",
+                    min_value=0,
+                    max_value=100,
+                ),
+                "Authenticity": st.column_config.TextColumn("Authenticity Badge"),
+            },
+            use_container_width=True
+        )
+        
+        # 4. DOWNLOAD REPORT
+        # Simple CSV download for the results
+        csv = df_results.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download Results CSV",
+            data=csv,
+            file_name="recruitment_screening_results.csv",
+            mime="text/csv",
+        )
 
 # --- 7. ADMIN CONSOLE ---
 def admin_console():
