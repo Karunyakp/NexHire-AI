@@ -113,6 +113,7 @@ def login_page():
         st.write("")
         with st.container(border=True):
             
+            # --- IMAGE LOGO SECTION ---
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
@@ -159,7 +160,7 @@ def login_page():
                     elif db.add_user(new_u, new_p): 
                         st.success("Account created! Please Sign In.")
                     else: 
-                        st.error("Username already exists or database error.")
+                        st.error("Username already exists.")
 
             st.markdown("""
                 <div style="text-align: center; margin: 20px 0;">
@@ -185,6 +186,7 @@ def login_page():
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
         
+        # Add footer to login page too
         render_footer()
 
 # --- 4. SIDEBAR ---
@@ -195,6 +197,7 @@ def render_sidebar():
         else:
             st.header("NexHire")
         
+        # Only show user info if logged in
         if st.session_state.get('logged_in'):
             st.markdown(f"### {st.session_state.get('username', 'Guest')}")
             st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
@@ -232,7 +235,7 @@ def render_sidebar():
         st.caption("© 2025 NexHire Inc.")
 
 # --- 5. NEXBOT POPUP COMPONENT ---
-def render_nexbot_button():
+def render_nexbot_button(key_suffix="default"):
     with st.popover("💬 Chat with NexBot", use_container_width=False):
         st.markdown("### 🤖 NexBot Assistant")
         st.caption("Ask me anything about your resume or hiring!")
@@ -243,11 +246,13 @@ def render_nexbot_button():
         chat_container = st.container(height=300)
         with chat_container:
             for message in st.session_state.messages:
+                # Use chat.png for assistant if available
                 avatar = "chat.png" if message["role"] == "assistant" and os.path.exists("chat.png") else None
                 with st.chat_message(message["role"], avatar=avatar):
                     st.markdown(message["content"])
 
-        if prompt := st.chat_input("Ask a question...", key="chatbot_input"):
+        # Use a unique key for the input based on where it's called
+        if prompt := st.chat_input("Ask a question...", key=f"chatbot_input_{key_suffix}"):
             st.session_state.messages.append({"role": "user", "content": prompt})
             
             with chat_container:
@@ -269,7 +274,7 @@ def candidate_mode():
         st.markdown("### 🎓 Candidate Dashboard")
         st.caption("Optimize your profile to get hired faster.")
     with h2:
-        render_nexbot_button()
+        render_nexbot_button(key_suffix="candidate")
     
     # --- HISTORY / SAVED PLANS SECTION ---
     try:
@@ -326,6 +331,7 @@ def candidate_mode():
         with col_act4:
             interview_prep_btn = st.button("🎤 Interview Prep", use_container_width=True)
 
+        # Logic for "Complete AI Scan" (Job Fit)
         if analyze_fit_btn:
              if not jd:
                  st.error("Please provide a Job Description for a Complete AI Scan.")
@@ -333,13 +339,18 @@ def candidate_mode():
                  st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
                  with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
                     text = resume_text
+                    # Store Title for PDF
                     st.session_state['c_role_title'] = target_role if target_role else "Target Role"
+                    
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
                     
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
                     st.session_state['c_roadmap'] = ai.get_roadmap(text, full_jd)
+                    
+                    # Store Analyzed Text (Avoiding widget key conflict)
                     st.session_state['c_text_stored'] = text
                     st.session_state['c_jd_stored'] = full_jd
+                    
                     st.session_state['view_mode'] = 'fit'
                     
                     full_details = st.session_state['c_data']
@@ -347,6 +358,7 @@ def candidate_mode():
                     
                     db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), full_details)
 
+        # Logic for "Quick Scan"
         if quick_scan_btn:
              with st.spinner("Running Quick Resume Scan..."):
                 text = resume_text
@@ -359,6 +371,7 @@ def candidate_mode():
                 
                 db.save_scan(st.session_state['username'], "Candidate", "Quick Scan", auth.get('human_score', 0), auth)
 
+        # Logic for "ATS Score"
         if ats_score_btn:
              if not jd:
                  st.error("Job Description is recommended for accurate ATS scoring.")
@@ -372,6 +385,7 @@ def candidate_mode():
                     st.session_state['c_jd_stored'] = full_jd
                     st.session_state['view_mode'] = 'ats'
 
+        # Logic for "Interview Prep"
         if interview_prep_btn:
              if not jd:
                  st.error("Job Description required for tailored interview questions.")
@@ -385,9 +399,11 @@ def candidate_mode():
                     st.session_state['c_jd_stored'] = full_jd
                     st.session_state['view_mode'] = 'interview'
 
+    # DISPLAY RESULTS
     if 'view_mode' in st.session_state:
         st.divider()
         
+        # 1. COMPLETE AI SCAN (JOB FIT & ROADMAP)
         if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
             c_score, c_text = st.columns([1, 3])
@@ -423,21 +439,30 @@ def candidate_mode():
                         ", ".join(data['skills']['missing']),
                         "General"
                     )
-                    st.download_button("Click to Download PDF", pdf_bytes, "NexHire_Report.pdf", "application/pdf", key="dl_pdf_btn")
+                    st.download_button(
+                        label="Click to Download PDF",
+                        data=pdf_bytes,
+                        file_name="NexHire_Report.pdf",
+                        mime="application/pdf",
+                        key="dl_pdf_btn"
+                    )
                 except Exception as e:
                     st.error(f"Error generating PDF: {e}")
 
+        # 2. QUICK SCAN
         elif st.session_state['view_mode'] == 'quick' and 'c_quick' in st.session_state:
             res = st.session_state['c_quick']
             st.subheader("Quick Scan Results")
             c1, c2 = st.columns(2)
-            with c1: st.metric("Detected Category", res['category'])
+            with c1:
+                st.metric("Detected Category", res['category'])
             with c2:
                 auth = res['auth']
                 st.metric("Authenticity Score", f"{auth.get('human_score', 0)}%")
                 st.caption(f"Verdict: {auth.get('verdict', 'Unknown')}")
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
+        # 3. ATS SCORE
         elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
             data = st.session_state['c_ats_data']
             st.subheader("ATS Compatibility")
@@ -449,6 +474,7 @@ def candidate_mode():
                 else: st.error("Risk of Rejection")
             st.write(data['summary'])
 
+        # 4. INTERVIEW PREP
         elif st.session_state['view_mode'] == 'interview' and 'c_interview' in st.session_state:
             st.subheader("🎤 Interview Preparation")
             st.write(st.session_state['c_interview'])
@@ -460,7 +486,7 @@ def recruiter_mode():
         st.markdown("### 🧑‍💼 Recruiter Workspace")
         st.caption("Bulk screen candidates and identify top talent instantly.")
     with h2:
-        render_nexbot_button()
+        render_nexbot_button(key_suffix="recruiter")
 
     c1, c2 = st.columns([1, 1])
     with c1: 
@@ -552,10 +578,12 @@ def main():
             elif role == "Recruiter":
                 recruiter_mode()
             else:
+                # Fallback for generic user
                 tab1, tab2 = st.tabs(["Candidate Tools", "Recruiter Tools"])
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
         
+        # Render footer in dashboard mode as well
         render_footer()
 
 if __name__ == "__main__":
