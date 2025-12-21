@@ -8,8 +8,8 @@ import time
 import os
 import json
 
-# --- 1. CONFIGURATION ---
-st.set_page_config(page_title="NexHire", page_icon="💼", layout="wide")
+
+st.set_page_config(page_title="NexHire", page_icon="", layout="wide")
 
 st.markdown("""
     <style>
@@ -85,7 +85,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. HELPER FUNCTIONS ---
+
 def extract_text(uploaded_file):
     try:
         reader = PyPDF2.PdfReader(uploaded_file)
@@ -95,13 +95,14 @@ def extract_text(uploaded_file):
 def render_footer():
     st.markdown("""
         <div class="custom-footer">
-            Developed by <b>Karunya K. P.</b> | 
-            <a href="https://www.linkedin.com/in/karunyakp" target="_blank">Connect on LinkedIn</a>
+            Developed by <b>Karunya. K. P</b> | 
+            <a href="https://www.linkedin.com/in/karunya-kp" target="_blank">Connect on LinkedIn</a>
+            <a href="https://github.com/in/Karunyakp" target="_blank">Connect on Github </a>
             <br>© 2025 NexHire Inc.
         </div>
     """, unsafe_allow_html=True)
 
-# --- 3. LOGIN PAGE ---
+
 def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
@@ -109,7 +110,7 @@ def login_page():
         st.write("")
         with st.container(border=True):
             
-            # --- IMAGE LOGO SECTION ---
+          
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
@@ -182,10 +183,10 @@ def login_page():
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
         
-        # Add footer to login page too
+       
         render_footer()
 
-# --- 4. SIDEBAR ---
+
 def render_sidebar():
     with st.sidebar:
         if os.path.exists("logo.png"):
@@ -217,16 +218,15 @@ def render_sidebar():
             @st.dialog("Contact Support")
             def show_support():
                 st.write("Need help? Contact our team:")
-                st.write("📧 **Email**: support@nexhire.ai")
-                st.write("📞 **Phone**: +1 (555) 123-4567")
+                st.write(" **Email**: karunyayashu6@gmail.com")
+                st.write(" **Phone**: XXXXXXXXXX")
             show_support()
             
         st.markdown("---")
         st.markdown("**Developed by**")
-        st.markdown("Karunya K. P.")
+        st.markdown("Karunya. K. P")
         st.caption("© 2025 NexHire Inc.")
 
-# --- 5. NEXBOT POPUP COMPONENT ---
 def render_nexbot_button():
     with st.popover("💬 Chat with NexBot", use_container_width=False):
         st.markdown("### 🤖 NexBot Assistant")
@@ -258,21 +258,20 @@ def render_nexbot_button():
             
             st.session_state.messages.append({"role": "assistant", "content": response})
 
-# --- 6. CANDIDATE MODE ---
 def candidate_mode():
     h1, h2 = st.columns([3, 1])
     with h1:
-        st.markdown("### 🎓 Candidate Dashboard")
+        st.markdown("### Candidate Dashboard")
         st.caption("Optimize your profile to get hired faster.")
     with h2:
         render_nexbot_button()
     
-    # --- HISTORY / SAVED PLANS SECTION ---
+   
     history = db.fetch_user_history(st.session_state['username'])
     saved_plans = [h for h in history if h[3] == "Complete AI Scan"]
     
     if saved_plans:
-        with st.expander("📚 Saved Learning Plans & History"):
+        with st.expander(" Saved Learning Plans & History"):
             for plan in saved_plans:
                 timestamp = plan[0]
                 score = plan[4]
@@ -310,15 +309,14 @@ def candidate_mode():
         col_act1, col_act2, col_act3, col_act4 = st.columns(4)
         
         with col_act1:
-            analyze_fit_btn = st.button("🚀 Complete AI Scan", type="primary", use_container_width=True, help="Full analysis against JD")
+            analyze_fit_btn = st.button(" Complete AI Scan", type="primary", use_container_width=True, help="Full analysis against JD")
         with col_act2:
             quick_scan_btn = st.button("⚡ Quick Scan", use_container_width=True, help="Fast resume review without JD")
         with col_act3:
-            ats_score_btn = st.button("📊 ATS Score", use_container_width=True)
+            ats_score_btn = st.button(" ATS Score", use_container_width=True)
         with col_act4:
-            interview_prep_btn = st.button("🎤 Interview Prep", use_container_width=True)
+            interview_prep_btn = st.button(" Interview Prep", use_container_width=True)
 
-        # Logic for "Complete AI Scan" (Job Fit)
         if analyze_fit_btn:
              if not jd:
                  st.error("Please provide a Job Description for a Complete AI Scan.")
@@ -345,7 +343,6 @@ def candidate_mode():
                     
                     db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), full_details)
 
-        # Logic for "Quick Scan"
         if quick_scan_btn:
              with st.spinner("Running Quick Resume Scan..."):
                 text = resume_text
@@ -358,7 +355,7 @@ def candidate_mode():
                 
                 db.save_scan(st.session_state['username'], "Candidate", "Quick Scan", auth.get('human_score', 0), auth)
 
-        # Logic for "ATS Score"
+       
         if ats_score_btn:
              if not jd:
                  st.error("Job Description is recommended for accurate ATS scoring.")
@@ -372,7 +369,7 @@ def candidate_mode():
                     st.session_state['c_jd_stored'] = full_jd
                     st.session_state['view_mode'] = 'ats'
 
-        # Logic for "Interview Prep"
+        
         if interview_prep_btn:
              if not jd:
                  st.error("Job Description required for tailored interview questions.")
@@ -386,7 +383,7 @@ def candidate_mode():
                     st.session_state['c_jd_stored'] = full_jd
                     st.session_state['view_mode'] = 'interview'
 
-    # DISPLAY RESULTS
+  
     if 'view_mode' in st.session_state:
         st.divider()
         
@@ -401,20 +398,20 @@ def candidate_mode():
             st.subheader("Skills Analysis")
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.markdown("✅ **Matched**")
+                st.markdown(" **Matched**")
                 for s in data['skills']['matched']: st.success(s)
             with col2:
-                st.markdown("⚠️ **Partial**")
+                st.markdown(" **Partial**")
                 for s in data['skills']['partial']: st.warning(s)
             with col3:
-                st.markdown("❌ **Missing**")
+                st.markdown(" **Missing**")
                 for s in data['skills']['missing']: st.error(s)
 
-            with st.expander("📅 4-Week Improvement Plan (Timetable)", expanded=True):
+            with st.expander(" 4-Week Improvement Plan (Timetable)", expanded=True):
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
             
-            if st.button("📥 Download Report (PDF)"):
+            if st.button(" Download Report (PDF)"):
                 try:
                     role_title = st.session_state.get('c_role_title', 'Target Role')
                     pdf_bytes = af.generate_pdf_report(
@@ -436,7 +433,6 @@ def candidate_mode():
                 except Exception as e:
                     st.error(f"Error generating PDF: {e}")
 
-        # 2. QUICK SCAN
         elif st.session_state['view_mode'] == 'quick' and 'c_quick' in st.session_state:
             res = st.session_state['c_quick']
             st.subheader("Quick Scan Results")
@@ -449,7 +445,6 @@ def candidate_mode():
                 st.caption(f"Verdict: {auth.get('verdict', 'Unknown')}")
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
-        # 3. ATS SCORE
         elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
             data = st.session_state['c_ats_data']
             st.subheader("ATS Compatibility")
@@ -461,16 +456,16 @@ def candidate_mode():
                 else: st.error("Risk of Rejection")
             st.write(data['summary'])
 
-        # 4. INTERVIEW PREP
+       
         elif st.session_state['view_mode'] == 'interview' and 'c_interview' in st.session_state:
-            st.subheader("🎤 Interview Preparation")
+            st.subheader(" Interview Preparation")
             st.write(st.session_state['c_interview'])
 
-# --- 7. RECRUITER MODE ---
+
 def recruiter_mode():
     h1, h2 = st.columns([3, 1])
     with h1:
-        st.markdown("### 🧑‍💼 Recruiter Workspace")
+        st.markdown("###  Recruiter Workspace")
         st.caption("Bulk screen candidates and identify top talent instantly.")
     with h2:
         render_nexbot_button()
@@ -536,7 +531,7 @@ def recruiter_mode():
         csv = df_results.to_csv(index=False).encode('utf-8')
         st.download_button("Download Results CSV", csv, "screening_results.csv", "text/csv")
 
-# --- 8. ADMIN CONSOLE ---
+
 def admin_console():
     st.markdown("### System Administration")
     data = db.get_all_full_analysis()
@@ -545,7 +540,7 @@ def admin_console():
         st.dataframe(df, use_container_width=True)
     else: st.info("No system activity recorded.")
 
-# --- 9. MAIN APP LOGIC ---
+
 def main():
     db.create_tables()
     
@@ -573,3 +568,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
