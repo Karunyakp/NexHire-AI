@@ -133,10 +133,12 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         rows = []
         for line in table_lines:
             # Remove outer pipes and split
+            # Split by | but handle escaped pipes if needed (simplifying for now)
             cells = [c.strip() for c in line.strip('|').split('|')]
             rows.append(cells)
         
         # Filter out separator lines (e.g. ---|---|---)
+        # Check if the first cell contains only dashes/colons
         data_rows = []
         for r in rows:
             if not r: continue
@@ -147,6 +149,7 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         if not data_rows: return
 
         # Calculate widths (distribute 190mm page width)
+        # Ensure we don't divide by zero
         num_cols = len(data_rows[0])
         if num_cols == 0: return
         
