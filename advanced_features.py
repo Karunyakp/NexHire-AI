@@ -5,7 +5,7 @@ import re
 def generate_pdf_report(username, role, score, feedback, resume_skills, missing_skills, category):
     class PDF(FPDF):
         def header(self):
-            # Logo
+            # Logo handling
             if os.path.exists('logo.png'):
                 try:
                     self.image('logo.png', 10, 8, 25)
@@ -44,15 +44,16 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     # Function to render a markdown table row
     def render_table_row(pdf, cells, widths, header=False):
         max_h = 0
-        # Calculate max height for the row
+        # Calculate max height for the row based on text content
         for i, cell in enumerate(cells):
             if i < len(widths):
                 # Calculate height needed for this cell
+                # Multi_cell returns a list of strings if split_only is True
                 lines = pdf.multi_cell(widths[i], 6, str(cell).strip(), split_only=True)
                 h = len(lines) * 6
                 if h > max_h: max_h = h
         
-        # If max_h is 0 (empty row), skip
+        # If max_h is 0 (empty row), skip or set min height
         if max_h == 0: max_h = 6
 
         # Check for page break
@@ -73,13 +74,14 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                 
                 # Render cell box
                 pdf.rect(x, y, widths[i], max_h, 'DF')
-                # Render text
+                # Render text inside the box
                 pdf.multi_cell(widths[i], 6, str(cell).strip(), align='L')
                 
                 # Move to next cell position
                 x += widths[i]
                 pdf.set_xy(x, y)
         
+        # Move to the next line after the row is done
         pdf.ln(max_h)
 
     # Function to parse and render content (text vs tables)
@@ -102,7 +104,6 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
             else:
                 # If we were in a table and hit a non-table line, render the table now
                 if in_table:
-                    # Render the accumulated table
                     process_markdown_table(pdf, table_lines)
                     table_lines = []
                     in_table = False
@@ -119,8 +120,8 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                     pdf.multi_cell(0, 6, clean_line)
                 else:
                     pdf.set_font("Arial", size=11)
-                    # Handle bolding inside text roughly (removing markers)
-                    pdf.multi_cell(0, 6, line.replace('**', ''))
+                    clean_line = line.replace('**', '')
+                    pdf.multi_cell(0, 6, clean_line)
 
         # If ended while in table
         if in_table:
@@ -133,23 +134,21 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         rows = []
         for line in table_lines:
             # Remove outer pipes and split
-            # Split by | but handle escaped pipes if needed (simplifying for now)
             cells = [c.strip() for c in line.strip('|').split('|')]
             rows.append(cells)
         
         # Filter out separator lines (e.g. ---|---|---)
-        # Check if the first cell contains only dashes/colons
         data_rows = []
         for r in rows:
             if not r: continue
             # Check if row looks like separator line (---)
+            # A separator row typically contains only -, :, and |
             if not all(c.replace('-', '').replace(':', '').strip() == '' for c in r):
                 data_rows.append(r)
         
         if not data_rows: return
 
         # Calculate widths (distribute 190mm page width)
-        # Ensure we don't divide by zero
         num_cols = len(data_rows[0])
         if num_cols == 0: return
         
