@@ -6,6 +6,7 @@ import advanced_features as af
 import PyPDF2
 import time
 import os
+import json
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NexHire", page_icon="💼", layout="wide")
@@ -267,6 +268,34 @@ def candidate_mode():
     with h2:
         render_nexbot_button()
     
+    # --- HISTORY / SAVED PLANS SECTION ---
+    # Retrieve past scans for this user
+    history = db.fetch_user_history(st.session_state['username'])
+    
+    # Filter for 'Complete AI Scan' to show saved roadmaps
+    saved_plans = [h for h in history if h[3] == "Complete AI Scan"]
+    
+    if saved_plans:
+        with st.expander("📚 Saved Learning Plans & History"):
+            for plan in saved_plans:
+                # plan structure: timestamp, user, mode, action, score, details_json
+                timestamp = plan[0]
+                score = plan[4]
+                details_str = plan[5]
+                
+                try:
+                    details = json.loads(details_str)
+                    roadmap = details.get('roadmap', 'No roadmap saved.')
+                    
+                    st.markdown(f"**{timestamp}** - Score: {score}%")
+                    if st.button(f"View Plan ({timestamp})", key=f"hist_{timestamp}"):
+                        st.info("Re-loaded Plan from History")
+                        st.write(roadmap)
+                except:
+                    pass
+
+    # --- MAIN INPUT ---
+    st.divider()
     c1, c2 = st.columns([1, 1])
     with c1: 
         input_method = st.radio("Resume Input Method", ["Upload PDF", "Paste Text"], horizontal=True)
