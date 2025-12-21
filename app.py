@@ -5,6 +5,7 @@ import ai_engine as ai
 import advanced_features as af
 import PyPDF2
 import time
+import os
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NexHire", page_icon=None, layout="wide")
@@ -59,7 +60,7 @@ st.markdown("""
         background-color: white;
         border: 1px solid #E5E7EB;
         border-radius: 12px;
-        padding: 10px;
+        padding: 15px;
         margin-bottom: 10px;
     }
 
@@ -213,16 +214,13 @@ def candidate_mode():
             resume_text = st.text_area("Paste Resume Content", height=300, key="c_res_text", placeholder="Paste your resume text here...")
 
     with c2: 
-        # Added Job Title Input
         target_role = st.text_input("Target Job Title", placeholder="e.g. Senior Product Manager")
         jd = st.text_area("Paste Job Description", height=150, key="c_jd", placeholder="Paste the job description you are applying for...")
     
-    # Enable buttons if resume text is present
     if resume_text:
         st.write("")
         st.markdown("#### Actions")
         
-        # Action Buttons
         col_act1, col_act2, col_act3, col_act4 = st.columns(4)
         
         with col_act1:
@@ -234,14 +232,12 @@ def candidate_mode():
         with col_act4:
             interview_prep_btn = st.button("🎤 Interview Prep", use_container_width=True)
 
-        # Logic for "Complete AI Scan" (Job Fit)
         if analyze_fit_btn:
              if not jd:
                  st.error("Please provide a Job Description for a Complete AI Scan.")
              else:
                  with st.spinner("Performing Complete AI Scan..."):
                     text = resume_text
-                    # Append title to JD for context
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
                     
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
@@ -251,11 +247,9 @@ def candidate_mode():
                     
                     db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), st.session_state['c_data'])
 
-        # Logic for "Quick Scan"
         if quick_scan_btn:
              with st.spinner("Running Quick Resume Scan..."):
                 text = resume_text
-                # Perform lighter analysis
                 cat = ai.categorize_resume(text)
                 auth = ai.check_authenticity(text)
                 
@@ -265,7 +259,6 @@ def candidate_mode():
                 
                 db.save_scan(st.session_state['username'], "Candidate", "Quick Scan", auth.get('human_score', 0), auth)
 
-        # Logic for "ATS Score"
         if ats_score_btn:
              if not jd:
                  st.error("Job Description is recommended for accurate ATS scoring.")
@@ -279,7 +272,6 @@ def candidate_mode():
                     st.session_state['c_jd'] = full_jd
                     st.session_state['view_mode'] = 'ats'
 
-        # Logic for "Interview Prep"
         if interview_prep_btn:
              if not jd:
                  st.error("Job Description required for tailored interview questions.")
@@ -293,11 +285,9 @@ def candidate_mode():
                     st.session_state['c_jd'] = full_jd
                     st.session_state['view_mode'] = 'interview'
 
-    # DISPLAY RESULTS
     if 'view_mode' in st.session_state:
         st.divider()
         
-        # 1. COMPLETE AI SCAN (JOB FIT & ROADMAP)
         if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
             c_score, c_text = st.columns([1, 3])
@@ -305,7 +295,6 @@ def candidate_mode():
             with c_text: 
                 st.info(f"**Summary:** {data['summary']}")
             
-            # Skills Breakdown included in Complete Scan
             st.subheader("Skills Analysis")
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -322,7 +311,6 @@ def candidate_mode():
                  roadmap = ai.get_roadmap(st.session_state['c_text'], st.session_state['c_jd'])
                  st.write(roadmap)
 
-        # 2. QUICK SCAN
         elif st.session_state['view_mode'] == 'quick' and 'c_quick' in st.session_state:
             res = st.session_state['c_quick']
             st.subheader("Quick Scan Results")
@@ -336,7 +324,6 @@ def candidate_mode():
             
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
-        # 3. ATS SCORE
         elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
             data = st.session_state['c_ats_data']
             st.subheader("ATS Compatibility")
@@ -348,7 +335,6 @@ def candidate_mode():
                 else: st.error("Risk of Rejection")
             st.write(data['summary'])
 
-        # 4. INTERVIEW PREP
         elif st.session_state['view_mode'] == 'interview' and 'c_interview' in st.session_state:
             st.subheader("🎤 Interview Preparation")
             st.write(st.session_state['c_interview'])
@@ -362,7 +348,6 @@ def recruiter_mode():
     with c1: 
         resumes = st.file_uploader("Upload Resumes (PDF)", type="pdf", key="r_res", accept_multiple_files=True)
     with c2: 
-        # Added Job Title Input
         job_title = st.text_input("Job Position Title", placeholder="e.g. Senior Data Scientist")
         jd = st.text_area("Job Requirements", height=150, key="r_jd")
     
@@ -376,7 +361,6 @@ def recruiter_mode():
             status_text = st.empty()
             total_files = len(resumes)
             
-            # Combine title and JD
             full_jd = f"Target Role: {job_title}\n\n{jd}" if job_title else jd
             
             for i, res in enumerate(resumes):
@@ -424,23 +408,27 @@ def recruiter_mode():
 
 # --- 7. CHATBOT MODE ---
 def chatbot_mode():
-    st.markdown("### 🤖 NexHire Assistant")
-    st.caption("Ask questions about recruitment strategies, interview tips, or analyzing resumes.")
+    st.markdown("### 🤖 NexBot")
+    st.caption("Your AI Recruiter Companion")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
+        # Initial greeting from NexBot
+        st.session_state.messages.append({"role": "assistant", "content": "Hello! I'm NexBot. Ask me anything about your resume, interview tips, or hiring strategies!"})
 
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
+        # Use logo.png for assistant, user icon for user
+        avatar = "logo.png" if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("How can I help you today?"):
+    if prompt := st.chat_input("Ask NexBot..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+        with st.chat_message("assistant", avatar="logo.png"):
+            with st.spinner("NexBot is thinking..."):
                 response = ai.chat_response(prompt)
                 st.markdown(response)
         
@@ -470,15 +458,15 @@ def main():
             role = st.session_state.get('role', 'User')
             
             if role == "Candidate":
-                tab1, tab2 = st.tabs(["Dashboard", "AI Assistant"])
+                tab1, tab2 = st.tabs(["Dashboard", "NexBot"])
                 with tab1: candidate_mode()
                 with tab2: chatbot_mode()
             elif role == "Recruiter":
-                tab1, tab2 = st.tabs(["Dashboard", "AI Assistant"])
+                tab1, tab2 = st.tabs(["Dashboard", "NexBot"])
                 with tab1: recruiter_mode()
                 with tab2: chatbot_mode()
             else:
-                tab1, tab2, tab3 = st.tabs(["Candidate Tools", "Recruiter Tools", "AI Assistant"])
+                tab1, tab2, tab3 = st.tabs(["Candidate Tools", "Recruiter Tools", "NexBot"])
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
                 with tab3: chatbot_mode()
