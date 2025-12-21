@@ -5,7 +5,6 @@ import ai_engine as ai
 import advanced_features as af
 import PyPDF2
 import time
-import os
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NexHire", page_icon=None, layout="wide")
@@ -55,14 +54,9 @@ st.markdown("""
         border: 1px solid #E5E7EB;
     }
     
-    /* Chat Message Styling */
-    .stChatMessage {
-        background-color: white;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 10px;
-    }
+    /* Floating Chat Button Styling (Simulated via placement) */
+    /* Streamlit doesn't support true fixed FABs natively without component hacks, 
+       so we use a Popover in the sidebar or main area. */
 
     /* Hide Footer only, keep header for settings */
     footer {visibility: hidden;}
@@ -406,33 +400,35 @@ def recruiter_mode():
         csv = df_results.to_csv(index=False).encode('utf-8')
         st.download_button("Download Results CSV", csv, "screening_results.csv", "text/csv")
 
-# --- 7. CHATBOT MODE ---
-def chatbot_mode():
-    st.markdown("### 🤖 NexBot")
-    st.caption("Your AI Recruiter Companion")
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-        # Initial greeting from NexBot
-        st.session_state.messages.append({"role": "assistant", "content": "Hello! I'm NexBot. Ask me anything about your resume, interview tips, or hiring strategies!"})
-
-    for message in st.session_state.messages:
-        # Use logo.png for assistant, user icon for user
-        avatar = "logo.png" if message["role"] == "assistant" else None
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("Ask NexBot..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant", avatar="logo.png"):
-            with st.spinner("NexBot is thinking..."):
-                response = ai.chat_response(prompt)
-                st.markdown(response)
+# --- 7. NEXBOT FLOATING CHAT (POPOVER) ---
+def render_nexbot():
+    # This creates a button that opens a popover chat window
+    with st.popover("💬 Chat with NexBot"):
+        st.markdown("### 🤖 NexBot Assistant")
+        st.caption("Ask me anything about your resume or hiring!")
         
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+
+        # Display chat messages
+        for message in st.session_state.messages:
+            avatar = "logo.png" if message["role"] == "assistant" else None
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
+
+        # Chat Input
+        if prompt := st.chat_input("Ask a question..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant", avatar="logo.png"):
+                with st.spinner("Thinking..."):
+                    response = ai.chat_response(prompt)
+                    st.markdown(response)
+            
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun() # Rerun to update the chat history visually inside the popover
 
 # --- 8. ADMIN CONSOLE ---
 def admin_console():
@@ -455,21 +451,23 @@ def main():
         if st.session_state.get('admin_unlocked'):
             admin_console()
         else:
+            # Place the Chatbot Popover in the sidebar or main area
+            # Placing it in sidebar ensures it's always accessible "at the corner"
+            with st.sidebar:
+                st.markdown("---")
+                render_nexbot() 
+
             role = st.session_state.get('role', 'User')
             
             if role == "Candidate":
-                tab1, tab2 = st.tabs(["Dashboard", "NexBot"])
-                with tab1: candidate_mode()
-                with tab2: chatbot_mode()
+                candidate_mode()
             elif role == "Recruiter":
-                tab1, tab2 = st.tabs(["Dashboard", "NexBot"])
-                with tab1: recruiter_mode()
-                with tab2: chatbot_mode()
+                recruiter_mode()
             else:
-                tab1, tab2, tab3 = st.tabs(["Candidate Tools", "Recruiter Tools", "NexBot"])
+                # Fallback for generic user
+                tab1, tab2 = st.tabs(["Candidate Tools", "Recruiter Tools"])
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
-                with tab3: chatbot_mode()
 
 if __name__ == "__main__":
     main()
