@@ -38,10 +38,10 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         for char, replacement in replacements.items():
             text = text.replace(char, replacement)
         
-        # Remove any remaining non-latin-1 characters
+       
         return text.encode('latin-1', 'replace').decode('latin-1')
 
-    # Function to render a markdown table row
+
     def render_table_row(pdf, cells, widths, header=False):
         max_h = 0
         # Calculate max height for the row
@@ -52,14 +52,14 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                 h = len(lines) * 6
                 if h > max_h: max_h = h
         
-        # If max_h is 0 (empty row), skip
+    
         if max_h == 0: max_h = 6
 
-        # Check for page break
+     
         if pdf.get_y() + max_h > 270:
             pdf.add_page()
 
-        # Render cells
+      
         x = pdf.get_x()
         y = pdf.get_y()
         for i, cell in enumerate(cells):
@@ -70,19 +70,17 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                 else:
                     pdf.set_font("Arial", size=10)
                     pdf.set_fill_color(255, 255, 255)
-                
-                # Render cell box
+               
                 pdf.rect(x, y, widths[i], max_h, 'DF')
-                # Render text
+               
                 pdf.multi_cell(widths[i], 6, str(cell).strip(), align='L')
-                
-                # Move to next cell position
+             
                 x += widths[i]
                 pdf.set_xy(x, y)
         
         pdf.ln(max_h)
 
-    # Function to parse and render content (text vs tables)
+  
     def render_content(pdf, text):
         lines = text.split('\n')
         in_table = False
@@ -94,8 +92,7 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                 if not in_table: pdf.ln(2)
                 continue
 
-            # Detect Markdown Table Row (starts and ends with |)
-            # Basic detection: check if line starts with | and contains another |
+           
             if line.startswith('|') and '|' in line[1:]:
                 in_table = True
                 table_lines.append(line)
@@ -106,8 +103,7 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                     process_markdown_table(pdf, table_lines)
                     table_lines = []
                     in_table = False
-                
-                # Render normal text
+
                 if line.startswith('##'):
                     pdf.ln(5)
                     pdf.set_font("Arial", 'B', 14)
@@ -122,23 +118,19 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
                     # Handle bolding inside text roughly (removing markers)
                     pdf.multi_cell(0, 6, line.replace('**', ''))
 
-        # If ended while in table
         if in_table:
             process_markdown_table(pdf, table_lines)
 
     def process_markdown_table(pdf, table_lines):
         if len(table_lines) < 2: return
         
-        # Parse rows
+       
         rows = []
         for line in table_lines:
-            # Remove outer pipes and split
-            # Split by | but handle escaped pipes if needed (simplifying for now)
+           
             cells = [c.strip() for c in line.strip('|').split('|')]
             rows.append(cells)
-        
-        # Filter out separator lines (e.g. ---|---|---)
-        # Check if the first cell contains only dashes/colons
+     
         data_rows = []
         for r in rows:
             if not r: continue
@@ -148,18 +140,16 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         
         if not data_rows: return
 
-        # Calculate widths (distribute 190mm page width)
-        # Ensure we don't divide by zero
+
         num_cols = len(data_rows[0])
         if num_cols == 0: return
         
         col_width = 190 / num_cols
         widths = [col_width] * num_cols
         
-        # Render Header (First row of data)
+       
         render_table_row(pdf, data_rows[0], widths, header=True)
-        
-        # Render Body
+   
         for row in data_rows[1:]:
             # Ensure row has same number of columns, pad if needed
             while len(row) < num_cols:
@@ -172,7 +162,6 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Sanitize all inputs
     username = sanitize_text(username)
     role = sanitize_text(role)
     category = sanitize_text(category)
@@ -180,13 +169,13 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     resume_skills = sanitize_text(resume_skills)
     missing_skills = sanitize_text(missing_skills)
     
-    # --- REPORT TITLE SECTION ---
+
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, "Candidate Evaluation Report", 0, 1, 'L')
     pdf.line(10, 35, 200, 35)
     pdf.ln(5)
 
-    # --- INFO TABLE ---
+  
     pdf.set_font("Arial", size=11)
     
     def create_row(label, value):
@@ -202,23 +191,20 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     
     pdf.ln(5)
     
-    # --- SCORE SECTION ---
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 12, f" Overall Match Score: {score}%", 0, 1, 'C', fill=True)
     pdf.ln(5)
 
-    # --- SKILLS TABLE ---
+ 
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Skills Breakdown", 0, 1)
     
-    # Simple fixed table for skills
     pdf.set_font("Arial", 'B', 10)
     pdf.set_fill_color(220, 220, 220)
     pdf.cell(95, 8, "Matched Skills", 1, 0, 'C', fill=True)
     pdf.cell(95, 8, "Missing / Gap Skills", 1, 1, 'C', fill=True)
-    
-    # Save positions for side-by-side rendering
+
     pdf.set_font("Arial", size=10)
     x_start = pdf.get_x()
     y_start = pdf.get_y()
@@ -232,16 +218,17 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     
     pdf.set_y(y_start + max(h1, h2) + 5)
 
-    # --- FEEDBACK & ROADMAP SECTION ---
+  
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Detailed Analysis & Roadmap", 0, 1)
     
-    # Add a note about the app
+
     pdf.set_font("Arial", 'I', 10)
     pdf.multi_cell(0, 6, "Note: Refer to the NexHire App for interactive learning resources and detailed plan tracking.")
     pdf.ln(2)
     
-    # Use the smart render content function to parse markdown tables in feedback
+
     render_content(pdf, feedback)
     
     return pdf.output(dest='S').encode('latin-1')
+
