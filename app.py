@@ -85,6 +85,7 @@ def login_page():
         with st.container(border=True):
             
             # --- IMAGE LOGO SECTION ---
+            # Adjusted to center better and use fixed width for consistency
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
@@ -280,19 +281,14 @@ def candidate_mode():
                     text = resume_text
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
                     
-                    # 1. Analyze Fit (Score, Skills, Summary)
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
-                    
-                    # 2. Generate Roadmap (Explicit Call & Storage)
                     st.session_state['c_roadmap'] = ai.get_roadmap(text, full_jd)
                     
-                    # Store Text/JD
                     st.session_state['c_text_stored'] = text
                     st.session_state['c_jd_stored'] = full_jd
                     
                     st.session_state['view_mode'] = 'fit'
                     
-                    # Save Scan with full data including roadmap in details
                     full_details = st.session_state['c_data']
                     full_details['roadmap'] = st.session_state['c_roadmap']
                     
@@ -364,9 +360,30 @@ def candidate_mode():
                 for s in data['skills']['missing']: st.error(s)
 
             with st.expander("📅 4-Week Improvement Plan (Timetable)", expanded=True):
-                 # Retrieve stored roadmap
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
+            
+            # --- PDF DOWNLOAD BUTTON ---
+            if st.button("📥 Download Report (PDF)"):
+                try:
+                    pdf_bytes = af.generate_pdf_report(
+                        st.session_state['username'],
+                        st.session_state.get('c_jd_stored', 'Job Role'),
+                        data['score'],
+                        data['summary'] + "\n\nROADMAP:\n" + roadmap,
+                        ", ".join(data['skills']['matched']),
+                        ", ".join(data['skills']['missing']),
+                        "General"
+                    )
+                    st.download_button(
+                        label="Click to Download PDF",
+                        data=pdf_bytes,
+                        file_name="NexHire_Report.pdf",
+                        mime="application/pdf",
+                        key="dl_pdf_btn"
+                    )
+                except Exception as e:
+                    st.error(f"Error generating PDF: {e}")
 
         # 2. QUICK SCAN
         elif st.session_state['view_mode'] == 'quick' and 'c_quick' in st.session_state:
@@ -505,3 +522,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
