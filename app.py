@@ -8,8 +8,8 @@ import time
 import os
 import json
 
-# --- 1. CONFIGURATION ---
-st.set_page_config(page_title="NexHire", page_icon="💼", layout="wide", initial_sidebar_state="expanded")
+
+st.set_page_config(page_title="NexHire", page_icon="", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
@@ -102,7 +102,7 @@ def render_footer():
         </div>
     """, unsafe_allow_html=True)
 
-# --- 3. LOGIN PAGE ---
+
 def login_page():
     # Render sidebar on login page too
     render_sidebar()
@@ -113,7 +113,7 @@ def login_page():
         st.write("")
         with st.container(border=True):
             
-            # --- IMAGE LOGO SECTION ---
+          
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
@@ -188,7 +188,6 @@ def login_page():
         
         render_footer()
 
-# --- 4. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
         if os.path.exists("logo.png"):
@@ -197,7 +196,7 @@ def render_sidebar():
             st.header("NexHire")
         
         if st.session_state.get('logged_in'):
-            st.markdown(f"### Hi, {st.session_state.get('username', 'Guest')} 👋")
+            st.markdown(f"### Hi, {st.session_state.get('username', 'Guest')} !!")
             st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
             st.write("")
             if st.button("Sign Out", type="secondary", use_container_width=True):
@@ -225,14 +224,14 @@ def render_sidebar():
             show_support()
             
         st.markdown("---")
-        st.markdown("[🔗 Connect on LinkedIn](https://www.linkedin.com/in/karunya-kp)")
-        st.markdown("[💻 Connect on GitHub](https://github.com/in/Karunyakp)")
+        st.markdown("[ Connect on LinkedIn !](https://www.linkedin.com/in/karunya-kp)")
+        st.markdown("[ Connect on GitHub !](https://github.com/in/Karunyakp)")
         st.markdown("---")
         st.markdown("**Developed by**")
         st.markdown("Karunya. K. P")
         st.caption("© 2025 NexHire Inc.")
 
-# --- 5. NEXBOT POPUP COMPONENT ---
+
 def render_nexbot_button(key_suffix="default"):
     with st.popover("💬 Chat with NexBot", use_container_width=False):
         st.markdown("### 🤖 NexBot Assistant")
@@ -263,11 +262,10 @@ def render_nexbot_button(key_suffix="default"):
             
             st.session_state.messages.append({"role": "assistant", "content": response})
 
-# --- 6. CANDIDATE MODE ---
 def candidate_mode():
     h1, h2 = st.columns([3, 1])
     with h1:
-        st.markdown("### 🎓 Candidate Dashboard")
+        st.markdown("###  Candidate Dashboard")
         st.caption("Optimize your profile to get hired faster.")
     with h2:
         render_nexbot_button(key_suffix="candidate")
@@ -278,7 +276,7 @@ def candidate_mode():
         saved_plans = [h for h in history if h[3] == "Complete AI Scan"]
         
         if saved_plans:
-            with st.expander("📚 Saved Learning Plans & History"):
+            with st.expander(" Saved Learning Plans & History"):
                 for plan in saved_plans:
                     timestamp = plan[0]
                     score = plan[4]
@@ -318,13 +316,13 @@ def candidate_mode():
         col_act1, col_act2, col_act3, col_act4 = st.columns(4)
         
         with col_act1:
-            analyze_fit_btn = st.button("🚀 Complete AI Scan", type="primary", use_container_width=True, help="Full analysis against JD")
+            analyze_fit_btn = st.button("Complete AI Scan", type="primary", use_container_width=True, help="Full analysis against JD")
         with col_act2:
-            quick_scan_btn = st.button("⚡ Quick Scan", use_container_width=True, help="Fast resume review without JD")
+            quick_scan_btn = st.button(" Quick Scan", use_container_width=True, help="Fast resume review without JD")
         with col_act3:
-            ats_score_btn = st.button("📊 ATS Score", use_container_width=True)
+            ats_score_btn = st.button(" ATS Score", use_container_width=True)
         with col_act4:
-            interview_prep_btn = st.button("🎤 Interview Prep", use_container_width=True)
+            interview_prep_btn = st.button(" Interview Prep", use_container_width=True)
 
         # Logic for "Complete AI Scan" (Job Fit)
         if analyze_fit_btn:
@@ -413,11 +411,11 @@ def candidate_mode():
                 st.markdown("❌ **Missing**")
                 for s in data['skills']['missing']: st.error(s)
 
-            with st.expander("📅 4-Week Improvement Plan (Timetable)", expanded=True):
+            with st.expander(" 4-Week Improvement Plan (Timetable)", expanded=True):
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
             
-            if st.button("📥 Download Report (PDF)"):
+            if st.button(" Download Report (PDF)"):
                 try:
                     role_title = st.session_state.get('c_role_title', 'Target Role')
                     pdf_bytes = af.generate_pdf_report(
@@ -464,7 +462,7 @@ def candidate_mode():
 def recruiter_mode():
     h1, h2 = st.columns([3, 1])
     with h1:
-        st.markdown("### 🧑‍💼 Recruiter Workspace")
+        st.markdown("###  Recruiter Workspace")
         st.caption("Bulk screen candidates and identify top talent instantly.")
     with h2:
         render_nexbot_button(key_suffix="recruiter")
@@ -556,3 +554,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
