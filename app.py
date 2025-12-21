@@ -95,9 +95,9 @@ def extract_text(uploaded_file):
 def render_footer():
     st.markdown("""
         <div class="custom-footer">
-            Developed by <b>Karunya. K. P</b> | 
-            <a href="https://www.linkedin.com/in/karunya-kp" target="_blank">Connect on LinkedIn</a>
-            <a href="https://github.com/in/Karunyakp" target="_blank"> | Connect on Github </a>
+            Developed by <b>Karunya K. P.</b> | 
+            <a href="https://www.linkedin.com/in/karunya-kp" target="_blank">LinkedIn</a> | 
+            <a href="https://github.com/in/Karunyakp" target="_blank">GitHub</a>
             <br>© 2025 NexHire Inc.
         </div>
     """, unsafe_allow_html=True)
@@ -196,7 +196,6 @@ def render_sidebar():
         else:
             st.header("NexHire")
         
-        # Only show user info if logged in
         if st.session_state.get('logged_in'):
             st.markdown(f"### {st.session_state.get('username', 'Guest')}")
             st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
@@ -222,11 +221,15 @@ def render_sidebar():
             def show_support():
                 st.write("Need help? Contact our team:")
                 st.write(" **Email**: karunyayashu6@gmail.com")
-                # Removed placeholder phone as requested, just kept email format
-                st.write(" **Phone**: +91 XXXXX XXXXX") 
+                st.write(" **Phone**: +91 XXXXX XXXXX")
             show_support()
             
         st.markdown("---")
+        # Social Links
+        st.markdown("[🔗 Connect on LinkedIn](https://www.linkedin.com/in/karunya-kp)")
+        st.markdown("[💻 Connect on GitHub](https://github.com/in/Karunyakp)")
+        st.markdown("---")
+        # Developer Credit at bottom
         st.markdown("**Developed by**")
         st.markdown("Karunya. K. P")
         st.caption("© 2025 NexHire Inc.")
@@ -331,7 +334,7 @@ def candidate_mode():
                  st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
                  with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
                     text = resume_text
-                    # Store Title for PDF (Fixes long title issue)
+                    # Store Title for PDF
                     st.session_state['c_role_title'] = target_role if target_role else "Target Role"
                     
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
@@ -419,15 +422,12 @@ def candidate_mode():
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
             
-            # --- PDF DOWNLOAD BUTTON ---
             if st.button("📥 Download Report (PDF)"):
                 try:
-                    # Pass only the ROLE TITLE, not the full JD
                     role_title = st.session_state.get('c_role_title', 'Target Role')
-                    
                     pdf_bytes = af.generate_pdf_report(
                         st.session_state['username'],
-                        role_title, # FIXED: Uses short title
+                        role_title,
                         data['score'],
                         data['summary'] + "\n\nROADMAP:\n" + roadmap,
                         ", ".join(data['skills']['matched']),
