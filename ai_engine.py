@@ -94,3 +94,14 @@ def run_screening(resume, jd, bias_free=False):
 
 def explain_score(resume, jd, score):
     return generate_text("rec_explain", f"Current Score: {score}\nRESUME: {resume}\nJD: {jd}")
+
+# --- 🔐 SECURITY FUNCTIONS ---
+def validate_admin_login(username, password):
+    try:
+        secure_user = st.secrets["admin"]["username"]
+        secure_pass = st.secrets["admin"]["password"]
+        if username == secure_user and password == secure_pass:
+            return True
+        return False
+    except:
+        return False
