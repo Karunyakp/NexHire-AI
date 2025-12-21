@@ -1,21 +1,36 @@
 import streamlit as st
+import pandas as pd
 import database as db
 import ai_engine as ai
+import advanced_features as af
 import PyPDF2
 import time
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="NexHire", page_icon="💜", layout="wide")
+st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
     html, body, [class*="css"] { font-family: 'Outfit', sans-serif; color: #111827; }
-    div[data-testid="stVerticalBlockBorderWrapper"] > div { background-color: white; border-radius: 12px; border: 1px solid #E5E7EB; padding: 25px; }
+    
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        background-color: white;
+        border-radius: 12px;
+        border: 1px solid #E5E7EB;
+        padding: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Login Page Styling */
+    .login-container { text-align: center; margin-bottom: 20px; }
+    
+    /* Badges */
     .skill-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 5px; display: inline-block; }
     .match { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
     .partial { background: #FEF9C3; color: #854D0E; border: 1px solid #FDE047; }
     .missing { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    
     #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
@@ -26,33 +41,69 @@ def extract_text(uploaded_file):
         return "".join([page.extract_text() for page in reader.pages])
     except: return None
 
-# --- SIDEBAR WITH ADMIN LOGIN ---
+# --- AUTHENTICATION PAGE ---
+def login_page():
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.write("")
+        with st.container(border=True):
+            c1, c2 = st.columns([1, 4])
+            with c1: st.image("logo.png", use_container_width=True)
+            with c2: 
+                st.markdown("## NexHire")
+                st.caption("Enterprise Recruitment Intelligence")
+            
+            st.divider()
+            
+            tab_login, tab_reg = st.tabs(["🔐 Login", "📝 Register"])
+            
+            with tab_login:
+                u = st.text_input("Username", key="l_user")
+                p = st.text_input("Password", type="password", key="l_pwd")
+                if st.button("Sign In", type="primary", use_container_width=True):
+                    if db.login_user(u, p):
+                        st.session_state['logged_in'] = True
+                        st.session_state['username'] = u
+                        st.session_state['is_guest'] = False
+                        st.rerun()
+                    else:
+                        st.error("Invalid Credentials")
+            
+            with tab_reg:
+                new_u = st.text_input("Choose Username", key="r_user")
+                new_p = st.text_input("Choose Password", type="password", key="r_pwd")
+                if st.button("Create Account", use_container_width=True):
+                    if len(new_p) < 4:
+                        st.error("Password too short")
+                    elif db.add_user(new_u, new_p):
+                        st.success("Account Created! Please Sign In.")
+                    else:
+                        st.error("Username taken.")
+
+            st.markdown("---")
+            if st.button("🚀 Continue as Guest", use_container_width=True):
+                st.session_state['logged_in'] = True
+                st.session_state['username'] = "Guest"
+                st.session_state['is_guest'] = True
+                st.rerun()
+
+# --- SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
         try: st.image("logo.png", width=150) 
         except: pass 
-        st.title("NexHire")
-        st.markdown("### Recruitment Intelligence")
-        st.divider()
         
-        # Admin Access in Sidebar
-        with st.expander("🔐 Admin Access"):
-            user = st.text_input("Username", key="adm_user")
-            pwd = st.text_input("Password", type="password", key="adm_pwd")
-            if st.button("Login"):
-                if ai.validate_admin_login(user, pwd):
-                    st.session_state['admin_logged_in'] = True
-                    st.rerun()
-                else:
-                    st.error("Invalid Credentials")
+        st.write(f"Logged in as: **{st.session_state.get('username', 'Guest')}**")
         
-        if st.session_state.get('admin_logged_in'):
+        if st.session_state.get('is_guest'):
+            st.info("ℹ️ Guest Mode: History not saved.")
+        else:
             if st.button("Logout"):
-                st.session_state['admin_logged_in'] = False
+                st.session_state.clear()
                 st.rerun()
-
+        
         st.divider()
-        st.subheader("Developer")
+        st.subheader("Connect")
         st.link_button("🔗 LinkedIn", "https://www.linkedin.com/in/karunyakp")
         st.link_button("💻 GitHub", "https://github.com/karunyakp")
         
@@ -75,14 +126,20 @@ def candidate_mode():
         if resume and jd:
             with st.spinner("Analyzing profile..."):
                 text = extract_text(resume)
-                st.session_state['c_data'] = ai.analyze_fit(text, jd)
-                st.session_state['c_text'] = text
-                st.session_state['c_jd'] = jd
-                st.session_state['show_interview'] = False
-                st.session_state['show_roadmap'] = False
-                st.session_state['show_sim'] = False
-                st.session_state['show_compare'] = False
-                db.save_scan("Candidate", "Job Fit Analysis", st.session_state['c_data'].get('score', 0))
+                if text:
+                    st.session_state['c_data'] = ai.analyze_fit(text, jd)
+                    st.session_state['c_text'] = text
+                    st.session_state['c_jd'] = jd
+                    st.session_state['show_interview'] = False
+                    st.session_state['show_roadmap'] = False
+                    st.session_state['show_sim'] = False
+                    st.session_state['show_compare'] = False
+                    st.session_state.pop('comp_data', None)
+                    
+                    # Save scan with username
+                    db.save_scan(st.session_state['username'], "Candidate", "Job Fit Analysis", st.session_state['c_data'].get('score', 0))
+                else:
+                    st.error("Could not read PDF.")
 
     # 2. OUTPUT
     if 'c_data' in st.session_state and st.session_state['c_data']:
@@ -118,7 +175,7 @@ def candidate_mode():
         if b1.button("🎤 Interview Prep"): st.session_state['show_interview'] = True
         if b2.button("📅 30-Day Plan"): st.session_state['show_roadmap'] = True
         if b3.button("🔮 What-If Simulator"): st.session_state['show_sim'] = True
-        if b4.button("⚖️ Compare Version"): st.session_state['show_compare'] = True
+        if b4.button("⚖️ Compare Versions"): st.session_state['show_compare'] = True
             
         if st.session_state.get('show_interview'):
             st.success("### Interview Questions")
@@ -142,7 +199,13 @@ def candidate_mode():
             if res_v2:
                 if st.button("Compare V1 vs V2"):
                     text_v2 = extract_text(res_v2)
-                    comp_data = ai.compare_versions(st.session_state['c_text'], text_v2, st.session_state['c_jd'])
+                    if text_v2:
+                        st.session_state['comp_data'] = ai.compare_versions(st.session_state['c_text'], text_v2, st.session_state['c_jd'])
+                    else:
+                        st.error("Error reading V2 resume.")
+                
+                if 'comp_data' in st.session_state:
+                    comp_data = st.session_state['comp_data']
                     cc1, cc2 = st.columns(2)
                     with cc1: st.metric("V1 Score", f"{comp_data['v1_score']}%")
                     with cc2: st.metric("V2 Score", f"{comp_data['v2_score']}%", delta=f"{comp_data['v2_score'] - comp_data['v1_score']}%")
@@ -160,17 +223,19 @@ def recruiter_mode():
     with c1: resume = st.file_uploader("Upload Resume", type="pdf", key="r_res")
     with c2: jd = st.text_area("Paste Job Description", height=100, key="r_jd")
     
-    # BIAS FREE TOGGLE
     bias_free = st.toggle("Enable Bias-Free Evaluation (Hide Name/Gender/Location)")
     
     if st.button("Run Screening", type="primary", use_container_width=True):
         if resume and jd:
             with st.spinner("Screening..."):
                 text = extract_text(resume)
-                st.session_state['r_data'] = ai.run_screening(text, jd, bias_free)
-                st.session_state['r_text'] = text
-                st.session_state['r_jd'] = jd
-                db.save_scan("Recruiter", "Screening", st.session_state['r_data'].get('ats_score', 0))
+                if text:
+                    st.session_state['r_data'] = ai.run_screening(text, jd, bias_free)
+                    st.session_state['r_text'] = text
+                    st.session_state['r_jd'] = jd
+                    db.save_scan(st.session_state['username'], "Recruiter", "Screening", st.session_state['r_data'].get('ats_score', 0))
+                else:
+                    st.error("Could not read PDF.")
 
     if 'r_data' in st.session_state and st.session_state['r_data']:
         data = st.session_state['r_data']
@@ -195,26 +260,50 @@ def recruiter_mode():
             with st.spinner("Analyzing logic..."):
                 st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
 
-# --- ADMIN CONSOLE ---
+# --- ADMIN CONSOLE (HIDDEN) ---
 def admin_console():
     st.markdown("## 🛡️ Admin Console")
     st.info("Authorized Access Only")
     data = db.get_all_full_analysis()
     if data:
-        st.dataframe(data, use_container_width=True)
+        df = pd.DataFrame(data, columns=["Timestamp", "Username", "Mode", "Action", "Score"])
+        st.dataframe(df, use_container_width=True)
     else:
         st.warning("No data found.")
 
 # --- MAIN ---
 def main():
     db.create_tables()
-    render_sidebar()
     
-    # Check if Admin Logged In
-    if st.session_state.get('admin_logged_in'):
-        admin_console()
+    # 🕵️ HIDDEN ADMIN ROUTE CHECK
+    try:
+        secret_mode = st.secrets["admin"]["hidden_route"]
+    except:
+        secret_mode = "secure_admin_view"
+        
+    query_params = st.query_params
+    
+    if query_params.get("mode") == secret_mode:
+        st.empty()
+        st.header("🛡️ Secure Admin Login")
+        u = st.text_input("Admin Username")
+        p = st.text_input("Admin Password", type="password")
+        if st.button("Authenticate"):
+            if ai.validate_admin_login(u, p):
+                st.session_state['admin_unlocked'] = True
+                st.rerun()
+            else:
+                st.error("Access Denied.")
+        
+        if st.session_state.get('admin_unlocked'):
+            admin_console()
+            return
+
+    # --- STANDARD APP FLOW ---
+    if not st.session_state.get('logged_in'):
+        login_page()
     else:
-        # Public View
+        render_sidebar()
         c1, c2 = st.columns([1, 5])
         with c1: st.image("logo.png", width=100)
         with c2: 
