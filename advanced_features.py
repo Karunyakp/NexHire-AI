@@ -147,7 +147,6 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         if not data_rows: return
 
         # Calculate widths (distribute 190mm page width)
-        # Ensure we don't divide by zero
         num_cols = len(data_rows[0])
         if num_cols == 0: return
         
