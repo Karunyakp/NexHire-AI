@@ -26,6 +26,41 @@ def extract_text(uploaded_file):
         return "".join([page.extract_text() for page in reader.pages])
     except: return None
 
+# --- SIDEBAR WITH ADMIN LOGIN ---
+def render_sidebar():
+    with st.sidebar:
+        try: st.image("logo.png", width=150) 
+        except: pass 
+        st.title("NexHire")
+        st.markdown("### Recruitment Intelligence")
+        st.divider()
+        
+        # Admin Access in Sidebar
+        with st.expander("🔐 Admin Access"):
+            user = st.text_input("Username", key="adm_user")
+            pwd = st.text_input("Password", type="password", key="adm_pwd")
+            if st.button("Login"):
+                if ai.validate_admin_login(user, pwd):
+                    st.session_state['admin_logged_in'] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid Credentials")
+        
+        if st.session_state.get('admin_logged_in'):
+            if st.button("Logout"):
+                st.session_state['admin_logged_in'] = False
+                st.rerun()
+
+        st.divider()
+        st.subheader("Developer")
+        st.link_button("🔗 LinkedIn", "https://www.linkedin.com/in/karunyakp")
+        st.link_button("💻 GitHub", "https://github.com/karunyakp")
+        
+        st.markdown("---")
+        st.caption("Developed & Maintained by")
+        st.markdown("**Karunya. K. P**") 
+        st.caption("© 2025 NexHire Systems")
+
 # --- 🎓 CANDIDATE MODE ---
 def candidate_mode():
     st.markdown("## 🎓 Candidate Preparation")
@@ -160,35 +195,38 @@ def recruiter_mode():
             with st.spinner("Analyzing logic..."):
                 st.write(ai.explain_score(st.session_state['r_text'], st.session_state['r_jd'], data['ats_score']))
 
-# --- HIDDEN ADMIN ---
-def hidden_admin():
-    try:
-        if st.query_params.get("mode") != st.secrets["admin"]["hidden_route"]: return
-    except: return
-
+# --- ADMIN CONSOLE ---
+def admin_console():
     st.markdown("## 🛡️ Admin Console")
-    pwd = st.text_input("Password", type="password")
-    if pwd == st.secrets["admin"]["password"]:
-        st.success("Access Granted")
-        st.dataframe(db.get_all_full_analysis())
+    st.info("Authorized Access Only")
+    data = db.get_all_full_analysis()
+    if data:
+        st.dataframe(data, use_container_width=True)
+    else:
+        st.warning("No data found.")
 
 # --- MAIN ---
 def main():
     db.create_tables()
-    hidden_admin()
+    render_sidebar()
     
-    c1, c2 = st.columns([1, 5])
-    with c1: st.image("logo.png", width=100)
-    with c2: 
-        st.title("NexHire")
-        st.caption("Role Readiness & Recruitment Intelligence")
-    
-    tab1, tab2 = st.tabs(["🎓 Candidate Mode", "🧑‍💼 Recruiter Mode"])
-    with tab1: candidate_mode()
-    with tab2: recruiter_mode()
-    
-    st.divider()
-    st.caption("🔒 Privacy Note: Documents are processed in-memory and not stored. Decisions should be made by humans, not AI.")
+    # Check if Admin Logged In
+    if st.session_state.get('admin_logged_in'):
+        admin_console()
+    else:
+        # Public View
+        c1, c2 = st.columns([1, 5])
+        with c1: st.image("logo.png", width=100)
+        with c2: 
+            st.title("NexHire")
+            st.caption("Role Readiness & Recruitment Intelligence")
+        
+        tab1, tab2 = st.tabs(["🎓 Candidate Mode", "🧑‍💼 Recruiter Mode"])
+        with tab1: candidate_mode()
+        with tab2: recruiter_mode()
+        
+        st.divider()
+        st.caption("🔒 Privacy Note: Documents are processed in-memory and not stored. Decisions should be made by humans, not AI.")
 
 if __name__ == "__main__":
     main()
