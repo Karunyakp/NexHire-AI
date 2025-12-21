@@ -66,6 +66,21 @@ st.markdown("""
 
     /* Hide Footer only, keep header for settings */
     footer {visibility: hidden;}
+    
+    /* Custom Footer */
+    .custom-footer {
+        text-align: center;
+        color: #6B7280;
+        font-size: 12px;
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px solid #E5E7EB;
+    }
+    .custom-footer a {
+        color: #4F46E5;
+        text-decoration: none;
+        font-weight: 600;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -75,6 +90,15 @@ def extract_text(uploaded_file):
         reader = PyPDF2.PdfReader(uploaded_file)
         return "".join([page.extract_text() for page in reader.pages])
     except: return None
+
+def render_footer():
+    st.markdown("""
+        <div class="custom-footer">
+            Developed by <b>Karunya K. P.</b> | 
+            <a href="https://www.linkedin.com/in/karunyakp" target="_blank">Connect on LinkedIn</a>
+            <br>© 2025 NexHire Inc.
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- 3. LOGIN PAGE ---
 def login_page():
@@ -157,6 +181,9 @@ def login_page():
                     st.session_state['is_guest'] = True
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
+        
+        # Add footer to login page too
+        render_footer()
 
 # --- 4. SIDEBAR ---
 def render_sidebar():
@@ -519,7 +546,9 @@ def main():
                 tab1, tab2 = st.tabs(["Candidate Tools", "Recruiter Tools"])
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
+        
+        # Render footer in dashboard mode as well
+        render_footer()
 
 if __name__ == "__main__":
     main()
-    
