@@ -4,7 +4,6 @@ import json
 import random
 import time
 
-# --- HELPER: SMART KEY ROTATION ---
 def generate_response_with_rotation(contents, generation_config=None):
     """
     Tries to generate content using the list of API keys.
@@ -40,7 +39,7 @@ def generate_response_with_rotation(contents, generation_config=None):
             
         except Exception as e:
             error_msg = str(e).lower()
-            # If it's a Quota/Limit error, log it and TRY NEXT KEY
+
             if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
                 last_error = e
                 continue 
@@ -48,7 +47,6 @@ def generate_response_with_rotation(contents, generation_config=None):
                 # If it's a logic error (like bad prompt), fail immediately
                 raise e
     
-    # If we loop through ALL keys and they all fail
     raise last_error if last_error else Exception("All API keys are exhausted or invalid.")
 
 def get_prompt(prompt_name):
@@ -56,8 +54,6 @@ def get_prompt(prompt_name):
         return st.secrets["prompts"][prompt_name]
     except:
         return None
-
-# --- CORE AI FUNCTIONS ---
 
 def check_resume_authenticity(resume_text):
     sys_prompt = get_prompt("authenticity_prompt")
@@ -213,3 +209,4 @@ def validate_admin_login(username, password):
         return False
     except:
         return False
+
