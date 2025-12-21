@@ -3,7 +3,6 @@ import google.generativeai as genai
 import json
 import random
 
-# --- CONFIGURATION ---
 def configure_genai():
     try:
         keys = st.secrets["general"]["gemini_api_key"]
@@ -18,7 +17,6 @@ def configure_genai():
     except: return False
 
 def get_prompt(name):
-    # Safe fetch
     try:
         return st.secrets["prompts"][name]
     except:
@@ -35,7 +33,14 @@ def clean_json_text(text):
 def generate_json(prompt_name, user_content):
     if not configure_genai(): return None
     sys_prompt = get_prompt(prompt_name)
-    if not sys_prompt: return None
+    # Default fallback prompts if secrets are missing
+    if not sys_prompt: 
+        if "cand_score_skills" in prompt_name:
+            sys_prompt = "Analyze the resume against the JD. Return JSON with 'score' (0-100), 'summary', 'skills' object containing 'matched', 'partial', 'missing' lists."
+        elif "authenticity" in prompt_name:
+            sys_prompt = "Analyze text for AI generation patterns. Return JSON with 'human_score', 'verdict', 'analysis'."
+        else:
+            return None
 
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
@@ -47,27 +52,26 @@ def generate_json(prompt_name, user_content):
     except: return None
 
 def generate_text(prompt_name, user_content):
-    if not configure_genai(): return "Error: AI Unavailable"
+    if not configure_genai(): return "Service Unavailable."
     sys_prompt = get_prompt(prompt_name)
+    if not sys_prompt: sys_prompt = "You are a helpful recruitment AI assistant."
     try:
         model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
         resp = model.generate_content(f"{sys_prompt}\n\nDATA:\n{user_content}")
         return resp.text
-    except: return "Error generating text."
-
-# --- 🎓 CANDIDATE FUNCTIONS ---
+    except: return "Generation Error."
 
 def categorize_resume(resume_text):
-    # Simple categorization (RESTORED FEATURE)
-    sys_prompt = "Classify this resume into a SINGLE job category (e.g. Full Stack Dev). Output only the name."
+    sys_prompt = "Classify this resume into a SINGLE job category. Output only the name."
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
-        resp = model.generate_content(f"{sys_prompt}\n\nRESUME: {resume_text[:2000]}")
-        return resp.text.strip()
+        if configure_genai():
+            model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
+            resp = model.generate_content(f"{sys_prompt}\n\nRESUME: {resume_text[:2000]}")
+            return resp.text.strip()
+        return "General"
     except: return "General"
 
 def check_authenticity(resume_text):
-    # Authenticity Check (RESTORED FEATURE)
     return generate_json("authenticity_prompt", f"RESUME: {resume_text[:4000]}")
 
 def analyze_fit(resume, jd):
@@ -86,7 +90,6 @@ def get_roadmap(resume, jd):
     return generate_text("cand_roadmap", f"RESUME: {resume}\nJD: {jd}")
 
 def simulate_skill(resume, jd, current_score, new_skill):
-    # Pass variables in user content instead of formatting system prompt
     content = f"Current Score: {current_score}\nNew Skill to Add: {new_skill}\nRESUME: {resume}\nJD: {jd}"
     return generate_json("cand_simulator", content)
 
@@ -94,9 +97,8 @@ def compare_versions(res_v1, res_v2, jd):
     content = f"RESUME V1: {res_v1}\nRESUME V2: {res_v2}\nJD: {jd}"
     return generate_json("cand_compare", content)
 
-# --- 🧑‍💼 RECRUITER FUNCTIONS ---
 def run_screening(resume, jd, bias_free=False):
-    bias_note = "NOTE: Ignore Name, Gender, Location." if bias_free else ""
+    bias_note = "Ignore Name, Gender, Location." if bias_free else ""
     content = f"{bias_note}\nRESUME: {resume}\nJD: {jd}"
     return generate_json("rec_screen", content)
 
@@ -104,7 +106,10 @@ def explain_score(resume, jd, score):
     content = f"Current Score: {score}\nRESUME: {resume}\nJD: {jd}"
     return generate_text("rec_explain", content)
 
-# --- 🔐 SECURITY ---
+def chat_response(user_message):
+    sys_prompt = "You are NexHire's AI Assistant. Help candidates with resume tips and interview advice, or help recruiters with screening strategies. Keep answers concise and professional."
+    return generate_text("chatbot_prompt", user_message)
+
 def validate_admin_login(username, password):
     try:
         secure_user = st.secrets["admin"]["username"]
