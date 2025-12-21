@@ -211,7 +211,8 @@ def render_nexbot_button():
         chat_container = st.container(height=300)
         with chat_container:
             for message in st.session_state.messages:
-                avatar = "logo.png" if message["role"] == "assistant" and os.path.exists("logo.png") else None
+                # Use chat.png for assistant if available
+                avatar = "chat.png" if message["role"] == "assistant" and os.path.exists("chat.png") else None
                 with st.chat_message(message["role"], avatar=avatar):
                     st.markdown(message["content"])
 
@@ -222,7 +223,8 @@ def render_nexbot_button():
                 with st.chat_message("user"):
                     st.markdown(prompt)
                 
-                avatar = "logo.png" if os.path.exists("logo.png") else None
+                # Use chat.png for assistant response avatar as well
+                avatar = "chat.png" if os.path.exists("chat.png") else None
                 with st.chat_message("assistant", avatar=avatar):
                     with st.spinner("Thinking..."):
                         response = ai.chat_response(prompt)
