@@ -1,5 +1,6 @@
 from fpdf import FPDF
 import os
+import re
 
 def generate_pdf_report(username, role, score, feedback, resume_skills, missing_skills, category):
     class PDF(FPDF):
@@ -40,6 +41,119 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
         # Remove any remaining non-latin-1 characters
         return text.encode('latin-1', 'replace').decode('latin-1')
 
+    # Function to render a markdown table row
+    def render_table_row(pdf, cells, widths, header=False):
+        max_h = 0
+        # Calculate max height for the row
+        for i, cell in enumerate(cells):
+            if i < len(widths):
+                # Calculate height needed for this cell
+                lines = pdf.multi_cell(widths[i], 6, str(cell).strip(), split_only=True)
+                h = len(lines) * 6
+                if h > max_h: max_h = h
+        
+        # If max_h is 0 (empty row), skip
+        if max_h == 0: max_h = 6
+
+        # Check for page break
+        if pdf.get_y() + max_h > 270:
+            pdf.add_page()
+
+        # Render cells
+        x = pdf.get_x()
+        y = pdf.get_y()
+        for i, cell in enumerate(cells):
+            if i < len(widths):
+                if header:
+                    pdf.set_font("Arial", 'B', 10)
+                    pdf.set_fill_color(230, 230, 230)
+                else:
+                    pdf.set_font("Arial", size=10)
+                    pdf.set_fill_color(255, 255, 255)
+                
+                # Render cell box
+                pdf.rect(x, y, widths[i], max_h, 'DF')
+                # Render text
+                pdf.multi_cell(widths[i], 6, str(cell).strip(), align='L')
+                
+                # Move to next cell position
+                x += widths[i]
+                pdf.set_xy(x, y)
+        
+        pdf.ln(max_h)
+
+    # Function to parse and render content (text vs tables)
+    def render_content(pdf, text):
+        lines = text.split('\n')
+        in_table = False
+        table_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                if not in_table: pdf.ln(2)
+                continue
+
+            # Detect Markdown Table Row (starts and ends with |)
+            if line.startswith('|') and line.endswith('|'):
+                in_table = True
+                table_lines.append(line)
+            else:
+                # If we were in a table and hit a non-table line, render the table now
+                if in_table:
+                    # Render the accumulated table
+                    process_markdown_table(pdf, table_lines)
+                    table_lines = []
+                    in_table = False
+                
+                # Render normal text
+                if line.startswith('##'):
+                    pdf.ln(5)
+                    pdf.set_font("Arial", 'B', 14)
+                    pdf.multi_cell(0, 8, line.replace('#', '').strip())
+                elif line.startswith('**') or line.startswith('###'):
+                    pdf.ln(2)
+                    pdf.set_font("Arial", 'B', 11)
+                    clean_line = line.replace('*', '').replace('#', '').strip()
+                    pdf.multi_cell(0, 6, clean_line)
+                else:
+                    pdf.set_font("Arial", size=11)
+                    # Handle bolding inside text roughly
+                    pdf.multi_cell(0, 6, line.replace('**', ''))
+
+        # If ended while in table
+        if in_table:
+            process_markdown_table(pdf, table_lines)
+
+    def process_markdown_table(pdf, table_lines):
+        if len(table_lines) < 2: return
+        
+        # Parse rows
+        rows = []
+        for line in table_lines:
+            # Remove outer pipes and split
+            cells = [c.strip() for c in line.strip('|').split('|')]
+            rows.append(cells)
+        
+        # Filter out separator lines (e.g. ---|---|---)
+        data_rows = [r for r in rows if not set(r[0]).issubset({'-', ':', ' '})]
+        
+        if not data_rows: return
+
+        # Calculate widths (distribute 190mm page width)
+        num_cols = len(data_rows[0])
+        col_width = 190 / num_cols
+        widths = [col_width] * num_cols
+        
+        # Render Header
+        render_table_row(pdf, data_rows[0], widths, header=True)
+        
+        # Render Body
+        for row in data_rows[1:]:
+            render_table_row(pdf, row, widths, header=False)
+        
+        pdf.ln(5)
+
     pdf = PDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -54,28 +168,19 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     
     # --- REPORT TITLE SECTION ---
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Candidate Evaluation", 0, 1, 'L')
-    pdf.line(10, 35, 200, 35) # Draw a line under title
+    pdf.cell(0, 10, "Candidate Evaluation Report", 0, 1, 'L')
+    pdf.line(10, 35, 200, 35)
     pdf.ln(5)
 
     # --- INFO TABLE ---
     pdf.set_font("Arial", size=11)
     
-    # Function to create a row with multi_cell for values to prevent overflow
     def create_row(label, value):
         pdf.set_font("Arial", 'B', 11)
         pdf.cell(40, 8, label, 0, 0)
-        
         pdf.set_font("Arial", size=11)
-        # Save X and Y to handle multi_cell positioning
-        x = pdf.get_x()
-        y = pdf.get_y()
-        
-        # Use MultiCell for the value, width 150 (approx remaining page width)
-        pdf.multi_cell(150, 8, value, 0, 'L')
-        
-        # Reset X to start, and Y to below the MultiCell
-        pdf.set_xy(10, pdf.get_y())
+        # Ensure value fits nicely
+        pdf.multi_cell(0, 8, value, 0, 'L')
 
     create_row("Candidate Name:", username)
     create_row("Target Role:", role)
@@ -84,7 +189,7 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     pdf.ln(5)
     
     # --- SCORE SECTION ---
-    pdf.set_fill_color(240, 240, 240) # Light gray background
+    pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 12, f" Overall Match Score: {score}%", 0, 1, 'C', fill=True)
     pdf.ln(5)
@@ -93,44 +198,31 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Skills Breakdown", 0, 1)
     
-    # Table Header
+    # Simple fixed table for skills
     pdf.set_font("Arial", 'B', 10)
     pdf.set_fill_color(220, 220, 220)
-    pdf.cell(95, 8, "Matched Skills (Present)", 1, 0, 'C', fill=True)
+    pdf.cell(95, 8, "Matched Skills", 1, 0, 'C', fill=True)
     pdf.cell(95, 8, "Missing / Gap Skills", 1, 1, 'C', fill=True)
     
-    # Table Content
+    # Save positions for side-by-side rendering
     pdf.set_font("Arial", size=10)
-    
-    # Save current position
     x_start = pdf.get_x()
     y_start = pdf.get_y()
     
-    # Cell 1: Matched Skills
-    # Use multi_cell to wrap text within 95mm width
     pdf.multi_cell(95, 6, resume_skills, border=1, align='L')
+    h1 = pdf.get_y() - y_start
     
-    # Get the height of the first cell
-    height1 = pdf.get_y() - y_start
-    
-    # Reset position to right of first cell
     pdf.set_xy(x_start + 95, y_start)
-    
-    # Cell 2: Missing Skills
     pdf.multi_cell(95, 6, missing_skills, border=1, align='L')
+    h2 = pdf.get_y() - y_start
     
-    # Get height of second cell
-    height2 = pdf.get_y() - y_start
-    
-    # Set Y to the max height to continue below the table
-    # This prevents overlapping if one column is longer than the other
-    pdf.set_y(y_start + max(height1, height2) + 5)
+    pdf.set_y(y_start + max(h1, h2) + 5)
 
     # --- FEEDBACK & ROADMAP SECTION ---
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Detailed Analysis & Roadmap", 0, 1)
     
-    pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 6, txt=feedback)
+    # Use the smart render content function to parse markdown tables in feedback
+    render_content(pdf, feedback)
     
     return pdf.output(dest='S').encode('latin-1')
