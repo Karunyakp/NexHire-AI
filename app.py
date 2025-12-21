@@ -54,9 +54,14 @@ st.markdown("""
         border: 1px solid #E5E7EB;
     }
     
-    /* Floating Chat Button Styling (Simulated via placement) */
-    /* Streamlit doesn't support true fixed FABs natively without component hacks, 
-       so we use a Popover in the sidebar or main area. */
+    /* Chat Message Styling */
+    .stChatMessage {
+        background-color: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
 
     /* Hide Footer only, keep header for settings */
     footer {visibility: hidden;}
@@ -190,10 +195,57 @@ def render_sidebar():
         st.markdown("Karunya K. P.")
         st.caption("© 2025 NexHire Inc.")
 
-# --- 5. CANDIDATE MODE ---
+# --- 5. NEXBOT POPUP COMPONENT ---
+def render_nexbot_button():
+    # Use a popover for the small window effect
+    with st.popover("💬 Chat with NexBot", use_container_width=False):
+        st.markdown("### 🤖 NexBot Assistant")
+        st.caption("Ask me anything about your resume or hiring!")
+        
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
+
+        # Container for chat history
+        chat_container = st.container(height=300)
+        with chat_container:
+            for message in st.session_state.messages:
+                avatar = "logo.png" if message["role"] == "assistant" else None
+                with st.chat_message(message["role"], avatar=avatar):
+                    st.markdown(message["content"])
+
+        # Chat Input
+        if prompt := st.chat_input("Ask a question...", key="chatbot_input"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            # We need to rerun to show the user message immediately in the container
+            # But inside a popover, st.rerun might close it. 
+            # Ideally, we just process it.
+            
+            # Simple processing loop for popover context
+            # (Note: Chat input inside popover can be tricky in some Streamlit versions, 
+            # but usually works if key is unique)
+            
+            with chat_container:
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                
+                with st.chat_message("assistant", avatar="logo.png"):
+                    with st.spinner("Thinking..."):
+                        response = ai.chat_response(prompt)
+                        st.markdown(response)
+            
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            # No rerun here to keep popover open, just append to state
+
+# --- 6. CANDIDATE MODE ---
 def candidate_mode():
-    st.markdown("### 🎓 Candidate Dashboard")
-    st.caption("Optimize your profile to get hired faster.")
+    # Header with Chatbot Button
+    h1, h2 = st.columns([3, 1])
+    with h1:
+        st.markdown("### 🎓 Candidate Dashboard")
+        st.caption("Optimize your profile to get hired faster.")
+    with h2:
+        # Place chatbot button here
+        render_nexbot_button()
     
     c1, c2 = st.columns([1, 1])
     with c1: 
@@ -333,11 +385,16 @@ def candidate_mode():
             st.subheader("🎤 Interview Preparation")
             st.write(st.session_state['c_interview'])
 
-# --- 6. RECRUITER MODE ---
+# --- 7. RECRUITER MODE ---
 def recruiter_mode():
-    st.markdown("### 🧑‍💼 Recruiter Workspace")
-    st.caption("Bulk screen candidates and identify top talent instantly.")
-    
+    # Header with Chatbot Button
+    h1, h2 = st.columns([3, 1])
+    with h1:
+        st.markdown("### 🧑‍💼 Recruiter Workspace")
+        st.caption("Bulk screen candidates and identify top talent instantly.")
+    with h2:
+        render_nexbot_button()
+
     c1, c2 = st.columns([1, 1])
     with c1: 
         resumes = st.file_uploader("Upload Resumes (PDF)", type="pdf", key="r_res", accept_multiple_files=True)
@@ -400,36 +457,6 @@ def recruiter_mode():
         csv = df_results.to_csv(index=False).encode('utf-8')
         st.download_button("Download Results CSV", csv, "screening_results.csv", "text/csv")
 
-# --- 7. NEXBOT FLOATING CHAT (POPOVER) ---
-def render_nexbot():
-    # This creates a button that opens a popover chat window
-    with st.popover("💬 Chat with NexBot"):
-        st.markdown("### 🤖 NexBot Assistant")
-        st.caption("Ask me anything about your resume or hiring!")
-        
-        if "messages" not in st.session_state:
-            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
-
-        # Display chat messages
-        for message in st.session_state.messages:
-            avatar = "logo.png" if message["role"] == "assistant" else None
-            with st.chat_message(message["role"], avatar=avatar):
-                st.markdown(message["content"])
-
-        # Chat Input
-        if prompt := st.chat_input("Ask a question..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            with st.chat_message("assistant", avatar="logo.png"):
-                with st.spinner("Thinking..."):
-                    response = ai.chat_response(prompt)
-                    st.markdown(response)
-            
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            st.rerun() # Rerun to update the chat history visually inside the popover
-
 # --- 8. ADMIN CONSOLE ---
 def admin_console():
     st.markdown("### System Administration")
@@ -451,12 +478,6 @@ def main():
         if st.session_state.get('admin_unlocked'):
             admin_console()
         else:
-            # Place the Chatbot Popover in the sidebar or main area
-            # Placing it in sidebar ensures it's always accessible "at the corner"
-            with st.sidebar:
-                st.markdown("---")
-                render_nexbot() 
-
             role = st.session_state.get('role', 'User')
             
             if role == "Candidate":
