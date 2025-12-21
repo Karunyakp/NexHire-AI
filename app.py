@@ -186,7 +186,6 @@ def login_page():
                     st.session_state['admin_unlocked'] = False
                     st.rerun()
         
-        # Add footer to login page too
         render_footer()
 
 # --- 4. SIDEBAR ---
