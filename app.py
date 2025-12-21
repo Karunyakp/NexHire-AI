@@ -165,7 +165,6 @@ def render_sidebar():
         st.markdown(f"### {st.session_state.get('username', 'Guest')}")
         st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
         
-        # API Provider Swap (Admin/Dev Feature)
         with st.expander("Settings"):
             provider = st.selectbox("AI Provider", ["Gemini (Google)", "OpenAI (Coming Soon)", "Anthropic (Coming Soon)"])
             st.caption(f"Active: {provider}")
@@ -215,17 +214,19 @@ def candidate_mode():
         st.write("")
         st.markdown("#### Actions")
         
-        col_act1, col_act2, col_act3 = st.columns(3)
+        # Action Buttons
+        col_act1, col_act2, col_act3, col_act4 = st.columns(4)
         
         with col_act1:
-            analyze_fit_btn = st.button("🚀 Analyze Job Fit", type="primary", use_container_width=True)
-            
+            analyze_fit_btn = st.button("🚀 Job Fit", type="primary", use_container_width=True)
         with col_act2:
-            skill_gap_btn = st.button("🔍 Skill Gap Analysis", use_container_width=True)
-            
+            skill_gap_btn = st.button("🔍 Skills", use_container_width=True)
         with col_act3:
-            ats_score_btn = st.button("📊 Check ATS Score", use_container_width=True)
+            ats_score_btn = st.button("📊 ATS Score", use_container_width=True)
+        with col_act4:
+            interview_prep_btn = st.button("🎤 Interview Prep", use_container_width=True)
 
+        # Logic for "Job Fit"
         if analyze_fit_btn:
              with st.spinner("Analyzing profile fit..."):
                 text = extract_text(resume)
@@ -234,11 +235,9 @@ def candidate_mode():
                 st.session_state['c_jd'] = jd
                 st.session_state['view_mode'] = 'fit'
                 
-                db.save_scan(
-                    st.session_state['username'], "Candidate", "Job Fit Analysis", 
-                    st.session_state['c_data'].get('score', 0), st.session_state['c_data']
-                )
+                db.save_scan(st.session_state['username'], "Candidate", "Job Fit", st.session_state['c_data'].get('score', 0), st.session_state['c_data'])
 
+        # Logic for "Skills"
         if skill_gap_btn:
              with st.spinner("Extracting skills..."):
                 text = extract_text(resume)
@@ -247,6 +246,7 @@ def candidate_mode():
                 st.session_state['c_jd'] = jd
                 st.session_state['view_mode'] = 'skills'
 
+        # Logic for "ATS Score"
         if ats_score_btn:
              with st.spinner("Calculating ATS score..."):
                 text = extract_text(resume)
@@ -255,10 +255,20 @@ def candidate_mode():
                 st.session_state['c_jd'] = jd
                 st.session_state['view_mode'] = 'ats'
 
+        # Logic for "Interview Prep"
+        if interview_prep_btn:
+             with st.spinner("Generating interview questions..."):
+                text = extract_text(resume)
+                st.session_state['c_interview'] = ai.get_interview_prep(text, jd)
+                st.session_state['c_text'] = text
+                st.session_state['c_jd'] = jd
+                st.session_state['view_mode'] = 'interview'
 
+    # DISPLAY RESULTS
     if 'view_mode' in st.session_state:
         st.divider()
         
+        # 1. JOB FIT & ROADMAP
         if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
             c_score, c_text = st.columns([1, 3])
@@ -266,38 +276,44 @@ def candidate_mode():
             with c_text: 
                 st.info(f"**Summary:** {data['summary']}")
             
-            with st.expander("Show Improvement Plan", expanded=True):
-                st.write(ai.get_improvements(st.session_state['c_text'], st.session_state['c_jd']))
+            with st.expander("📅 4-Week Improvement Plan (Timetable)", expanded=True):
+                 # Directly call roadmap here if not already fetched
+                 roadmap = ai.get_roadmap(st.session_state['c_text'], st.session_state['c_jd'])
+                 st.write(roadmap)
 
+        # 2. SKILL GAP TRACKER
         elif st.session_state['view_mode'] == 'skills' and 'c_data' in st.session_state:
             data = st.session_state['c_data']
-            st.subheader("Skill Gap Analysis")
+            st.subheader("Skill Tracker")
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.markdown("✅ **You Have**")
+                st.markdown("✅ **Matched Skills**")
                 for s in data['skills']['matched']: st.success(s)
             with col2:
-                st.markdown("⚠️ **Partial Match**")
+                st.markdown("⚠️ **Partial Skills**")
                 for s in data['skills']['partial']: st.warning(s)
             with col3:
-                st.markdown("❌ **Missing**")
+                st.markdown("❌ **Missing Skills**")
                 for s in data['skills']['missing']: st.error(s)
-                
-            st.info("💡 **Tip:** Add the missing skills to your resume if you have experience with them!")
+            
+            st.info("Tip: Use the 'Chatbot' tab to ask how to learn these missing skills!")
 
+        # 3. ATS SCORE
         elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
             data = st.session_state['c_ats_data']
-            st.subheader("ATS Compatibility Check")
-            
+            st.subheader("ATS Compatibility")
             m1, m2 = st.columns(2)
             with m1: st.metric("ATS Parse Score", f"{data['ats_score']}%")
             with m2: 
-                if data['ats_score'] > 80: st.success("Your resume is highly readable by ATS.")
-                elif data['ats_score'] > 50: st.warning("Your resume needs formatting improvements.")
-                else: st.error("Your resume may be rejected by automated systems.")
-            
-            st.write("### How an ATS sees your resume:")
+                if data['ats_score'] > 80: st.success("Highly Readable")
+                elif data['ats_score'] > 50: st.warning("Needs Formatting Fixes")
+                else: st.error("Risk of Rejection")
             st.write(data['summary'])
+
+        # 4. INTERVIEW PREP
+        elif st.session_state['view_mode'] == 'interview' and 'c_interview' in st.session_state:
+            st.subheader("🎤 Interview Preparation")
+            st.write(st.session_state['c_interview'])
 
 # --- 6. RECRUITER MODE ---
 def recruiter_mode():
@@ -318,16 +334,13 @@ def recruiter_mode():
             
             progress_bar = st.progress(0)
             status_text = st.empty()
-            
             total_files = len(resumes)
             
             for i, res in enumerate(resumes):
                 status_text.text(f"Processing {res.name} ({i+1}/{total_files})...")
-                
                 text = extract_text(res)
                 if text:
                     ai_data = ai.run_screening(text, jd, bias_free)
-                    
                     results_list.append({
                         "Filename": res.name,
                         "ATS Score": ai_data.get('ats_score', 0),
@@ -335,15 +348,7 @@ def recruiter_mode():
                         "Red Flags": len(ai_data.get('red_flags', [])),
                         "Summary": ai_data.get('summary', 'No summary provided')
                     })
-                    
-                    db.save_scan(
-                        st.session_state['username'], 
-                        "Recruiter", 
-                        f"Bulk Screen: {res.name}", 
-                        ai_data.get('ats_score', 0),
-                        ai_data 
-                    )
-                
+                    db.save_scan(st.session_state['username'], "Recruiter", f"Bulk: {res.name}", ai_data.get('ats_score', 0), ai_data)
                 progress_bar.progress((i + 1) / total_files)
                 
             st.session_state['r_bulk_data'] = results_list
@@ -352,10 +357,8 @@ def recruiter_mode():
             status_text.empty()
             progress_bar.empty()
             
-        elif not resumes:
-            st.error("Please upload at least one resume.")
-        elif not jd:
-            st.error("Please provide a job description.")
+        elif not resumes: st.error("Please upload at least one resume.")
+        elif not jd: st.error("Please provide a job description.")
 
     if 'r_bulk_data' in st.session_state and st.session_state['r_bulk_data']:
         st.divider()
@@ -367,25 +370,14 @@ def recruiter_mode():
         st.dataframe(
             df_results,
             column_config={
-                "ATS Score": st.column_config.ProgressColumn(
-                    "Match Score",
-                    help="ATS Compatibility Score",
-                    format="%d%%",
-                    min_value=0,
-                    max_value=100,
-                ),
+                "ATS Score": st.column_config.ProgressColumn("Match Score", format="%d%%", min_value=0, max_value=100),
                 "Authenticity": st.column_config.TextColumn("Authenticity Badge"),
             },
             use_container_width=True
         )
         
         csv = df_results.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download Results CSV",
-            data=csv,
-            file_name="recruitment_screening_results.csv",
-            mime="text/csv",
-        )
+        st.download_button("Download Results CSV", csv, "screening_results.csv", "text/csv")
 
 # --- 7. CHATBOT MODE ---
 def chatbot_mode():
@@ -431,7 +423,6 @@ def main():
         
         if st.session_state.get('admin_unlocked'):
             admin_console()
-            
         else:
             role = st.session_state.get('role', 'User')
             
