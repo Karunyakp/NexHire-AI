@@ -222,6 +222,11 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Detailed Analysis & Roadmap", 0, 1)
     
+    # Add a note about the app
+    pdf.set_font("Arial", 'I', 10)
+    pdf.multi_cell(0, 6, "Note: Refer to the NexHire App for interactive learning resources and detailed plan tracking.")
+    pdf.ln(2)
+    
     # Use the smart render content function to parse markdown tables in feedback
     render_content(pdf, feedback)
     
