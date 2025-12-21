@@ -61,12 +61,21 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     # --- INFO TABLE ---
     pdf.set_font("Arial", size=11)
     
-    # Function to create a row
+    # Function to create a row with multi_cell for values to prevent overflow
     def create_row(label, value):
         pdf.set_font("Arial", 'B', 11)
         pdf.cell(40, 8, label, 0, 0)
+        
         pdf.set_font("Arial", size=11)
-        pdf.cell(0, 8, value, 0, 1)
+        # Save X and Y to handle multi_cell positioning
+        x = pdf.get_x()
+        y = pdf.get_y()
+        
+        # Use MultiCell for the value, width 150 (approx remaining page width)
+        pdf.multi_cell(150, 8, value, 0, 'L')
+        
+        # Reset X to start, and Y to below the MultiCell
+        pdf.set_xy(10, pdf.get_y())
 
     create_row("Candidate Name:", username)
     create_row("Target Role:", role)
@@ -93,13 +102,12 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     # Table Content
     pdf.set_font("Arial", size=10)
     
-    # Calculate height needed
-    # A simple approach: print text in multi_cell side by side
-    # We save current position
+    # Save current position
     x_start = pdf.get_x()
     y_start = pdf.get_y()
     
     # Cell 1: Matched Skills
+    # Use multi_cell to wrap text within 95mm width
     pdf.multi_cell(95, 6, resume_skills, border=1, align='L')
     
     # Get the height of the first cell
@@ -115,6 +123,7 @@ def generate_pdf_report(username, role, score, feedback, resume_skills, missing_
     height2 = pdf.get_y() - y_start
     
     # Set Y to the max height to continue below the table
+    # This prevents overlapping if one column is longer than the other
     pdf.set_y(y_start + max(height1, height2) + 5)
 
     # --- FEEDBACK & ROADMAP SECTION ---
