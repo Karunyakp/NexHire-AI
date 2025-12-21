@@ -1,68 +1,52 @@
-NexHire Platinum: Enterprise Recruitment Intelligence 💜
+NexHire AI 
 
-Status: 🟢 Live Production System
-Access: Click here to launch NexHire (Requires Admin Credentials)
+NexHire is an enterprise-grade recruitment intelligence platform powered by Google Gemini AI. It bridges the gap between talent and opportunity by providing deep, AI-driven insights for both candidates and recruiters.
 
-💼 Executive Summary
+Designed to streamline the hiring process, NexHire offers a dual-mode dashboard that optimizes candidate profiles for specific roles while enabling recruiters to screen talent at scale instantly.
 
-NexHire Platinum is an advanced AI-powered Applicant Tracking System (ATS) and career strategy engine. Unlike traditional keyword matchers, NexHire uses Google Gemini 2.5 Flash to perform semantic analysis, understanding the context of a candidate's experience rather than just matching words.
+~ Key Features
 
-This application demonstrates enterprise-grade Python development, prompt engineering, and secure cloud architecture.
+For Candidates 
 
-🚀 Key Capabilities
+~ Complete AI Scan: Performs a deep analysis of your resume against any specific Job Description, providing a precise 0-100 match score.
 
-1. Intelligent ATS Scoring
+~ Skill Gap Analysis: Automatically identifies exactly which skills you have matched, which are partial matches, and critical missing skills.
 
-Semantic Analysis: Deep learning evaluation of Resume vs. Job Description.
+~ Personalized 4-Week Roadmap: Generates a custom, actionable learning plan (timetable) to bridge your specific skill gaps and get you job-ready.
 
-Skill Gap Visualization: Instant identification of missing critical skills.
+~ ATS Compatibility Check: Simulates Applicant Tracking Systems to score your resume's formatting and readability, ensuring you don't get rejected by bots.
 
-Strict Scoring Logic: Non-lenient, zero-bias matching algorithms.
+~ AI Interview Prep: Creates tailored technical and HR interview questions based on your resume's weaknesses and the job requirements.
 
-2. Generative Recruitment Assets
+~ Quick Scan: Instantly detects your resume's category and performs an Authenticity Check to see if the content appears human-written or AI-generated.
 
-Smart Cover Letters: Auto-generates tailored cover letters bridging specific experience gaps.
+For Recruiters
 
-Dynamic Interview Scripting: Creates tough, technical interview questions based on the specific weaknesses found in the resume.
+~ Bulk Screening: Upload 50+ resumes simultaneously and screen them all against a single Job Description in seconds.
 
-3. Strategic Market Insights
+~ Bias-Free Evaluation: Option to automatically hide names, gender, and personal details during screening for fair, merit-based assessment.
 
-Salary Benchmarking: Real-time estimation of candidate market value based on 2025 trends.
+~ Red Flag Detection: AI automatically highlights potential inconsistencies, employment gaps, or vague descriptions in candidate profiles.
 
-Upskilling Roadmaps: Generates 4-week learning schedules to help candidates qualify for reach roles.
+~ Authenticity Detection: Flags resumes that show high probability of being entirely AI-generated.
 
-Automated Outreach: Drafts professional Offer Letters, Rejections, and Interview Invites.
+~ Exportable Reports: Download comprehensive screening results as CSV for further analysis.
 
-🔒 Security Architecture
+AI Assistant 🤖
 
-This application utilizes a "Headless" Security Architecture.
+NexBot: An integrated, context-aware chatbot available in the dashboard to answer career questions, explain scores, or provide hiring strategies.
 
-Proprietary Logic: The core decision-making algorithms and system prompts are decoupled from the source code and stored in a secure, encrypted cloud vault.
+* Technologies Used
 
-Zero-Trust Admin: Administrative privileges are verified against independent secrets, not hardcoded logic.
+Core Framework: Python & Streamlit
 
-API Rotation: Implements round-robin key rotation for high availability.
+Artificial Intelligence: Google Gemini 1.5 Flash (Generative AI)
 
-🛠️ Tech Stack
+Data Processing: Pandas, PyPDF2
 
-Core: Python 3.10+
+Storage: SQLite (Secure local database for history tracking)
 
-Frontend: Streamlit Enterprise
+Reporting: FPDF (Dynamic PDF report generation)
 
-AI Model: Google Gemini 2.5 Flash
-
-Data Processing: PyPDF2, Pandas, JSON
-
-Database: SQLite (Session-based) / Firestore (Production)
-
-© Copyright & License
-
-Copyright (c) 2025 Karunya K. P. All Rights Reserved.
-
-This source code is the intellectual property of the author.
-
-No License is granted to use, copy, modify, or distribute this software.
-
-Unauthorized reproduction or deployment of this code is strictly prohibited.
-
-The "System Prompts" required to run this application are proprietary trade secrets.
+Developed by Karunya K. P.
+© 2025 NexHire Inc.
