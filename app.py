@@ -5,9 +5,10 @@ import ai_engine as ai
 import advanced_features as af
 import PyPDF2
 import time
+import os
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="NexHire", page_icon=None, layout="wide")
+st.set_page_config(page_title="NexHire", page_icon="💼", layout="wide")
 
 st.markdown("""
     <style>
@@ -83,13 +84,14 @@ def login_page():
         st.write("")
         with st.container(border=True):
             
-            # --- IMAGE LOGO SECTION (No Emojis) ---
-            c_img1, c_img2, c_img3 = st.columns([1, 2, 1])
+            # --- IMAGE LOGO SECTION ---
+            # Adjusted to center better and use fixed width for consistency
+            c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
-                try:
-                    st.image("logo.png", use_container_width=True)
-                except:
-                    st.error("logo.png not found")
+                if os.path.exists("logo.png"):
+                    st.image("logo.png", width=100)
+                else:
+                    st.header("💼") # Fallback if image missing
 
             st.markdown("""
                 <div style="text-align: center; margin-bottom: 24px; margin-top: 10px;">
@@ -159,8 +161,10 @@ def login_page():
 # --- 4. SIDEBAR ---
 def render_sidebar():
     with st.sidebar:
-        try: st.image("logo.png", use_container_width=True) 
-        except: pass 
+        if os.path.exists("logo.png"):
+            st.image("logo.png", width=120) 
+        else:
+            st.header("NexHire")
         
         st.markdown(f"### {st.session_state.get('username', 'Guest')}")
         st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
@@ -197,7 +201,6 @@ def render_sidebar():
 
 # --- 5. NEXBOT POPUP COMPONENT ---
 def render_nexbot_button():
-    # Use a popover for the small window effect
     with st.popover("💬 Chat with NexBot", use_container_width=False):
         st.markdown("### 🤖 NexBot Assistant")
         st.caption("Ask me anything about your resume or hiring!")
@@ -205,46 +208,35 @@ def render_nexbot_button():
         if "messages" not in st.session_state:
             st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
 
-        # Container for chat history
         chat_container = st.container(height=300)
         with chat_container:
             for message in st.session_state.messages:
-                avatar = "logo.png" if message["role"] == "assistant" else None
+                avatar = "logo.png" if message["role"] == "assistant" and os.path.exists("logo.png") else None
                 with st.chat_message(message["role"], avatar=avatar):
                     st.markdown(message["content"])
 
-        # Chat Input
         if prompt := st.chat_input("Ask a question...", key="chatbot_input"):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            # We need to rerun to show the user message immediately in the container
-            # But inside a popover, st.rerun might close it. 
-            # Ideally, we just process it.
-            
-            # Simple processing loop for popover context
-            # (Note: Chat input inside popover can be tricky in some Streamlit versions, 
-            # but usually works if key is unique)
             
             with chat_container:
                 with st.chat_message("user"):
                     st.markdown(prompt)
                 
-                with st.chat_message("assistant", avatar="logo.png"):
+                avatar = "logo.png" if os.path.exists("logo.png") else None
+                with st.chat_message("assistant", avatar=avatar):
                     with st.spinner("Thinking..."):
                         response = ai.chat_response(prompt)
                         st.markdown(response)
             
             st.session_state.messages.append({"role": "assistant", "content": response})
-            # No rerun here to keep popover open, just append to state
 
 # --- 6. CANDIDATE MODE ---
 def candidate_mode():
-    # Header with Chatbot Button
     h1, h2 = st.columns([3, 1])
     with h1:
         st.markdown("### 🎓 Candidate Dashboard")
         st.caption("Optimize your profile to get hired faster.")
     with h2:
-        # Place chatbot button here
         render_nexbot_button()
     
     c1, c2 = st.columns([1, 1])
@@ -387,7 +379,6 @@ def candidate_mode():
 
 # --- 7. RECRUITER MODE ---
 def recruiter_mode():
-    # Header with Chatbot Button
     h1, h2 = st.columns([3, 1])
     with h1:
         st.markdown("### 🧑‍💼 Recruiter Workspace")
