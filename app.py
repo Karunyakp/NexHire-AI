@@ -110,7 +110,6 @@ def login_page():
         with st.container(border=True):
             
             # --- IMAGE LOGO SECTION ---
-            # Adjusted to center better and use fixed width for consistency
             c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
             with c_img2:
                 if os.path.exists("logo.png"):
@@ -269,32 +268,24 @@ def candidate_mode():
         render_nexbot_button()
     
     # --- HISTORY / SAVED PLANS SECTION ---
-    # Retrieve past scans for this user
     history = db.fetch_user_history(st.session_state['username'])
-    
-    # Filter for 'Complete AI Scan' to show saved roadmaps
     saved_plans = [h for h in history if h[3] == "Complete AI Scan"]
     
     if saved_plans:
         with st.expander("📚 Saved Learning Plans & History"):
             for plan in saved_plans:
-                # plan structure: timestamp, user, mode, action, score, details_json
                 timestamp = plan[0]
                 score = plan[4]
                 details_str = plan[5]
-                
                 try:
                     details = json.loads(details_str)
                     roadmap = details.get('roadmap', 'No roadmap saved.')
-                    
                     st.markdown(f"**{timestamp}** - Score: {score}%")
                     if st.button(f"View Plan ({timestamp})", key=f"hist_{timestamp}"):
                         st.info("Re-loaded Plan from History")
                         st.write(roadmap)
-                except:
-                    pass
+                except: pass
 
-    # --- MAIN INPUT ---
     st.divider()
     c1, c2 = st.columns([1, 1])
     with c1: 
@@ -335,7 +326,7 @@ def candidate_mode():
                  st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
                  with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
                     text = resume_text
-                    # Store the Title specifically for the PDF report
+                    # Store Title for PDF
                     st.session_state['c_role_title'] = target_role if target_role else "Target Role"
                     
                     full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
@@ -343,6 +334,7 @@ def candidate_mode():
                     st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
                     st.session_state['c_roadmap'] = ai.get_roadmap(text, full_jd)
                     
+                    # Store Analyzed Text (Avoiding widget key conflict)
                     st.session_state['c_text_stored'] = text
                     st.session_state['c_jd_stored'] = full_jd
                     
@@ -422,15 +414,12 @@ def candidate_mode():
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
             
-            # --- PDF DOWNLOAD BUTTON ---
             if st.button("📥 Download Report (PDF)"):
                 try:
-                    # Pass only the ROLE TITLE, not the full JD
                     role_title = st.session_state.get('c_role_title', 'Target Role')
-                    
                     pdf_bytes = af.generate_pdf_report(
                         st.session_state['username'],
-                        role_title, # FIXED: Uses short title
+                        role_title,
                         data['score'],
                         data['summary'] + "\n\nROADMAP:\n" + roadmap,
                         ", ".join(data['skills']['matched']),
@@ -458,7 +447,6 @@ def candidate_mode():
                 auth = res['auth']
                 st.metric("Authenticity Score", f"{auth.get('human_score', 0)}%")
                 st.caption(f"Verdict: {auth.get('verdict', 'Unknown')}")
-            
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
         # 3. ATS SCORE
@@ -499,7 +487,6 @@ def recruiter_mode():
     if st.button("Run Bulk Screening", type="primary"):
         if resumes and jd:
             results_list = []
-            
             progress_bar = st.progress(0)
             status_text = st.empty()
             total_files = len(resumes)
@@ -582,7 +569,6 @@ def main():
                 with tab1: candidate_mode()
                 with tab2: recruiter_mode()
         
-        # Render footer in dashboard mode as well
         render_footer()
 
 if __name__ == "__main__":
