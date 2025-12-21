@@ -199,7 +199,7 @@ def render_sidebar():
         
         # Only show user info if logged in
         if st.session_state.get('logged_in'):
-            st.markdown(f"### {st.session_state.get('username', 'Guest')}")
+            st.markdown(f"### Hi, {st.session_state.get('username', 'Guest')} 👋")
             st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
             st.write("")
             if st.button("Sign Out", type="secondary", use_container_width=True):
@@ -427,12 +427,15 @@ def candidate_mode():
                  roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
                  st.write(roadmap)
             
+            # --- PDF DOWNLOAD BUTTON ---
             if st.button("📥 Download Report (PDF)"):
                 try:
+                    # Pass only the ROLE TITLE, not the full JD
                     role_title = st.session_state.get('c_role_title', 'Target Role')
+                    
                     pdf_bytes = af.generate_pdf_report(
                         st.session_state['username'],
-                        role_title,
+                        role_title, # FIXED: Uses short title
                         data['score'],
                         data['summary'] + "\n\nROADMAP:\n" + roadmap,
                         ", ".join(data['skills']['matched']),
@@ -460,6 +463,7 @@ def candidate_mode():
                 auth = res['auth']
                 st.metric("Authenticity Score", f"{auth.get('human_score', 0)}%")
                 st.caption(f"Verdict: {auth.get('verdict', 'Unknown')}")
+            
             st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
 
         # 3. ATS SCORE
