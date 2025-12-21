@@ -27,12 +27,12 @@ def add_user(username, password):
     conn = get_connection()
     c = conn.cursor()
     try:
-        # Check if user exists first
+        # Check if user exists first to avoid Primary Key errors
         c.execute("SELECT * FROM users WHERE username = ?", (username,))
         if c.fetchone():
             return False
             
-        # Explicit INSERT to handle potential schema mismatches safely
+        # Use explicit column names to prevent OperationalError if schema drifts
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hash_password(password)))
         conn.commit()
         return True
