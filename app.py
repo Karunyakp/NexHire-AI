@@ -14,12 +14,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- NEW MODERN UI (LIGHT THEME) ---
+# --- NEW MODERN UI (PATTERNED BACKGROUND) ---
 st.markdown("""
 <style>
-    /* 1. Main Background - Soft Gradient */
+    /* 1. Main Background - Tech Grid Pattern */
     .stApp {
-        background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+        background-color: #f8f9fa;
+        opacity: 1;
+        background-image:  radial-gradient(#d1d5db 0.5px, transparent 0.5px), radial-gradient(#d1d5db 0.5px, #f8f9fa 0.5px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
         color: #2c3e50;
     }
 
@@ -30,17 +34,18 @@ st.markdown("""
         box-shadow: 2px 0 10px rgba(0,0,0,0.02);
     }
 
-    /* 3. Containers/Cards - White with soft shadow */
-    .stTextArea, .stTextInput, .stFileUploader {
-        background-color: #ffffff;
-        padding: 10px;
+    /* 3. Containers/Cards - Glass Effect with Shadow */
+    .stTextArea, .stTextInput, .stFileUploader, div[data-testid="stVerticalBlock"] > div[style*="background-color"] {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 15px;
         border-radius: 12px;
         border: 1px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     
     /* 4. Buttons - Professional Blue Gradient */
     .stButton>button {
-        background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
         border: none;
         border-radius: 8px;
@@ -48,12 +53,12 @@ st.markdown("""
         font-weight: 600;
         letter-spacing: 0.5px;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+        box-shadow: 0 4px 6px rgba(42, 82, 152, 0.2);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
+        box-shadow: 0 6px 12px rgba(42, 82, 152, 0.3);
         color: #ffffff;
     }
 
@@ -90,10 +95,11 @@ st.markdown("""
         font-weight: 700;
     }
     
-    /* Success/Info boxes style */
-    .stAlert {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    /* Image centering */
+    img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -119,12 +125,17 @@ def extract_text_from_pdf(file):
 
 def login_page():
     # Centered Layout for Login
-    c1, c2, c3 = st.columns([1, 1.5, 1])
+    c1, c2, c3 = st.columns([1, 1.2, 1])
     with c2:
-        st.markdown("<br><br>", unsafe_allow_html=True) # Spacing
-        # You can add st.image("logo.png", width=100) here if you have one
-        st.title("🔐 NexHire")
-        st.caption("AI-Powered Career Acceleration Platform")
+        st.markdown("<br><br>", unsafe_allow_html=True) 
+        # Display Logo (Ensure logo.png is in the folder)
+        try:
+            st.image("logo.png", width=120)
+        except:
+            st.title("🚀") # Fallback if logo missing
+            
+        st.markdown("<h1 style='text-align: center;'>NexHire</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #6c757d;'>AI-Powered Career Acceleration Platform</p>", unsafe_allow_html=True)
         
         with st.container(border=True):
             tab1, tab2 = st.tabs(["Login", "Sign Up"])
@@ -156,8 +167,12 @@ def dashboard_page():
     
     # Sidebar
     with st.sidebar:
-        st.title("NexHire")
-        st.caption(f"Welcome, {user['username']}")
+        try:
+            st.image("logo.png", width=80)
+        except:
+            pass
+            
+        st.markdown(f"<h3 style='text-align: center;'>Hello, {user['username']}</h3>", unsafe_allow_html=True)
         st.markdown("---")
         
         # Navigation / History
