@@ -4,158 +4,201 @@ import json
 import random
 import time
 
-def get_keys():
-    """Retrieves API keys from secrets."""
+# --- HELPER: SMART KEY ROTATION ---
+def generate_response_with_rotation(contents, generation_config=None):
+    """
+    Tries to generate content using the list of API keys.
+    If one key hits a quota limit (429), it rotates to the next one.
+    """
     try:
         keys = st.secrets["general"]["gemini_api_key"]
+        # Ensure keys is a list
         if not isinstance(keys, list):
-            return [keys]
-        # Shuffle to distribute load
+            keys = [keys]
+            
+        # Shuffle keys to distribute load across different scans
         random.shuffle(keys)
-        return keys
     except:
-        return []
-
-def get_prompt(name):
-    try:
-        return st.secrets["prompts"][name]
-    except:
-        return ""
-
-def clean_json_text(text):
-    text = text.strip()
-    if "```json" in text:
-        text = text.split("```json")[1].split("```")[0]
-    elif "```" in text:
-        text = text.split("```")[1].split("```")[0]
-    return text
-
-def generate_with_retry(system_prompt, user_content, response_mime_type="text/plain"):
-    """
-    Tries to generate content using available keys. 
-    If a key fails (quota exceeded), it tries the next one.
-    """
-    keys = get_keys()
-    if not keys:
+        # Fallback if secrets are missing
+        st.error("🚨 API Keys missing in Secrets!")
         return None
 
-    for key in keys:
+    last_error = None
+    
+    for api_key in keys:
         try:
-            # Configure with the current key attempt
-            genai.configure(api_key=key)
-            
+            # Configure with the current key
+            genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.5-flash-preview-09-2025')
             
-            generation_config = {"temperature": 0.0}
-            if response_mime_type == "application/json":
-                generation_config["response_mime_type"] = "application/json"
-
             # Attempt generation
-            resp = model.generate_content(
-                contents=[{"role": "user", "parts": [{"text": f"{system_prompt}\n\nDATA:\n{user_content}"}]}],
+            response = model.generate_content(
+                contents=contents, 
                 generation_config=generation_config
             )
-            
-            # If successful, return the result immediately
-            return resp.text
+            return response
             
         except Exception as e:
-            # If error is quota related (429) or other API issue, log/continue to next key
-            # print(f"Key failed: {e}") # Debugging
-            continue
+            error_msg = str(e).lower()
+            # If it's a Quota/Limit error, log it and TRY NEXT KEY
+            if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
+                last_error = e
+                continue 
+            else:
+                # If it's a logic error (like bad prompt), fail immediately
+                raise e
+    
+    # If we loop through ALL keys and they all fail
+    raise last_error if last_error else Exception("All API keys are exhausted or invalid.")
+
+def get_prompt(prompt_name):
+    try:
+        return st.secrets["prompts"][prompt_name]
+    except:
+        return None
+
+# --- CORE AI FUNCTIONS ---
+
+def check_resume_authenticity(resume_text):
+    sys_prompt = get_prompt("authenticity_prompt")
+    if not sys_prompt: return {"human_score": 0, "verdict": "Error", "analysis": "Prompt Missing from Secrets."}
+
+    try:
+        # Use Rotation Helper
+        response = generate_response_with_rotation(
+            contents=[{"role": "user", "parts": [{"text": f"{sys_prompt}\n\nRESUME TEXT:\n{resume_text[:4000]}"}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        if not response: return {"human_score": 0, "verdict": "Error", "analysis": "API Error"}
+
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
             
-    # If all keys failed
-    return None
-
-def generate_json(prompt_name, user_content):
-    sys_prompt = get_prompt(prompt_name)
-    if not sys_prompt: 
-        # Fallback defaults if secret prompt is missing
-        if "cand_score_skills" in prompt_name:
-            sys_prompt = "Analyze the resume. Output JSON: { 'score': 0, 'skills': {'matched':[], 'partial':[], 'missing':[]}, 'summary': '' }"
-        elif "rec_screen" in prompt_name:
-            sys_prompt = "Screen candidate. Output JSON: { 'ats_score': 0, 'auth_badge': 'Unknown', 'red_flags': [], 'summary': '' }"
-        else:
-            return None
-
-    result_text = generate_with_retry(sys_prompt, user_content, response_mime_type="application/json")
-    
-    if result_text:
-        try:
-            return json.loads(clean_json_text(result_text))
-        except:
-            return None
-    return None
-
-def generate_text(prompt_name, user_content):
-    sys_prompt = get_prompt(prompt_name)
-    if not sys_prompt: sys_prompt = "You are a helpful recruitment AI assistant."
-    
-    result_text = generate_with_retry(sys_prompt, user_content, response_mime_type="text/plain")
-    
-    if result_text:
-        return result_text
-    return "Service Unavailable (All API keys exhausted or invalid)."
-
-# --- Specific Functions Wrapper ---
+        return json.loads(text_out)
+    except Exception as e:
+        return {"human_score": 0, "verdict": "Error", "analysis": f"Analysis Failed: {str(e)}"}
 
 def categorize_resume(resume_text):
-    sys_prompt = "Classify this resume into a SINGLE job category. Output only the name."
-    res = generate_with_retry(sys_prompt, f"RESUME: {resume_text[:2000]}")
-    return res.strip() if res else "General"
-
-def check_authenticity(resume_text):
-    # Ensure this calls the correct prompt name from secrets or fallback
-    return generate_json("rec_screen", f"Analyze for AI generation patterns.\nRESUME: {resume_text[:4000]}")
-
-def analyze_fit(resume, jd):
-    return generate_json("cand_score_skills", f"RESUME: {resume}\nJD: {jd}")
-
-def get_insights(resume, jd):
-    return generate_text("cand_insights", f"RESUME: {resume}\nJD: {jd}")
-
-def get_improvements(resume, jd):
-    return generate_text("cand_improve", f"RESUME: {resume}\nJD: {jd}")
-
-def get_interview_prep(resume, jd):
-    return generate_text("cand_interview", f"RESUME: {resume}\nJD: {jd}")
-
-def get_roadmap(resume, jd):
-    return generate_text("cand_roadmap", f"RESUME: {resume}\nJD: {jd}")
-
-def simulate_skill(resume, jd, current_score, new_skill):
-    content = f"Current Score: {current_score}\nNew Skill to Add: {new_skill}\nRESUME: {resume}\nJD: {jd}"
-    return generate_json("cand_simulator", content)
-
-def compare_versions(res_v1, res_v2, jd):
-    content = f"RESUME V1: {res_v1}\nRESUME V2: {res_v2}\nJD: {jd}"
-    return generate_json("cand_compare", content)
-
-def run_screening(resume, jd, bias_free=False):
-    bias_note = "Ignore Name, Gender, Location." if bias_free else ""
-    # Inject bias note into prompt if needed, or append to content
-    # Ideally fetch raw prompt, but for simplicity append instruction to content
-    content = f"{bias_note}\nRESUME: {resume}\nJD: {jd}"
+    sys_prompt = get_prompt("category_prompt")
+    if not sys_prompt: return "General Profile"
     
-    # Special handling: if rec_screen prompt has placeholder
-    raw_prompt = get_prompt("rec_screen")
-    if raw_prompt and "{bias_instruction}" in raw_prompt:
-        formatted_sys_prompt = raw_prompt.replace("{bias_instruction}", bias_note)
-        # Call low-level generation directly with formatted prompt
-        res_text = generate_with_retry(formatted_sys_prompt, f"RESUME: {resume}\nJD: {jd}", "application/json")
-        if res_text:
-            return json.loads(clean_json_text(res_text))
-        return None
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nResume Snippet:\n{resume_text[:2000]}"
+        )
+        return response.text.strip() if response else "General Professional"
+    except:
+        return "General Professional"
+
+def get_ats_score(resume_text, job_desc):
+    sys_prompt = get_prompt("ats_prompt")
+    if not sys_prompt: return 0, []
+
+    try:
+        full_prompt = f"{sys_prompt}\n\nRESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{job_desc}"
         
-    return generate_json("rec_screen", content)
+        response = generate_response_with_rotation(
+            contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        if not response: return 0, []
 
-def explain_score(resume, jd, score):
-    content = f"Current Score: {score}\nRESUME: {resume}\nJD: {jd}"
-    return generate_text("rec_explain", content)
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
+            
+        data = json.loads(text_out)
+        return int(data.get("score", 0)), data.get("missing_keywords", [])
+    except Exception as e:
+        return 0, []
 
-def chat_response(user_message):
-    return generate_text("chatbot_prompt", user_message)
+def get_feedback(resume_text, job_desc):
+    sys_prompt = get_prompt("ats_prompt") 
+    if not sys_prompt: return "Error: System Prompts Missing."
 
+    try:
+        full_prompt = f"{sys_prompt}\n\nRESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{job_desc}"
+        
+        response = generate_response_with_rotation(
+            contents=[{"role": "user", "parts": [{"text": full_prompt}]}],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        if not response: return "Analysis Failed."
+
+        text_out = response.text.strip()
+        if "```json" in text_out:
+            text_out = text_out.split("```json")[1].split("```")[0]
+        elif "```" in text_out:
+            text_out = text_out.split("```")[1].split("```")[0]
+            
+        data = json.loads(text_out)
+        return data.get("summary", "Analysis failed.")
+    except:
+        return "Could not generate feedback."
+
+def generate_cover_letter(resume_text, job_desc):
+    sys_prompt = get_prompt("cover_letter_prompt")
+    if not sys_prompt: return "Cover Letter Module Locked."
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nCandidate Resume: {resume_text}\n\nTarget Job: {job_desc}"
+        )
+        return response.text if response else "Error generating draft."
+    except:
+        return "Could not generate draft."
+
+def generate_interview_questions(resume_text, job_desc):
+    sys_prompt = get_prompt("interview_prompt")
+    if not sys_prompt: return "Interview Module Locked."
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nResume: {resume_text}\n\nJob: {job_desc}"
+        )
+        return response.text if response else "Error generating questions."
+    except:
+        return "Could not generate questions."
+
+def get_market_analysis(resume_text, role):
+    sys_prompt = get_prompt("market_prompt")
+    if not sys_prompt: return "Market Analysis Module Locked."
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nJob Role: {role}\nResume Context: {resume_text[:2000]}"
+        )
+        return response.text if response else "Market analysis unavailable."
+    except:
+        return "Market analysis unavailable."
+
+def generate_learning_roadmap(resume_text, job_desc):
+    sys_prompt = get_prompt("roadmap_prompt")
+    if not sys_prompt: return "Roadmap Module Locked."
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nResume: {resume_text}\nJob Description: {job_desc}"
+        )
+        return response.text if response else "Roadmap unavailable."
+    except:
+        return "Roadmap unavailable."
+
+def generate_email_draft(resume_text, role, email_type):
+    sys_prompt = get_prompt("email_prompt")
+    if not sys_prompt: return "Email Module Locked."
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nEmail Type: {email_type}\nRole: {role}\nResume Context: {resume_text[:1000]}"
+        )
+        return response.text if response else "Email draft unavailable."
+    except:
+        return "Email draft unavailable."
+    
 def validate_admin_login(username, password):
     try:
         secure_user = st.secrets["admin"]["username"]
@@ -163,4 +206,5 @@ def validate_admin_login(username, password):
         if username == secure_user and password == secure_pass:
             return True
         return False
-    except: return False
+    except:
+        return False
