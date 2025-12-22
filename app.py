@@ -87,6 +87,12 @@ st.markdown("""
         background-color: #e3f2fd;
         color: #1565c0;
     }
+    
+    /* 7. Chatbot Avatar Styling */
+    .chat-avatar {
+        border-radius: 50%;
+        border: 2px solid #1e3c72;
+    }
 
     /* Headings */
     h1, h2, h3 {
@@ -101,6 +107,21 @@ st.markdown("""
         margin-left: auto;
         margin-right: auto;
     }
+    
+    /* Footer Styling */
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #ffffff;
+        color: #6c757d;
+        text-align: center;
+        padding: 10px;
+        font-size: 0.85rem;
+        border-top: 1px solid #dee2e6;
+        z-index: 100;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -109,6 +130,8 @@ if 'user' not in st.session_state:
     st.session_state['user'] = None
 if 'analysis_result' not in st.session_state:
     st.session_state['analysis_result'] = None
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [{"role": "assistant", "content": "Hi! I'm your NexHire assistant. How can I help you today?"}]
 
 # --- HELPER FUNCTIONS ---
 def hash_password(password):
@@ -121,6 +144,57 @@ def extract_text_from_pdf(file):
         text += page.extract_text()
     return text
 
+def render_footer():
+    st.markdown("""
+        <div class="footer">
+            <p style="margin:0;">NexHire © 2025 | AI-Powered Career Architect | <a href="#" style="color: #1e3c72;">Privacy</a> | <a href="#" style="color: #1e3c72;">Terms</a></p>
+        </div>
+        <br><br>
+    """, unsafe_allow_html=True)
+
+def render_chatbot():
+    """Renders the Sidebar Chatbot"""
+    with st.sidebar:
+        st.markdown("---")
+        
+        # Chat Header with User's Image
+        col_img, col_txt = st.columns([1, 3])
+        with col_img:
+            try:
+                st.image("chat.png", width=50) # Using the user's specific chat image
+            except:
+                st.write("🤖")
+        with col_txt:
+            st.markdown("### AI Assistant")
+            st.caption("Ask me anything!")
+
+        # Chat Container
+        with st.container(border=True, height=400):
+            # Display chat messages from history
+            formessage in st.session_state.chat_history:
+                with st.chat_message(formessage["role"]):
+                    st.markdown(formessage["content"])
+
+            # React to user input
+            if prompt := st.chat_input("Type here..."):
+                # Display user message
+                st.chat_message("user").markdown(prompt)
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
+
+                # Display assistant response
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        # Placeholder for actual AI connection (using simple logic for now)
+                        if "resume" in prompt.lower():
+                            response = "I can help you optimize your resume! Please upload it in the dashboard."
+                        elif "interview" in prompt.lower():
+                            response = "Check out the 'Prep & Practice' tab to start a mock interview!"
+                        else:
+                            response = "That's interesting! I'm currently in beta, but I'm here to support your career journey."
+                        
+                        st.markdown(response)
+                        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
 # --- PAGES ---
 
 def login_page():
@@ -130,9 +204,9 @@ def login_page():
         st.markdown("<br><br>", unsafe_allow_html=True) 
         # Display Logo (Ensure logo.png is in the folder)
         try:
-            st.image("logo.png", width=250) # Increased logo size significantly
+            st.image("logo.png", width=250)
         except:
-            st.title("🚀") # Fallback if logo missing
+            st.title("🚀")
             
         st.markdown("<h1 style='text-align: center;'>NexHire</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #6c757d;'>AI-Powered Career Acceleration Platform</p>", unsafe_allow_html=True)
@@ -161,34 +235,38 @@ def login_page():
                         st.success("Account created! Please login.")
                     else:
                         st.error("Username already exists.")
+    
+    # Render Footer
+    render_footer()
 
 def dashboard_page():
     user = st.session_state['user']
     
-    # Sidebar
+    # --- SIDEBAR (Updated with Chatbot) ---
     with st.sidebar:
         try:
-            st.image("logo.png", width=150) # Increased sidebar logo size
+            st.image("logo.png", width=150)
         except:
             pass
             
         st.markdown(f"<h3 style='text-align: center;'>Hello, {user['username']}</h3>", unsafe_allow_html=True)
-        st.markdown("---")
         
         # Navigation / History
-        st.markdown("### 📜 Recent Scans")
-        history = db.get_user_history(user['username'])
-        if not history:
-            st.info("No scans yet.")
-        for entry in history[-5:]:
-            st.text(f"{entry[3]} - {entry[2]}%")
+        with st.expander("📜 Recent Scans", expanded=False):
+            history = db.get_user_history(user['username'])
+            if not history:
+                st.info("No scans yet.")
+            for entry in history[-5:]:
+                st.text(f"{entry[3]} - {entry[2]}%")
             
-        st.markdown("---")
-        if st.button("Logout"):
+        if st.button("Logout", type="secondary", use_container_width=True):
             st.session_state['user'] = None
             st.rerun()
+            
+    # Render the Chatbot in sidebar (After navigation)
+    render_chatbot()
 
-    # Main Content
+    # --- MAIN CONTENT ---
     st.title("🚀 Career Dashboard")
     st.markdown("Optimize your resume and prepare for interviews with AI.")
     
@@ -315,7 +393,7 @@ def dashboard_page():
                     if 'interview_active' not in st.session_state:
                         st.session_state['interview_active'] = False
                         st.session_state['current_q'] = "Tell me about yourself and your project experience."
-                        st.session_state['chat_history'] = []
+                        st.session_state['chat_history_mock'] = []
 
                     if not st.session_state['interview_active']:
                         if st.button("Start Interview Session"):
@@ -332,15 +410,18 @@ def dashboard_page():
                                 if user_ans:
                                     with st.spinner("Analyzing..."):
                                         response = ai.evaluate_interview_answer(st.session_state['current_q'], user_ans, res['resume_text'])
-                                        st.session_state['chat_history'].append(f"**You:** {user_ans}")
-                                        st.session_state['chat_history'].append(f"**AI:** {response}")
+                                        st.session_state['chat_history_mock'].append(f"**You:** {user_ans}")
+                                        st.session_state['chat_history_mock'].append(f"**AI:** {response}")
                                         st.session_state['current_q'] = response 
                                         st.rerun()
                         with col_b:
                             if st.button("End Session"):
                                 st.session_state['interview_active'] = False
-                                st.session_state['chat_history'] = []
+                                st.session_state['chat_history_mock'] = []
                                 st.rerun()
+    
+    # Render Footer
+    render_footer()
 
 def admin_page():
     st.title("Admin Console")
@@ -350,6 +431,7 @@ def admin_page():
     
     st.write("All User Data:")
     st.dataframe(db.get_all_users())
+    render_footer()
 
 # --- MAIN ROUTING ---
 if not st.session_state['user']:
