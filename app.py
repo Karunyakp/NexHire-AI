@@ -11,16 +11,30 @@ def setup_page():
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        /* --- MAIN BACKGROUND CHANGE --- */
+        .stApp {
+            background-color: #F9FAFB; /* Light Grey Base */
+            /* Creates a subtle dot-matrix grid pattern */
+            background-image: radial-gradient(#E0E7FF 1px, transparent 1px); 
+            background-size: 24px 24px; /* Spacing of the dots */
+        }
+        /* ------------------------------ */
+
         html, body, [class*="css"] {
             font-family: 'Outfit', sans-serif;
             color: #111827;
-            background-color: #F9FAFB;
+            /* Make sure text containers are transparent so the background shows */
+            background-color: transparent; 
         }
+        
         .stMarkdown a {
             text-decoration: none;
             color: #4F46E5 !important;
             font-weight: 600;
         }
+        
+        /* Card Containers - White with Shadow to pop against the grid */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
             background-color: #FFFFFF;
             border-radius: 16px; 
@@ -28,8 +42,10 @@ def setup_page():
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             padding: 40px;
         }
+        
         .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
         .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+        
         .skill-tag {
             display: inline-block;
             padding: 5px 12px;
@@ -40,6 +56,7 @@ def setup_page():
         }
         .skill-match { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
         .skill-missing { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        
         .category-badge {
             background-color: #EEF2FF;
             color: #4F46E5;
@@ -49,11 +66,11 @@ def setup_page():
             font-size: 14px;
             border: 1px solid #C7D2FE;
         }
+        
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
-
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -434,3 +451,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
