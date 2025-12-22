@@ -1,370 +1,266 @@
 import streamlit as st
-import pandas as pd
 import database as db
 import ai_engine as ai
 import advanced_features as af
-import PyPDF2
+import hashlib
 import time
+from PyPDF2 import PdfReader
 
-def setup_page():
-    st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
-    st.markdown("""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-        html, body, [class*="css"] {
-            font-family: 'Outfit', sans-serif;
-            color: #111827;
-            background-color: #F9FAFB;
-        }
-        .stMarkdown a {
-            text-decoration: none;
-            color: #4F46E5 !important;
-            font-weight: 600;
-        }
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background-color: #FFFFFF;
-            border-radius: 16px; 
-            border: 1px solid #E5E7EB;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            padding: 40px;
-        }
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
-        .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
-        .skill-tag {
-            display: inline-block;
-            padding: 5px 12px;
-            margin: 4px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .skill-match { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
-        .skill-missing { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
-        .category-badge {
-            background-color: #EEF2FF;
-            color: #4F46E5;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 14px;
-            border: 1px solid #C7D2FE;
-        }
-        #MainMenu, footer, header {visibility: hidden;}
-        div[data-testid="stHeaderActionElements"] {display: none !important;}
-        </style>
-    """, unsafe_allow_html=True)
+# --- CONFIGURATION ---
+st.set_page_config(
+    page_title="NexHire: AI Resume Architect",
+    page_icon="🚀",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-def render_sidebar():
-    with st.sidebar:
-        try: st.image("logo.png", width=150) 
-        except: pass 
-        st.title("NexHire")
-        st.markdown("### Enterprise Recruitment Intelligence")
-        st.divider()
-        st.subheader("Connect with Developer")
-        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
-        st.link_button("GitHub Profile", "https://github.com/karunyakp")
-        st.divider()
-        st.caption("Developed & Maintained by")
-        st.markdown("### Karunya. K. P") 
-        st.caption("© 2025 NexHire Systems")
+# --- CUSTOM CSS FOR MODERN UI ---
+st.markdown("""
+<style>
+    .stApp { background-color: #0e1117; color: #ffffff; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
+    .stTextInput>div>div>input { border-radius: 8px; }
+    .css-1v0mbdj { margin-top: -50px; }
+    .metric-card { background-color: #1f2937; padding: 20px; border-radius: 10px; border: 1px solid #374151; }
+</style>
+""", unsafe_allow_html=True)
+
+# --- SESSION STATE INITIALIZATION ---
+if 'user' not in st.session_state:
+    st.session_state['user'] = None
+if 'analysis_result' not in st.session_state:
+    st.session_state['analysis_result'] = None
+
+# --- HELPER FUNCTIONS ---
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def extract_text_from_pdf(file):
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
+
+# --- PAGES ---
 
 def login_page():
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        st.write(""); st.write("")
-        with st.container(border=True):
-            c1, c2, c3 = st.columns([1, 2, 1])
-            with c2:
-                try: st.image("logo.png", use_container_width=True)
-                except: st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
-            st.write("")
-            tab_sign, tab_reg = st.tabs(["Sign In", "Register New Account"])
-            with tab_sign:
-                st.write("")
-                username = st.text_input("Username", key="login_user")
-                password = st.text_input("Password", type="password", key="login_pass")
-                st.write("")
-                if st.button("Access Dashboard"):
-                    if db.login_user(username, password):
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = username
-                        if ai.validate_admin_login(username, password): 
-                            db.set_admin(username)
-                        st.rerun()
-                    else: st.error("Invalid credentials.")
-            with tab_reg:
-                st.write("")
-                new_user = st.text_input("Choose Username", key="new_user")
-                new_pass = st.text_input("Choose Password", type="password", key="new_pass")
-                st.info("Password must be at least 8 characters.")
-                st.write("")
-                if st.button("Create Profile"):
-                    if new_user and new_pass:
-                        if len(new_pass) < 8: st.error("Password is too short!")
-                        else:
-                            if db.add_user(new_user, new_pass):
-                                if ai.validate_admin_login(new_user, new_pass):
-                                    db.set_admin(new_user)
-                                    st.success("Admin Credentials Verified! Please Login.")
-                                else: st.success("Account created! Please log in.")
-                            else: st.error("Username taken.")
-                    else: st.warning("Please fill all fields.")
-            st.write(""); st.divider()
-            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-            st.caption("Application Developed by")
-            st.markdown("**Karunya. K. P**") 
-            st.caption("© 2025 NexHire Systems")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-def dashboard_page():
-    c_left, c_right = st.columns([6, 1])
-    with c_left:
-        cl1, cl2 = st.columns([1, 10])
-        with cl1:
-            try: st.image("logo.png", width=100)
-            except: st.write("")
-        with cl2:
-            st.markdown(f"### Hello, {st.session_state['username']}")
-            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your recruitment analytics overview</p>", unsafe_allow_html=True)
-    with c_right:
-        if st.button("Sign Out"):
-            st.session_state['logged_in'] = False
-            # Clear session state on logout
-            keys_to_remove = ['analysis_result', 'analysis_complete']
-            for key in keys_to_remove:
-                if key in st.session_state:
-                    del st.session_state[key]
-            st.rerun()
-    st.divider()
-
-    if db.is_admin(st.session_state['username']):
-        st.markdown("### Super Admin Console")
-        st.info("Full Access to User Data, Resumes, and AI Outputs.")
-        with st.expander("View Full Database (Click to Expand)", expanded=True):
-            all_data = db.get_all_full_analysis()
-            if all_data:
-                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
-                st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
-                st.divider()
-                st.markdown("### Deep Inspection")
-                selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
-                if selected_id:
-                    record = df[df['ID'] == selected_id].iloc[0]
-                    st.success(f"Inspecting Record #{selected_id} | User: {record['User']}")
-                    with st.expander("Resume & Job Description (Inputs)"):
-                        c1, c2 = st.columns(2)
-                        with c1: 
-                            st.caption("Resume Text")
-                            st.text_area("Resume", record['Resume'], height=200, key="adm_res")
-                        with c2: 
-                            st.caption("Job Description")
-                            st.text_area("JD", record['JD'], height=200, key="adm_jd")
-                    with st.expander("AI Feedback & Analysis (Outputs)"):
-                        st.metric(label="Match Score", value=f"{record['Score']}%")
-                        st.markdown("---")
-                        st.markdown(record['Feedback'])
-                    with st.expander("Generated Content (Drafts)"):
-                        t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
-                        with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
-                        with t2: st.markdown(record['Interview'])
-                        with t3: st.markdown(record['Market'])
-                        with t4: st.markdown(record['Roadmap'])
-            else:
-                st.warning("No analysis data recorded yet.")
-        st.divider()
-
-    history = db.fetch_history(st.session_state['username'])
-    last_score = history[0][3] if history else 0
-    m1, m2 = st.columns(2)
-    with m1:
-        with st.container(border=True):
-            st.metric(label="LATEST SCORE", value=f"{last_score}%", delta="Most Recent Scan")
-    with m2:
-        with st.container(border=True):
-            st.metric(label="TOTAL SCANS", value=len(history), delta="Lifetime Usage")
-    st.write("")
-    
-    col_main, col_side = st.columns([2, 1])
-    with col_main:
-        with st.container(border=True):
-            st.markdown("### 1. Document Processing")
-            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed", key="resume_uploader")
-            resume_text = ""
-            category = "Manual Entry"
-            
-            if uploaded_file:
-                with st.spinner("Extracting text..."):
-                    reader = PyPDF2.PdfReader(uploaded_file)
-                    for page in reader.pages: resume_text += page.extract_text()
-                
-                with st.spinner("Categorizing profile..."):
-                    category = ai.categorize_resume(resume_text)
-                    st.success("Resume Extracted & Categorized!")
-                    st.markdown(f"<span class='category-badge'>{category}</span>", unsafe_allow_html=True)
-            else: 
-                resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
-
-            if resume_text:
-                st.write("")
-                if st.button("Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
-                    with st.spinner("Scanning for AI patterns and ATS readability..."):
-                        auth_data = ai.check_resume_authenticity(resume_text)
-                        st.write("---")
-                        st.markdown("### Authenticity Report")
-                        s1, s2 = st.columns(2)
-                        with s1:
-                            h_score = auth_data.get('human_score', 0)
-                            color = "normal" if h_score > 70 else "inverse"
-                            st.metric("Human-Written Score", f"{h_score}%", help="Lower score means high likelihood of AI generation.")
-                        with s2:
-                            st.caption("ATS Verdict")
-                            st.info(auth_data.get('verdict', 'N/A'))
-                        st.warning(auth_data.get('analysis', ''))
-
-    with col_side:
-        with st.container(border=True):
-            st.markdown("### 2. Job Requisition")
-            job_role = st.text_input("Role Title", placeholder="e.g. Product Designer")
-            job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
-    st.write("")
-    
-    btn_col1, btn_col2 = st.columns([1, 1])
-    with btn_col1:
-        run_quick_scan = st.button("Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
-    with btn_col2:
-        run_full_scan = st.button("Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
-
-    # --- QUICK SCAN LOGIC ---
-    if run_quick_scan:
-        if resume_text and job_desc:
-            with st.spinner("Calculating ATS Match Score..."):
-                score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
-                db.save_scan(st.session_state['username'], job_role, score)
-                st.divider()
-                st.markdown("### ATS Score Analysis")
-                q1, q2 = st.columns([1, 2])
-                with q1:
-                    st.metric(label="ATS Match Score", value=f"{score}%", delta="Instant Result")
-                with q2:
-                    if missing_keywords:
-                        st.error(f"**Missing Critical Keywords:**\n{', '.join(missing_keywords)}")
-                    else:
-                        st.success("Excellent Match! No critical keywords missing.")
-        else:
-             st.warning("Please provide both a Resume and a Job Description.")
-
-    # --- FULL SCAN LOGIC (PERSISTENT STATE) ---
-    if run_full_scan:
-        if resume_text and job_desc:
-            with st.status("Launching NexHire Intelligence Engine...", expanded=True) as status:
-                st.warning("Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
-                st.write("Analyzing Resume & Job Description...")
-                
-                score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
-                feedback = ai.get_feedback(resume_text, job_desc)
-                
-                resume_skills = af.extract_skills(resume_text)
-                job_skills = af.extract_skills(job_desc)
-                
-                st.write("Drafting Cover Letter & Interview Questions...")
-                cover_letter = ai.generate_cover_letter(resume_text, job_desc)
-                interview_q = ai.generate_interview_questions(resume_text, job_desc)
-                
-                st.write("Calculating Market Value & Learning Roadmap...")
-                market_analysis = ai.get_market_analysis(resume_text, job_role)
-                roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
-                
-                db.save_scan(st.session_state['username'], job_role, score)
-                db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
-                status.update(label="Analysis Complete!", state="complete", expanded=False)
-                
-                # STORE RESULTS IN SESSION STATE
-                st.session_state['analysis_complete'] = True
-                st.session_state['analysis_result'] = {
-                    'score': score,
-                    'feedback': feedback,
-                    'resume_skills': resume_skills,
-                    'job_skills': job_skills,
-                    'missing_keywords': missing_keywords,
-                    'cover_letter': cover_letter,
-                    'interview_q': interview_q,
-                    'market_analysis': market_analysis,
-                    'roadmap': roadmap,
-                    'category': category
-                }
-        else:
-            st.warning("Please provide both a Resume and a Job Description.")
-
-    # --- DISPLAY RESULTS FROM SESSION STATE ---
-    if st.session_state.get('analysis_complete', False) and 'analysis_result' in st.session_state:
-        res = st.session_state['analysis_result']
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.image("logo.png", width=150) # Ensure you have a logo.png
+        st.title("NexHire Login")
+        st.write("Welcome back to your AI Career Assistant.")
         
-        st.divider()
-        tab1, tab2, tab3, tab4 = st.tabs(["Analysis Report", "Cover Letter", "Interview Prep", "Strategic Insights"])
+        tab1, tab2 = st.tabs(["Login", "Register"])
         
         with tab1:
-            r1, r2 = st.columns([1, 2])
-            with r1:
-                with st.container(border=True):
-                    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                    st.markdown("### MATCH SCORE")
-                    st.metric(label="", value=f"{res['score']}%", help="Strict ATS Calculation")
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    st.write("")
-                    pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, res['score'], res['feedback'], res['resume_skills'], res['missing_keywords'], res['category'])
-                    st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
-            with r2:
-                with st.container(border=True):
-                    st.markdown("### SKILL GAP ANALYSIS")
-                    matched = [s for s in res['resume_skills'] if s in res['job_skills']]
-                    
-                    if matched:
-                        st.markdown("**Matched Skills**")
-                        st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
-                    st.write("")
-                    if res['missing_keywords']:
-                        st.markdown("**Missing Skills (AI Detected)**")
-                        st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in res['missing_keywords'][:10]]), unsafe_allow_html=True)
-                    st.divider()
-                    st.write(res['feedback'])
+            username = st.text_input("Username", key="login_user")
+            password = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Login", type="primary"):
+                if username == st.secrets["admin"]["username"] and password == st.secrets["admin"]["password"]:
+                    st.session_state['user'] = {'username': 'ADMIN', 'role': 'admin'}
+                    st.rerun()
+                elif db.verify_user(username, hash_password(password)):
+                    st.session_state['user'] = {'username': username, 'role': 'user'}
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials")
+
         with tab2:
-            with st.container(border=True):
-                st.markdown("### AI-Generated Cover Letter")
-                st.text_area("Copy this draft:", value=res['cover_letter'], height=400)
+            new_user = st.text_input("New Username", key="reg_user")
+            new_pass = st.text_input("New Password", type="password", key="reg_pass")
+            if st.button("Create Account"):
+                if db.create_user(new_user, hash_password(new_pass)):
+                    st.success("Account created! Please login.")
+                else:
+                    st.error("Username already exists.")
+
+def dashboard_page():
+    user = st.session_state['user']
+    
+    # Sidebar
+    with st.sidebar:
+        st.image("logo.png", width=100)
+        st.write(f"👤 **{user['username']}**")
+        if st.button("Logout"):
+            st.session_state['user'] = None
+            st.rerun()
+        
+        st.markdown("---")
+        st.markdown("### 📜 History")
+        history = db.get_user_history(user['username'])
+        for entry in history[-5:]:
+            st.caption(f"{entry[3]} - {entry[2]}%")
+
+    # Main Content
+    st.title("🚀 Smart Resume Analysis")
+    st.markdown("Upload your resume and the job description to get AI-powered insights.")
+
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.subheader("1. Your Resume")
+        uploaded_file = st.file_uploader("Upload PDF", type=['pdf'])
+        resume_text = st.text_area("Or Paste Resume Text", height=200)
+        
+        if uploaded_file:
+            resume_text = extract_text_from_pdf(uploaded_file)
+            st.success("PDF Loaded Successfully")
+
+    with col2:
+        st.subheader("2. Job Description")
+        job_desc = st.text_area("Paste Job Description (JD)", height=295)
+
+    if st.button("🔍 Analyze Resume", type="primary"):
+        if resume_text and job_desc:
+            with st.spinner("AI is analyzing your profile... (This may take 30s)"):
+                # 1. Basic Scan
+                ats_result = ai.get_ats_score(resume_text, job_desc)
+                
+                # 2. AI Detection
+                authenticity = ai.check_resume_authenticity(resume_text)
+                
+                # 3. Categorization
+                job_role = ai.categorize_resume(resume_text)
+                
+                # 4. Advanced Generation (Parallel calls simulated)
+                cover_letter = ai.generate_cover_letter(resume_text, job_desc)
+                interview_q = ai.generate_interview_questions(resume_text, job_desc)
+                market_data = ai.get_market_analysis(job_role)
+                roadmap = ai.generate_learning_roadmap(ats_result['missing_keywords'], job_role)
+                
+                # Store in session
+                st.session_state['analysis_result'] = {
+                    "ats": ats_result,
+                    "auth": authenticity,
+                    "role": job_role,
+                    "cover_letter": cover_letter,
+                    "interview": interview_q,
+                    "market": market_data,
+                    "roadmap": roadmap,
+                    "resume_text": resume_text, # Save for prep tools
+                    "job_desc": job_desc
+                }
+                
+                # Save to DB
+                db.save_analysis(user['username'], job_role, ats_result['score'], str(ats_result))
+                st.rerun()
+        else:
+            st.warning("Please provide both Resume and JD.")
+
+    # --- RESULTS DASHBOARD ---
+    res = st.session_state['analysis_result']
+    if res:
+        st.markdown("---")
+        
+        # Top Metrics
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("ATS Score", f"{res['ats']['score']}%", delta_color="normal")
+        m2.metric("Role Detected", res['role'])
+        m3.metric("AI Probability", f"{res['auth'].get('confidence', 0)}%")
+        m4.metric("Status", "Ready" if res['ats']['score'] > 70 else "Needs Work")
+
+        # Tabs for detailed view
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Analysis", "📄 Cover Letter", "🛣️ Roadmap", "🎓 Prep & Practice"])
+        
+        with tab1:
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                st.subheader("📝 Missing Keywords")
+                st.write(res['ats']['missing_keywords'])
+                st.subheader("📋 Summary")
+                st.write(res['ats']['summary'])
+            with c2:
+                st.subheader("📈 Market Data")
+                st.markdown(res['market'])
+        
+        with tab2:
+            st.subheader("✍️ Generated Cover Letter")
+            st.text_area("Copy this:", value=res['cover_letter'], height=400)
+            st.download_button("Download Cover Letter", res['cover_letter'], "cover_letter.txt")
+
         with tab3:
-            with st.container(border=True):
-                st.markdown("### Interview Questions")
-                st.markdown(res['interview_q'])
+            st.subheader("📅 4-Week Learning Plan")
+            st.markdown(res['roadmap'])
+
+        # --- NEW PREP & PRACTICE ZONE (Replaces Recruiter Outreach) ---
         with tab4:
-            d1, d2 = st.columns([1.5, 1])
-            with d1:
+            st.markdown("### 🎓 Prep & Practice Zone")
+            st.caption("Tools to help you get ready for the big day.")
+            
+            pp1, pp2 = st.columns([1, 1])
+            
+            # --- FEATURE 1: BULLET POINT POLISHER ---
+            with pp1:
                 with st.container(border=True):
-                    st.markdown("### Market Value & Salary")
-                    st.info("Based on 2025 Market Trends.")
-                    st.markdown(res['market_analysis'])
-                st.write("")
-                with st.container(border=True):
-                    st.markdown("### Candidate Upskilling Roadmap")
-                    st.success("Suggested 4-Week Plan to bridge skill gaps:")
-                    st.markdown(res['roadmap'])
-            with d2:
-                with st.container(border=True):
-                    st.markdown("### Recruiter Outreach")
-                    email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
-                    if st.button("Generate Email Draft"):
-                        with st.spinner("Drafting..."):
-                            email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
-                            st.text_area("Email Draft:", value=email_draft, height=250)
+                    st.markdown("#### ✨ Bullet Point Polisher")
+                    st.info("Don't just say 'I did java'. Make it shine!")
+                    
+                    weak_point = st.text_area("Paste a weak resume sentence:", placeholder="e.g. I worked on a python project for class...")
+                    
+                    if st.button("✨ Polish My Bullet Point"):
+                        if weak_point:
+                            with st.spinner("Applying STAR Method..."):
+                                polished = ai.refine_bullet_point(weak_point, res['role'])
+                                st.success("Stronger Version:")
+                                st.code(polished, language="text")
+                        else:
+                            st.warning("Paste some text first!")
 
-def main():
-    setup_page()
-    db.create_tables()
-    render_sidebar()
-    if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
-    if 'username' not in st.session_state: st.session_state['username'] = ""
-    if not st.session_state['logged_in']: login_page()
-    else: dashboard_page()
+            # --- FEATURE 2: MOCK INTERVIEWER ---
+            with pp2:
+                with st.container(border=True):
+                    st.markdown("#### 🤖 AI Mock Interviewer")
+                    
+                    # Initialize Interview State
+                    if 'interview_active' not in st.session_state:
+                        st.session_state['interview_active'] = False
+                        st.session_state['current_q'] = "Tell me about yourself and your project experience."
+                        st.session_state['chat_history'] = []
 
-if __name__ == "__main__":
-    main()
+                    if not st.session_state['interview_active']:
+                        if st.button("Start Mock Interview"):
+                            st.session_state['interview_active'] = True
+                            st.rerun()
+                    else:
+                        st.markdown(f"**🎙️ AI asks:** {st.session_state['current_q']}")
+                        
+                        user_ans = st.text_area("Your Answer:", height=100, key="ans_input")
+                        
+                        if st.button("Submit Answer"):
+                            if user_ans:
+                                with st.spinner("Analyzing..."):
+                                    # Get feedback and next question
+                                    response = ai.evaluate_interview_answer(st.session_state['current_q'], user_ans, res['resume_text'])
+                                    
+                                    # Update Chat History for display
+                                    st.session_state['chat_history'].append(f"**You:** {user_ans}")
+                                    st.session_state['chat_history'].append(f"**AI:** {response}")
+                                    
+                                    # Update current question (Basic logic: entire response becomes prompt for user)
+                                    st.session_state['current_q'] = response 
+                                    st.rerun()
+                        
+                        if st.button("End Interview"):
+                            st.session_state['interview_active'] = False
+                            st.session_state['chat_history'] = []
+                            st.rerun()
+
+def admin_page():
+    st.title("Admin Console")
+    if st.button("Back to Login"):
+        st.session_state['user'] = None
+        st.rerun()
+    
+    st.write("All User Data:")
+    # Fetch all data from DB (Placeholder)
+    st.dataframe(db.get_all_users())
+
+# --- MAIN ROUTING ---
+if not st.session_state['user']:
+    login_page()
+else:
+    if st.session_state['user']['role'] == 'admin':
+        admin_page()
+    else:
+        dashboard_page()
