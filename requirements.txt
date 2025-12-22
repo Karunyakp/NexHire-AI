@@ -3,7 +3,3 @@ pandas
 google-generativeai
 PyPDF2
 fpdf
-
-streamlit>=1.30.0
-pandas
-PyPDF2
