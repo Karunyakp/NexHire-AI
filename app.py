@@ -12,74 +12,99 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. BACKGROUND (Keep the Deep Space Look) --- */
+        /* --- 1. LIGHT 3D BACKGROUND --- */
         .stApp {
-            background-color: #0f172a; /* Dark Blue Base */
+            background-color: #F3F4F6; /* Light Grey Base */
+            /* Subtle glowing orbs in corners for 3D depth */
             background-image: 
-                radial-gradient(at 50% 0%, #312e81 0px, transparent 50%),
-                radial-gradient(at 100% 0%, #4c1d95 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.5) 0px, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(233, 213, 255, 0.5) 0px, transparent 50%);
+            background-attachment: fixed;
             background-size: 100% 100%;
         }
 
-        /* --- 2. GLOBAL TEXT DEFAULT (White for titles on dark bg) --- */
-        h1, h2, h3, .stMarkdown p {
-            color: #ffffff; 
-        }
-
-        /* --- 3. THE "WHITE BOX" CONTAINERS --- */
-        /* Targets all st.container(border=True) blocks */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background-color: #FFFFFF !important; /* Pure White Box */
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); /* Pop-out Shadow */
-            padding: 40px;
-        }
-
-        /* --- 4. TEXT INSIDE WHITE BOXES (MUST BE DARK) --- */
-        /* Force text inside the white containers to be dark for readability */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div h1,
-        div[data-testid="stVerticalBlockBorderWrapper"] > div h2,
-        div[data-testid="stVerticalBlockBorderWrapper"] > div h3,
-        div[data-testid="stVerticalBlockBorderWrapper"] > div p,
-        div[data-testid="stVerticalBlockBorderWrapper"] > div span,
-        div[data-testid="stVerticalBlockBorderWrapper"] > div div {
-            color: #111827 !important; /* Dark Grey Text */
+        /* --- 2. GLOBAL TEXT VISIBILITY (Dark Text) --- */
+        html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li {
+            font-family: 'Outfit', sans-serif;
+            color: #111827 !important; /* Deep Charcoal - Easy to read */
         }
         
-        /* Fix Input Fields inside White Boxes */
+        /* Links */
+        .stMarkdown a {
+            color: #4F46E5 !important;
+        }
+
+        /* --- 3. 3D FROSTED GLASS CARDS --- */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background: rgba(255, 255, 255, 0.9); /* 90% White (High Contrast) */
+            backdrop-filter: blur(14px);           /* Glass Blur Effect */
+            border-radius: 20px;
+            
+            /* 3D SHADOWS: Soft but deep */
+            border: 1px solid #FFFFFF;
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+                0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255,255,255,0.5); 
+            padding: 40px;
+            transition: transform 0.2s ease;
+        }
+
+        /* Hover Effect: Cards lift up slightly */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* --- 4. INPUT FIELDS (Clean White) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #f8fafc !important; 
-            color: #0f172a !important; 
-            border: 1px solid #cbd5e1;
-        }
-
-        /* --- 5. SIDEBAR (Make it a White Panel) --- */
-        section[data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #e5e7eb;
-        }
-        /* Sidebar Text must be dark */
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] p,
-        section[data-testid="stSidebar"] span,
-        section[data-testid="stSidebar"] div {
+            background-color: #FFFFFF !important;
             color: #111827 !important;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* Inner shadow for depth */
         }
 
-        /* --- 6. BADGES & BUTTONS --- */
+        /* --- 5. SIDEBAR (Glass Panel) --- */
+        section[data-testid="stSidebar"] {
+            background-color: #F9FAFB;
+            border-right: 1px solid #E5E7EB;
+        }
+        
+        /* --- 6. BUTTONS (3D Gradient) --- */
+        div.stButton > button {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white !important;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.5);
+        }
+        div.stButton > button:active {
+            transform: scale(0.98);
+        }
+
+        /* --- 7. BADGES & TABS --- */
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
+        .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+
         .skill-tag {
             display: inline-block; padding: 5px 12px; margin: 4px; border-radius: 20px;
             font-size: 12px; font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Mini 3D shadow for tags */
         }
-        .skill-match { background-color: #d1fae5 !important; color: #065f46 !important; border: 1px solid #34d399; }
-        .skill-missing { background-color: #fee2e2 !important; color: #991b1b !important; border: 1px solid #f87171; }
+        .skill-match { background-color: #ecfdf5; color: #047857 !important; border: 1px solid #6ee7b7; }
+        .skill-missing { background-color: #fef2f2; color: #b91c1c !important; border: 1px solid #fca5a5; }
 
         .category-badge {
-            background-color: #eef2ff !important; color: #4338ca !important;
+            background-color: #eef2ff; color: #4338ca !important;
             padding: 4px 12px; border-radius: 12px; border: 1px solid #c7d2fe;
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.15);
         }
 
         #MainMenu, footer, header {visibility: hidden;}
@@ -466,6 +491,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
