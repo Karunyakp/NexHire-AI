@@ -5,103 +5,123 @@ import ai_engine as ai
 import advanced_features as af
 import PyPDF2
 import time
-
 def setup_page():
     st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. 3D ISOMETRIC BACKGROUND --- */
+        /* --- 1. ABSTRACT FLUID ART BACKGROUND --- */
         .stApp {
-            background-color: #e5e7eb; /* Light Grey Base */
-            opacity: 1;
-            /* This CSS creates a 3D Isometric Cube Pattern */
-            background-image:  linear-gradient(30deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(150deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(30deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(150deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(60deg, #f3f4f6 25%, transparent 25.5%, transparent 75%, #f3f4f6 75%, #f3f4f6), linear-gradient(60deg, #f3f4f6 25%, transparent 25.5%, transparent 75%, #f3f4f6 75%, #f3f4f6);
-            background-size: 40px 70px;
-            background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+            background-color: #FFFFFF;
+            /* Multiple soft pastel gradients overlapping to create fluid shapes */
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
+                radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),
+                radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),
+                radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),
+                radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),
+                radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);
+            background-size: 100% 100%;
+            background-attachment: fixed;
         }
 
-        /* --- 2. TEXT VISIBILITY (Dark Text on Light) --- */
+        /* --- 2. TEXT & TYPOGRAPHY (Dark Charcoal for Max Contrast) --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #111827 !important; /* Dark Black/Grey */
+            color: #1f2937 !important; /* Dark Grey */
         }
         
-        /* Links */
+        /* Highlight Links with a gradient text effect */
         .stMarkdown a {
-            color: #4F46E5 !important;
+            background: linear-gradient(90deg, #4f46e5, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             font-weight: 700;
+            text-decoration: none;
         }
 
-        /* --- 3. 3D FLOATING CARDS (Clean White) --- */
+        /* --- 3. PREMIUM GLASS CARDS (The "Floating" Content) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background-color: #FFFFFF;
-            border-radius: 16px; 
-            border: 1px solid #FFFFFF;
-            /* Deep shadow to make it float high above the 3D grid */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.7); /* Milky White Glass */
+            backdrop-filter: blur(20px) saturate(180%); /* Strong blur + vibrance */
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            /* Soft, diffuse shadow for levitation */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
             padding: 40px;
-            transition: transform 0.2s;
         }
         
+        /* Hover Animation: Smooth Lift */
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-2px); /* Subtle lift */
+            transform: translateY(-5px) scale(1.005);
+            box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.15);
+            transition: all 0.4s ease;
         }
 
-        /* --- 4. SIDEBAR (Clean Panel) --- */
+        /* --- 4. SIDEBAR (Frosted Panel) --- */
         section[data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #E5E7EB;
-            box-shadow: 5px 0 15px -5px rgba(0,0,0,0.05);
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255,255,255,0.6);
         }
 
-        /* --- 5. INPUT FIELDS (High Contrast) --- */
-        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #F9FAFB !important;
-            color: #111827 !important;
-            border: 1px solid #D1D5DB;
-            border-radius: 8px;
-        }
+        /* --- 5. MODERN UI ELEMENTS --- */
         
-        /* --- 6. BUTTONS (Purple 3D) --- */
+        /* Inputs: Clean & Minimal */
+        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border: 2px solid #f3f4f6;
+            border-radius: 12px;
+            color: #1f2937 !important;
+            transition: border-color 0.3s;
+        }
+        .stTextInput input:focus, .stTextArea textarea:focus {
+            border-color: #818cf8;
+        }
+
+        /* Buttons: Liquid Gradient */
         div.stButton > button {
-            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%); /* 3D Gradient */
+            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+            background-size: 200% auto;
             color: white !important;
             border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.5); /* Drop Shadow */
-            border-bottom: 4px solid #4338ca; /* 3D Bevel Edge */
+            border-radius: 50px; /* Pill shape */
             font-weight: 600;
-            transition: all 0.1s;
+            letter-spacing: 0.5px;
+            padding: 10px 24px;
+            transition: 0.5s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        div.stButton > button:active {
-            transform: translateY(2px); /* Push down effect */
-            border-bottom: 0px solid #4338ca;
-            box-shadow: none;
+        div.stButton > button:hover {
+            background-position: right center; /* Animate gradient */
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
         }
 
-        /* --- 7. BADGES & TABS --- */
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
-        .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+        /* Badges & Tabs */
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e5e7eb; }
+        .stTabs [aria-selected="true"] { color: #8b5cf6 !important; border-bottom-color: #8b5cf6 !important; }
 
         .skill-tag {
-            display: inline-block; padding: 5px 12px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 600;
+            background: white; border: 1px solid #e5e7eb; 
+            padding: 5px 12px; margin: 4px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; color: #4b5563;
         }
-        .skill-match { background-color: #d1fae5; color: #065f46 !important; border: 1px solid #34d399; }
-        .skill-missing { background-color: #fee2e2; color: #991b1b !important; border: 1px solid #f87171; }
+        .skill-match { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; border: none; }
+        .skill-missing { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; border: none; }
 
         .category-badge {
-            background-color: #eef2ff; color: #4338ca !important;
-            padding: 4px 12px; border-radius: 12px; border: 1px solid #c7d2fe;
+            background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
+            color: #4338ca; padding: 6px 16px; border-radius: 20px;
+            font-weight: bold; font-size: 14px; border: none;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
-    
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -482,6 +502,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
