@@ -11,19 +11,19 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. BACKGROUND: SOFT CLOUD WHITE (Reduced Glare) --- */
+        /* --- 1. BACKGROUND: COOL SILVER (Reduces Glare) --- */
         .stApp {
-            background-color: #F8FAFC; /* Soft Off-White (Less harsh than pure white) */
+            background-color: #E2E8F0; /* Cool Grey Base - Much easier on the eyes */
             background-image: 
-                /* LAYER 1: Subtle Micro-Dots (Faint Grey) */
-                radial-gradient(#CBD5E1 1.5px, transparent 1.5px), 
+                /* LAYER 1: Darker Micro-Dots for contrast against grey */
+                radial-gradient(#94a3b8 1.5px, transparent 1.5px), 
                 
-                /* LAYER 2: Fluid Art Gradients (Softened Opacity) */
-                radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),    /* Baby Blue */
-                radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),     /* Rose Pink */
-                radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),      /* Lavender */
+                /* LAYER 2: Fluid Gradients (Slightly darker to blend) */
+                radial-gradient(at 50% 100%, #dbeafe 0px, transparent 50%),    /* Muted Blue */
+                radial-gradient(at 100% 0%, #fce7f3 0px, transparent 50%),     /* Muted Pink */
+                radial-gradient(at 0% 50%, #ede9fe 0px, transparent 50%),      /* Muted Lavender */
                 radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),     /* Mint */
-                radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Soft Indigo */
+                radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Indigo */
                 
             /* Sizing & Fixed Position */
             background-size: 24px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
@@ -31,88 +31,83 @@ def setup_page():
             background-attachment: fixed;
         }
 
-        /* --- 2. TYPOGRAPHY (Dark Grey for Contrast) --- */
+        /* --- 2. TYPOGRAPHY (High Contrast Dark Text) --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #334155 !important; /* Soft Slate Grey (Easier on eyes than pure black) */
+            color: #0f172a !important; /* Deep Navy/Black - 100% Visible */
         }
         
-        /* Gradient Links */
         .stMarkdown a {
-            background: linear-gradient(90deg, #4f46e5, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #4338ca !important;
             font-weight: 700;
         }
 
-        /* --- 3. GLASS CARDS (Floating & Soft) --- */
+        /* --- 3. CARDS (White Pop-out) --- */
+        /* These stay WHITE so the dark text is readable inside them */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.65); /* More transparent to let background show */
-            backdrop-filter: blur(25px) saturate(140%);
-            -webkit-backdrop-filter: blur(25px) saturate(140%);
+            background: rgba(255, 255, 255, 0.9); /* High opacity white */
+            backdrop-filter: blur(20px);
             border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); /* Very soft shadow */
+            border: 1px solid #ffffff;
+            /* Strong shadow to separate card from grey background */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             padding: 40px;
         }
         
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.08);
-            background: rgba(255, 255, 255, 0.85); /* Whiter on hover */
-            transition: all 0.4s ease;
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
         }
 
-        /* --- 4. INPUT FIELDS (Glass Pill) --- */
+        /* --- 4. INPUTS (Clean White) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.8) !important;
-            border: 1px solid #e2e8f0;
+            background-color: #FFFFFF !important;
+            border: 2px solid #cbd5e1; /* Darker border for visibility */
             border-radius: 12px;
-            color: #1e293b !important;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            color: #0f172a !important;
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
-            border-color: #818cf8;
-            background-color: #ffffff !important;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        /* --- 5. BUTTONS (Soft Gradient) --- */
+        /* --- 5. BUTTONS (Vibrant) --- */
         div.stButton > button {
-            background-image: linear-gradient(120deg, #6366f1, #a855f7);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white !important;
             border: none;
             border-radius: 50px;
             font-weight: 600;
-            padding: 10px 24px;
+            padding: 12px 28px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
             transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
         div.stButton > button:hover {
             transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.35);
+            box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.4);
         }
 
-        /* --- 6. SIDEBAR (Frosted) --- */
+        /* --- 6. SIDEBAR --- */
         section[data-testid="stSidebar"] {
-            background-color: rgba(248, 250, 252, 0.85); /* Matches background */
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255,255,255,0.4);
+            background-color: #f1f5f9; /* Light Grey Sidebar */
+            border-right: 1px solid #e2e8f0;
         }
 
-        /* Tabs & Badges */
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
-        .stTabs [aria-selected="true"] { color: #6366f1 !important; border-bottom-color: #6366f1 !important; }
+        /* --- 7. EXTRAS --- */
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #cbd5e1; }
+        .stTabs [aria-selected="true"] { color: #4f46e5 !important; border-bottom-color: #4f46e5 !important; }
 
         .skill-tag {
-            background: rgba(255,255,255,0.8); border: 1px solid #e2e8f0; 
+            background: white; border: 1px solid #cbd5e1; 
             padding: 5px 12px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; color: #64748b;
+            font-size: 12px; font-weight: 700; color: #475569;
         }
-        .skill-match { background: #ecfdf5; color: #047857 !important; border: 1px solid #a7f3d0; }
-        .skill-missing { background: #fef2f2; color: #b91c1c !important; border: 1px solid #fecaca; }
+        .skill-match { background: #dcfce7; color: #166534 !important; border: 1px solid #86efac; }
+        .skill-missing { background: #fee2e2; color: #991b1b !important; border: 1px solid #fca5a5; }
 
         .category-badge {
-            background: #eef2ff; color: #4338ca !important;
+            background: #e0e7ff; color: #3730a3 !important;
             padding: 4px 12px; border-radius: 12px; font-weight: bold; border: 1px solid #c7d2fe;
         }
 
@@ -500,6 +495,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
