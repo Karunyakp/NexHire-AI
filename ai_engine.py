@@ -208,3 +208,36 @@ def validate_admin_login(username, password):
         return False
     except:
         return False
+# --- ADD THIS TO THE END OF ai_engine.py ---
+
+def get_chat_response(messages):
+    """
+    Handles the sidebar chat conversation.
+    Receives st.session_state.messages and sends formatted context to Gemini.
+    """
+    # 1. Define a System Prompt for the Chatbot
+    system_prompt = (
+        "You are NexBot, an expert AI Recruitment Assistant embedded in the NexHire application. "
+        "Help the user with questions about hiring, resumes, interview tips, and navigating this dashboard. "
+        "Keep your answers concise, professional, and helpful."
+    )
+
+    # 2. Format the history for the API
+    # We manually seed the conversation with the system prompt to give it a 'persona'
+    contents = []
+    contents.append({"role": "user", "parts": [{"text": system_prompt}]})
+    contents.append({"role": "model", "parts": [{"text": "Understood. I am NexBot, ready to assist."}]})
+
+    for msg in messages:
+        # Map 'assistant' role to 'model' for Gemini
+        role = "user" if msg["role"] == "user" else "model"
+        if msg["content"]:
+            contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+    # 3. Call the existing rotation function
+    try:
+        response = generate_response_with_rotation(contents=contents)
+        return response.text if response else "I'm having trouble connecting right now."
+    except Exception as e:
+        return "Sorry, I encountered an error processing your request."
+
