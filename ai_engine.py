@@ -208,3 +208,38 @@ def validate_admin_login(username, password):
         return False
     except:
         return False
+# --- ADD THIS TO THE BOTTOM OF ai_engine.py ---
+
+def refine_bullet_point(bullet_point, job_role):
+    sys_prompt = get_prompt("polisher_prompt")
+    if not sys_prompt: return "Error: Polisher Prompt Missing."
+    
+    try:
+        response = generate_response_with_rotation(
+            contents=f"{sys_prompt}\n\nTarget Role: {job_role}\nOriginal Text: {bullet_point}"
+        )
+        return response.text if response else "Could not refine text."
+    except:
+        return "Error refining text."
+
+def evaluate_interview_answer(current_question, user_answer, resume_context):
+    sys_prompt = get_prompt("interactive_interview_prompt")
+    if not sys_prompt: return "Error: Interview Prompt Missing."
+    
+    try:
+        # We send the whole context so the AI knows what's happening
+        prompt_content = f"""
+        {sys_prompt}
+        
+        RESUME CONTEXT: {resume_context[:1000]}
+        
+        CURRENT QUESTION: {current_question}
+        CANDIDATE ANSWER: {user_answer}
+        """
+        
+        response = generate_response_with_rotation(
+            contents=prompt_content
+        )
+        return response.text if response else "Could not evaluate answer."
+    except:
+        return "Error evaluating answer."
