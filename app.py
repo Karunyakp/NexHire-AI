@@ -9,19 +9,19 @@ def setup_page():
     st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
         
-        /* --- 1. BACKGROUND: COOL SILVER (Reduces Glare) --- */
+        /* --- 1. BACKGROUND: SOFT FLUID + MICRO-DOTS --- */
         .stApp {
-            background-color: #E2E8F0; /* Cool Grey Base - Much easier on the eyes */
+            background-color: #F8FAFC; /* Soft Cloud White */
             background-image: 
-                /* LAYER 1: Darker Micro-Dots for contrast against grey */
-                radial-gradient(#94a3b8 1.5px, transparent 1.5px), 
+                /* LAYER 1: Micro-Dots (Subtle texture, not tabular checks) */
+                radial-gradient(#cbd5e1 1.5px, transparent 1.5px), 
                 
-                /* LAYER 2: Fluid Gradients (Slightly darker to blend) */
-                radial-gradient(at 50% 100%, #dbeafe 0px, transparent 50%),    /* Muted Blue */
-                radial-gradient(at 100% 0%, #fce7f3 0px, transparent 50%),     /* Muted Pink */
-                radial-gradient(at 0% 50%, #ede9fe 0px, transparent 50%),      /* Muted Lavender */
+                /* LAYER 2: The "Best" Fluid Art Gradients */
+                radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),    /* Baby Blue */
+                radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),     /* Rose Pink */
+                radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),      /* Lavender */
                 radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),     /* Mint */
                 radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Indigo */
                 
@@ -31,84 +31,99 @@ def setup_page():
             background-attachment: fixed;
         }
 
-        /* --- 2. TYPOGRAPHY (High Contrast Dark Text) --- */
-        html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
+        /* --- 2. TYPOGRAPHY: BOLD & SHARP --- */
+        /* Force Medium (500) weight for all standard text */
+        html, body, [class*="css"], .stMarkdown, .stMetricLabel, p, li, .stCaption, div, span, label {
             font-family: 'Outfit', sans-serif;
-            color: #0f172a !important; /* Deep Navy/Black - 100% Visible */
+            color: #0f172a !important; /* Deepest Navy for Max Contrast */
+            font-weight: 500 !important; /* BOLD TEXT BASE */
         }
         
+        /* Force Extra Bold (700-800) for Headers */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 800 !important;
+            letter-spacing: -0.5px;
+            color: #1e293b !important;
+        }
+        
+        /* Links */
         .stMarkdown a {
-            color: #4338ca !important;
-            font-weight: 700;
+            background: linear-gradient(90deg, #4f46e5, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800 !important;
+            text-decoration: none;
         }
 
-        /* --- 3. CARDS (White Pop-out) --- */
-        /* These stay WHITE so the dark text is readable inside them */
+        /* --- 3. GLASS CARDS --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.9); /* High opacity white */
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(25px) saturate(140%);
+            -webkit-backdrop-filter: blur(25px) saturate(140%);
             border-radius: 24px;
-            border: 1px solid #ffffff;
-            /* Strong shadow to separate card from grey background */
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
             padding: 40px;
         }
         
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transition: all 0.3s ease;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.4s ease;
         }
 
-        /* --- 4. INPUTS (Clean White) --- */
+        /* --- 4. INPUTS (Bold Text Inside) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #FFFFFF !important;
-            border: 2px solid #cbd5e1; /* Darker border for visibility */
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            border: 2px solid #e2e8f0;
             border-radius: 12px;
             color: #0f172a !important;
+            font-weight: 600 !important; /* Bold Input Text */
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
             border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            background-color: #ffffff !important;
         }
 
-        /* --- 5. BUTTONS (Vibrant) --- */
+        /* --- 5. BUTTONS --- */
         div.stButton > button {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            background-image: linear-gradient(120deg, #6366f1, #a855f7);
             color: white !important;
             border: none;
             border-radius: 50px;
-            font-weight: 600;
-            padding: 12px 28px;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            font-weight: 700 !important; /* Extra Bold Button Text */
+            padding: 10px 24px;
             transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
         div.stButton > button:hover {
             transform: scale(1.02);
-            box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.35);
         }
 
         /* --- 6. SIDEBAR --- */
         section[data-testid="stSidebar"] {
-            background-color: #f1f5f9; /* Light Grey Sidebar */
-            border-right: 1px solid #e2e8f0;
+            background-color: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255,255,255,0.4);
         }
 
         /* --- 7. EXTRAS --- */
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #cbd5e1; }
-        .stTabs [aria-selected="true"] { color: #4f46e5 !important; border-bottom-color: #4f46e5 !important; }
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
+        .stTabs [aria-selected="true"] { color: #6366f1 !important; border-bottom-color: #6366f1 !important; font-weight: 700 !important; }
 
         .skill-tag {
-            background: white; border: 1px solid #cbd5e1; 
+            background: rgba(255,255,255,0.8); border: 1px solid #e2e8f0; 
             padding: 5px 12px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; color: #475569;
+            font-size: 13px; font-weight: 700 !important; color: #475569;
         }
-        .skill-match { background: #dcfce7; color: #166534 !important; border: 1px solid #86efac; }
-        .skill-missing { background: #fee2e2; color: #991b1b !important; border: 1px solid #fca5a5; }
+        .skill-match { background: #dcfce7; color: #15803d !important; border: 1px solid #86efac; }
+        .skill-missing { background: #fee2e2; color: #b91c1c !important; border: 1px solid #fca5a5; }
 
         .category-badge {
-            background: #e0e7ff; color: #3730a3 !important;
-            padding: 4px 12px; border-radius: 12px; font-weight: bold; border: 1px solid #c7d2fe;
+            background: #eef2ff; color: #4338ca !important;
+            padding: 4px 12px; border-radius: 12px; font-weight: 800 !important; border: 1px solid #c7d2fe;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
