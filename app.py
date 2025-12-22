@@ -130,7 +130,7 @@ def login_page():
         st.markdown("<br><br>", unsafe_allow_html=True) 
         # Display Logo (Ensure logo.png is in the folder)
         try:
-            st.image("logo.png", width=120)
+            st.image("logo.png", width=250) # Increased logo size significantly
         except:
             st.title("🚀") # Fallback if logo missing
             
@@ -168,7 +168,7 @@ def dashboard_page():
     # Sidebar
     with st.sidebar:
         try:
-            st.image("logo.png", width=80)
+            st.image("logo.png", width=150) # Increased sidebar logo size
         except:
             pass
             
