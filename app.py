@@ -11,117 +11,109 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. ABSTRACT FLUID ART BACKGROUND --- */
+        /* --- 1. TECH-FLUID BACKGROUND --- */
         .stApp {
-            background-color: #FFFFFF;
-            /* Multiple soft pastel gradients overlapping to create fluid shapes */
+            background-color: #f8fafc;
             background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
-                radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),
-                radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),
-                radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),
-                radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),
-                radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);
-            background-size: 100% 100%;
+                /* LAYER 1: The Grid Overlay (Crisp & Technical) */
+                linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+                
+                /* LAYER 2: Fluid Blobs (Cooler Colors - No Pink) */
+                radial-gradient(at 0% 0%, #c7d2fe 0px, transparent 50%),       /* Soft Indigo */
+                radial-gradient(at 100% 0%, #e0f2fe 0px, transparent 50%),     /* Sky Blue (Replaced Pink) */
+                radial-gradient(at 100% 100%, #ddd6fe 0px, transparent 50%),   /* Light Violet */
+                radial-gradient(at 0% 100%, #ccfbf1 0px, transparent 50%);     /* Fresh Mint/Teal */
+                
+            /* Sizing: Grid is small (40px), Blobs are huge (100% screen) */
+            background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+            background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
             background-attachment: fixed;
         }
 
-        /* --- 2. TEXT & TYPOGRAPHY (Dark Charcoal for Max Contrast) --- */
+        /* --- 2. TEXT TYPOGRAPHY --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #1f2937 !important; /* Dark Grey */
+            color: #0f172a !important; /* Dark Navy/Black for contrast */
         }
         
-        /* Highlight Links with a gradient text effect */
         .stMarkdown a {
-            background: linear-gradient(90deg, #4f46e5, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #4F46E5 !important;
             font-weight: 700;
-            text-decoration: none;
         }
 
-        /* --- 3. PREMIUM GLASS CARDS (The "Floating" Content) --- */
+        /* --- 3. GLASS CARDS (High-End Tech Look) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.7); /* Milky White Glass */
-            backdrop-filter: blur(20px) saturate(180%); /* Strong blur + vibrance */
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            /* Soft, diffuse shadow for levitation */
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
+            background: rgba(255, 255, 255, 0.85); /* 85% White */
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            /* Clean, sharp shadow */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             padding: 40px;
         }
         
-        /* Hover Animation: Smooth Lift */
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-5px) scale(1.005);
-            box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.15);
-            transition: all 0.4s ease;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+            border-color: #a5b4fc; /* Glows Indigo on hover */
+            transition: all 0.3s ease;
         }
 
-        /* --- 4. SIDEBAR (Frosted Panel) --- */
-        section[data-testid="stSidebar"] {
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(15px);
-            border-right: 1px solid rgba(255,255,255,0.6);
-        }
-
-        /* --- 5. MODERN UI ELEMENTS --- */
-        
-        /* Inputs: Clean & Minimal */
+        /* --- 4. INPUTS (Clean White) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            border: 2px solid #f3f4f6;
-            border-radius: 12px;
-            color: #1f2937 !important;
-            transition: border-color 0.3s;
+            background-color: #FFFFFF !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
-            border-color: #818cf8;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        /* Buttons: Liquid Gradient */
+        /* --- 5. BUTTONS (Cool Blue/Purple Gradient) --- */
         div.stButton > button {
-            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
-            background-size: 200% auto;
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
             color: white !important;
             border: none;
-            border-radius: 50px; /* Pill shape */
+            border-radius: 8px;
             font-weight: 600;
-            letter-spacing: 0.5px;
-            padding: 10px 24px;
-            transition: 0.5s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s;
         }
         div.stButton > button:hover {
-            background-position: right center; /* Animate gradient */
             transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 8px 12px -2px rgba(79, 70, 229, 0.4);
         }
 
-        /* Badges & Tabs */
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e5e7eb; }
-        .stTabs [aria-selected="true"] { color: #8b5cf6 !important; border-bottom-color: #8b5cf6 !important; }
+        /* --- 6. SIDEBAR & EXTRAS --- */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
+        .stTabs [aria-selected="true"] { color: #4f46e5 !important; border-bottom-color: #4f46e5 !important; }
 
         .skill-tag {
-            background: white; border: 1px solid #e5e7eb; 
+            background: white; border: 1px solid #e2e8f0; 
             padding: 5px 12px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; color: #4b5563;
+            font-size: 12px; font-weight: 600; color: #475569;
         }
-        .skill-match { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; border: none; }
-        .skill-missing { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; border: none; }
+        .skill-match { background: #eff6ff; color: #1d4ed8 !important; border: 1px solid #bfdbfe; }
+        .skill-missing { background: #fef2f2; color: #b91c1c !important; border: 1px solid #fecaca; }
 
         .category-badge {
-            background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
-            color: #4338ca; padding: 6px 16px; border-radius: 20px;
-            font-weight: bold; font-size: 14px; border: none;
+            background: #eef2ff; color: #4338ca !important;
+            padding: 4px 12px; border-radius: 12px; font-weight: bold; border: 1px solid #c7d2fe;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
+    
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -502,6 +494,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
