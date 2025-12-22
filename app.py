@@ -171,9 +171,9 @@ def render_chatbot():
         # Chat Container
         with st.container(border=True, height=400):
             # Display chat messages from history
-            formessage in st.session_state.chat_history:
-                with st.chat_message(formessage["role"]):
-                    st.markdown(formessage["content"])
+            for message in st.session_state.chat_history:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
 
             # React to user input
             if prompt := st.chat_input("Type here..."):
