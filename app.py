@@ -56,8 +56,11 @@ def setup_page():
 
 # --- REPLACE THE EXISTING render_sidebar FUNCTION IN app.py WITH THIS ---
 
+# --- REPLACE THE render_sidebar FUNCTION IN app.py ---
+
 def render_sidebar():
     with st.sidebar:
+        # App Logo (Top)
         try: st.image("logo.png", width=150) 
         except: pass 
         st.title("NexHire")
@@ -65,24 +68,34 @@ def render_sidebar():
         
         # --- CHATBOT SECTION START ---
         st.divider()
-        st.markdown("### 🤖 NexBot Assistant")
         
+        # Header with your "chat.png" icon
+        c_icon, c_title = st.columns([1, 3])
+        with c_icon:
+            try: st.image("chat.png", width=60) # Using your specific chat icon here
+            except: st.write("🤖")
+        with c_title:
+            st.subheader("NexBot AI")
+            st.caption("Your Hiring Assistant")
+
         # 1. Initialize Chat History
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # 2. Chat History Display (Scrollable Container)
-        chat_container = st.container(height=300)
+        # 2. Chat History Display (Scrollable)
+        chat_container = st.container(height=350) # Increased height slightly
         with chat_container:
             if not st.session_state.messages:
-                st.info("👋 Hi! I'm NexBot. Ask me anything about recruitment!")
+                st.markdown("👋 **Hi! I'm NexBot.**")
+                st.caption("Ask me about candidates, interview questions, or how to use this app.")
             
             for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
+                # Use a different avatar for user vs assistant
+                avatar = "chat.png" if message["role"] == "assistant" else None
+                with st.chat_message(message["role"], avatar=avatar):
                     st.markdown(message["content"])
 
         # 3. Chat Input
-        # Note: We use a unique key to prevent conflicts
         if prompt := st.chat_input("Ask NexBot...", key="sidebar_chat_input"):
             # A. Display User Message
             st.session_state.messages.append({"role": "user", "content": prompt})
@@ -92,12 +105,13 @@ def render_sidebar():
 
             # B. Get AI Response
             with st.spinner("Thinking..."):
+                # Call the AI function (Make sure you added the function to ai_engine.py)
                 response = ai.get_chat_response(st.session_state.messages)
             
             # C. Display AI Response
             st.session_state.messages.append({"role": "assistant", "content": response})
             with chat_container:
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar="chat.png"): # Use icon for response too
                     st.markdown(response)
         # --- CHATBOT SECTION END ---
 
@@ -409,4 +423,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
