@@ -11,33 +11,33 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. BACKGROUND: FLUID ART + DOT MATRIX (No Checks) --- */
+        /* --- 1. BACKGROUND: SOFT CLOUD WHITE (Reduced Glare) --- */
         .stApp {
-            background-color: #FFFFFF;
+            background-color: #F8FAFC; /* Soft Off-White (Less harsh than pure white) */
             background-image: 
-                /* LAYER 1: Micro-Dots (Replaces the Grid/Checks) */
-                radial-gradient(rgba(99, 102, 241, 0.15) 1.5px, transparent 1.5px), 
+                /* LAYER 1: Subtle Micro-Dots (Faint Grey) */
+                radial-gradient(#CBD5E1 1.5px, transparent 1.5px), 
                 
-                /* LAYER 2: The "Best" Fluid Art Gradients */
+                /* LAYER 2: Fluid Art Gradients (Softened Opacity) */
                 radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),    /* Baby Blue */
                 radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),     /* Rose Pink */
                 radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),      /* Lavender */
                 radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),     /* Mint */
                 radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Soft Indigo */
                 
-            /* Sizing: Dots spaced 24px apart. Art fills screen. */
+            /* Sizing & Fixed Position */
             background-size: 24px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
             background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
             background-attachment: fixed;
         }
 
-        /* --- 2. TYPOGRAPHY (Clean Dark Grey) --- */
+        /* --- 2. TYPOGRAPHY (Dark Grey for Contrast) --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #1f2937 !important; 
+            color: #334155 !important; /* Soft Slate Grey (Easier on eyes than pure black) */
         }
         
-        /* Gradient Text for Links */
+        /* Gradient Links */
         .stMarkdown a {
             background: linear-gradient(90deg, #4f46e5, #ec4899);
             -webkit-background-clip: text;
@@ -45,82 +45,81 @@ def setup_page():
             font-weight: 700;
         }
 
-        /* --- 3. SOFT GLASS CARDS (Rounded, Not Tabular) --- */
+        /* --- 3. GLASS CARDS (Floating & Soft) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            /* Increased radius for a softer, organic look */
-            border-radius: 30px; 
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
+            background: rgba(255, 255, 255, 0.65); /* More transparent to let background show */
+            backdrop-filter: blur(25px) saturate(140%);
+            -webkit-backdrop-filter: blur(25px) saturate(140%);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); /* Very soft shadow */
             padding: 40px;
         }
         
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.85); /* Whiter on hover */
             transition: all 0.4s ease;
         }
 
-        /* --- 4. INPUT FIELDS (Pill Shaped) --- */
+        /* --- 4. INPUT FIELDS (Glass Pill) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.95) !important;
-            border: 2px solid #f1f5f9;
-            border-radius: 16px; /* Softer edges */
-            color: #1f2937 !important;
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            color: #1e293b !important;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
             border-color: #818cf8;
-            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1);
+            background-color: #ffffff !important;
         }
 
-        /* --- 5. BUTTONS (Liquid Gradient Pill) --- */
+        /* --- 5. BUTTONS (Soft Gradient) --- */
         div.stButton > button {
-            background-image: linear-gradient(to right, #6366f1, #8b5cf6, #d946ef);
+            background-image: linear-gradient(120deg, #6366f1, #a855f7);
             color: white !important;
             border: none;
-            border-radius: 50px; /* Full Pill Shape */
+            border-radius: 50px;
             font-weight: 600;
-            padding: 12px 28px;
+            padding: 10px 24px;
             transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
         div.stButton > button:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.35);
         }
 
-        /* --- 6. SIDEBAR & BADGES --- */
+        /* --- 6. SIDEBAR (Frosted) --- */
         section[data-testid="stSidebar"] {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(15px);
-            border-right: 1px solid rgba(255,255,255,0.6);
+            background-color: rgba(248, 250, 252, 0.85); /* Matches background */
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255,255,255,0.4);
         }
 
+        /* Tabs & Badges */
         .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
-        .stTabs [aria-selected="true"] { color: #8b5cf6 !important; border-bottom-color: #8b5cf6 !important; }
+        .stTabs [aria-selected="true"] { color: #6366f1 !important; border-bottom-color: #6366f1 !important; }
 
         .skill-tag {
-            background: white; border: 1px solid #e2e8f0; 
-            padding: 6px 14px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; color: #4b5563;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            background: rgba(255,255,255,0.8); border: 1px solid #e2e8f0; 
+            padding: 5px 12px; margin: 4px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; color: #64748b;
         }
-        .skill-match { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; border: none; }
-        .skill-missing { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; border: none; }
+        .skill-match { background: #ecfdf5; color: #047857 !important; border: 1px solid #a7f3d0; }
+        .skill-missing { background: #fef2f2; color: #b91c1c !important; border: 1px solid #fecaca; }
 
         .category-badge {
-            background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
-            color: #4338ca; padding: 6px 16px; border-radius: 20px;
-            font-weight: bold; font-size: 14px; border: none;
+            background: #eef2ff; color: #4338ca !important;
+            padding: 4px 12px; border-radius: 12px; font-weight: bold; border: 1px solid #c7d2fe;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
-    
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -501,6 +500,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
