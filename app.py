@@ -54,10 +54,6 @@ def setup_page():
         </style>
     """, unsafe_allow_html=True)
 
-# --- REPLACE THE EXISTING render_sidebar FUNCTION IN app.py WITH THIS ---
-
-# --- REPLACE THE render_sidebar FUNCTION IN app.py ---
-
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -105,7 +101,7 @@ def render_sidebar():
 
             # B. Get AI Response
             with st.spinner("Thinking..."):
-                # Call the AI function (Make sure you added the function to ai_engine.py)
+                # Call the AI function
                 response = ai.get_chat_response(st.session_state.messages)
             
             # C. Display AI Response
@@ -367,7 +363,22 @@ def dashboard_page():
                     st.metric(label="", value=f"{res['score']}%", help="Strict ATS Calculation")
                     st.markdown("</div>", unsafe_allow_html=True)
                     st.write("")
-                    pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, res['score'], res['feedback'], res['resume_skills'], res['missing_keywords'], res['category'])
+                    
+                    # --- UPDATED PDF GENERATION CALL ---
+                    pdf_data = af.generate_pdf_report(
+                        st.session_state['username'], 
+                        job_role, 
+                        res['score'], 
+                        res['feedback'], 
+                        res['resume_skills'], 
+                        res['missing_keywords'], 
+                        res['category'],
+                        res['interview_q'],        # PASSED NEW DATA
+                        res['market_analysis'],    # PASSED NEW DATA
+                        res['roadmap']             # PASSED NEW DATA
+                    )
+                    # -----------------------------------
+
                     st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
             with r2:
                 with st.container(border=True):
@@ -423,5 +434,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
