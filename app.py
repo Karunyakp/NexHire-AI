@@ -11,33 +11,33 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. THE PERFECT COMBO: FLUID ART + TECH GRID --- */
+        /* --- 1. BACKGROUND: FLUID ART + DOT MATRIX (No Checks) --- */
         .stApp {
             background-color: #FFFFFF;
             background-image: 
-                /* LAYER 1: The Grid Overlay (Crisp structure) */
-                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px), 
-                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                /* LAYER 1: Micro-Dots (Replaces the Grid/Checks) */
+                radial-gradient(rgba(99, 102, 241, 0.15) 1.5px, transparent 1.5px), 
                 
-                /* LAYER 2: The "Best" Fluid Art Gradients (Pink, Blue, Lavender) */
+                /* LAYER 2: The "Best" Fluid Art Gradients */
                 radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),    /* Baby Blue */
                 radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),     /* Rose Pink */
                 radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),      /* Lavender */
                 radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),     /* Mint */
                 radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Soft Indigo */
                 
-            /* Sizing: Grid is 40px, Art is 100% screen */
-            background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-            background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+            /* Sizing: Dots spaced 24px apart. Art fills screen. */
+            background-size: 24px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+            background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
             background-attachment: fixed;
         }
 
-        /* --- 2. TYPOGRAPHY (Dark Charcoal for Contrast) --- */
+        /* --- 2. TYPOGRAPHY (Clean Dark Grey) --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #1f2937 !important; /* Dark Grey */
+            color: #1f2937 !important; 
         }
         
+        /* Gradient Text for Links */
         .stMarkdown a {
             background: linear-gradient(90deg, #4f46e5, #ec4899);
             -webkit-background-clip: text;
@@ -45,66 +45,67 @@ def setup_page():
             font-weight: 700;
         }
 
-        /* --- 3. PREMIUM GLASS CARDS (Saturated Blur) --- */
+        /* --- 3. SOFT GLASS CARDS (Rounded, Not Tabular) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.75); /* Slightly more opaque for the grid */
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 24px;
+            /* Increased radius for a softer, organic look */
+            border-radius: 30px; 
             border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
             padding: 40px;
         }
         
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-5px) scale(1.005);
+            transform: translateY(-5px);
             box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.15);
             transition: all 0.4s ease;
         }
 
-        /* --- 4. INPUT FIELDS (Clean) --- */
+        /* --- 4. INPUT FIELDS (Pill Shaped) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            border: 2px solid #f3f4f6;
-            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #f1f5f9;
+            border-radius: 16px; /* Softer edges */
             color: #1f2937 !important;
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
             border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1);
         }
 
-        /* --- 5. BUTTONS (Liquid Gradient) --- */
+        /* --- 5. BUTTONS (Liquid Gradient Pill) --- */
         div.stButton > button {
-            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
-            background-size: 200% auto;
+            background-image: linear-gradient(to right, #6366f1, #8b5cf6, #d946ef);
             color: white !important;
             border: none;
-            border-radius: 50px;
+            border-radius: 50px; /* Full Pill Shape */
             font-weight: 600;
-            padding: 10px 24px;
-            transition: 0.5s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 12px 28px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
         }
         div.stButton > button:hover {
-            background-position: right center;
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
         /* --- 6. SIDEBAR & BADGES --- */
         section[data-testid="stSidebar"] {
-            background-color: rgba(255, 255, 255, 0.85);
+            background-color: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(15px);
             border-right: 1px solid rgba(255,255,255,0.6);
         }
 
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e5e7eb; }
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
         .stTabs [aria-selected="true"] { color: #8b5cf6 !important; border-bottom-color: #8b5cf6 !important; }
 
         .skill-tag {
-            background: white; border: 1px solid #e5e7eb; 
-            padding: 5px 12px; margin: 4px; border-radius: 20px;
+            background: white; border: 1px solid #e2e8f0; 
+            padding: 6px 14px; margin: 4px; border-radius: 20px;
             font-size: 12px; font-weight: 700; color: #4b5563;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
         .skill-match { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; border: none; }
         .skill-missing { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; border: none; }
@@ -500,6 +501,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
