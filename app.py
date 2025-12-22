@@ -5,553 +5,366 @@ import ai_engine as ai
 import advanced_features as af
 import PyPDF2
 import time
-import os
-import json
 
-
-st.set_page_config(page_title="NexHire", page_icon="", layout="wide", initial_sidebar_state="expanded")
-
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-        color: #111827;
-        background-color: #F9FAFB;
-    }
-    
-    .stApp {
-        background-color: #F9FAFB;
-    }
-
-    /* Cards */
-    div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        background-color: white;
-        border-radius: 12px;
-        border: 1px solid #E5E7EB;
-        padding: 32px;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Metrics */
-    div[data-testid="stMetricValue"] {
-        font-size: 28px !important;
-        font-weight: 700;
-        color: #111827;
-    }
-
-    div[data-testid="stMetricLabel"] {
-        font-size: 14px;
-        color: #6B7280;
-        font-weight: 500;
-    }
-    
-    /* Buttons */
-    .stButton > button {
-        border-radius: 8px;
-        font-weight: 500;
-        padding-top: 0.6rem;
-        padding-bottom: 0.6rem;
-        border: 1px solid #E5E7EB;
-    }
-    
-    /* Chat Message Styling */
-    .stChatMessage {
-        background-color: white;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-
-    /* Hide Footer only, keep header for settings */
-    footer {visibility: hidden;}
-    
-    /* Custom Footer */
-    .custom-footer {
-        text-align: center;
-        color: #6B7280;
-        font-size: 12px;
-        margin-top: 50px;
-        padding-top: 20px;
-        border-top: 1px solid #E5E7EB;
-    }
-    .custom-footer a {
-        color: #4F46E5;
-        text-decoration: none;
-        font-weight: 600;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- 2. HELPER FUNCTIONS ---
-def extract_text(uploaded_file):
-    try:
-        reader = PyPDF2.PdfReader(uploaded_file)
-        return "".join([page.extract_text() for page in reader.pages])
-    except: return None
-
-def render_footer():
+def setup_page():
+    st.set_page_config(page_title="NexHire Platinum", page_icon="💜", layout="wide")
     st.markdown("""
-        <div class="custom-footer">
-            Developed by <b>Karunya. K. P</b> | 
-            <a href="https://www.linkedin.com/in/karunya-kp" target="_blank">Connect on LinkedIn</a> | 
-            <a href="https://github.com/in/Karunyakp" target="_blank">Connect on Github </a>
-            <br>© 2025 NexHire Inc.
-        </div>
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        html, body, [class*="css"] {
+            font-family: 'Outfit', sans-serif;
+            color: #111827;
+            background-color: #F9FAFB;
+        }
+        .stMarkdown a {
+            text-decoration: none;
+            color: #4F46E5 !important;
+            font-weight: 600;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #FFFFFF;
+            border-radius: 16px; 
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #E5E7EB; }
+        .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
+        .skill-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 4px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .skill-match { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
+        .skill-missing { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        .category-badge {
+            background-color: #EEF2FF;
+            color: #4F46E5;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            border: 1px solid #C7D2FE;
+        }
+        #MainMenu, footer, header {visibility: hidden;}
+        div[data-testid="stHeaderActionElements"] {display: none !important;}
+        </style>
     """, unsafe_allow_html=True)
-
-
-def login_page():
-    # Render sidebar on login page too
-    render_sidebar()
-    
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        st.write("")
-        st.write("")
-        with st.container(border=True):
-            
-          
-            c_img1, c_img2, c_img3 = st.columns([1, 1, 1])
-            with c_img2:
-                if os.path.exists("logo.png"):
-                    st.image("logo.png", width=100)
-                else:
-                    st.header("💼")
-
-            st.markdown("""
-                <div style="text-align: center; margin-bottom: 24px; margin-top: 10px;">
-                    <h2 style="margin: 0; font-weight: 700; color: #111827; font-size: 24px;">NexHire</h2>
-                    <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 14px;">Enterprise Recruitment Intelligence</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            tab_login, tab_reg = st.tabs(["Sign In", "Create Account"])
-            
-            with tab_login:
-                u = st.text_input("Username", key="l_user")
-                p = st.text_input("Password", type="password", key="l_pwd")
-                if st.button("Sign In", type="primary", use_container_width=True):
-                    if ai.validate_admin_login(u, p):
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = u
-                        st.session_state['role'] = 'Admin'
-                        st.session_state['is_guest'] = False
-                        st.session_state['admin_unlocked'] = True
-                        st.rerun()
-                    elif db.login_user(u, p):
-                        st.session_state['logged_in'] = True
-                        st.session_state['username'] = u
-                        st.session_state['role'] = 'User'
-                        st.session_state['is_guest'] = False
-                        st.session_state['admin_unlocked'] = False
-                        st.rerun()
-                    else:
-                        st.error("Invalid credentials.")
-            
-            with tab_reg:
-                new_u = st.text_input("Choose Username", key="r_user")
-                new_p = st.text_input("Choose Password", type="password", key="r_pwd")
-                if st.button("Create Account", use_container_width=True):
-                    if len(new_p) < 8: 
-                        st.error("Password must be at least 8 characters.")
-                    elif db.add_user(new_u, new_p): 
-                        st.success("Account created! Please Sign In.")
-                    else: 
-                        st.error("Username already exists.")
-
-            st.markdown("""
-                <div style="text-align: center; margin: 20px 0;">
-                    <span style="background-color: white; padding: 0 10px; color: #9CA3AF; font-size: 12px;">OR CONTINUE AS</span>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            col_g1, col_g2 = st.columns(2)
-            with col_g1:
-                if st.button("Explore as Candidate", use_container_width=True):
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = "Guest Candidate"
-                    st.session_state['role'] = "Candidate"
-                    st.session_state['is_guest'] = True
-                    st.session_state['admin_unlocked'] = False
-                    st.rerun()
-            with col_g2:
-                if st.button("Explore as Recruiter", use_container_width=True):
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = "Guest Recruiter"
-                    st.session_state['role'] = "Recruiter"
-                    st.session_state['is_guest'] = True
-                    st.session_state['admin_unlocked'] = False
-                    st.rerun()
-        
-        render_footer()
 
 def render_sidebar():
     with st.sidebar:
-        if os.path.exists("logo.png"):
-            st.image("logo.png", width=120) 
-        else:
-            st.header("NexHire")
-        
-        if st.session_state.get('logged_in'):
-            st.markdown(f"### Hi, {st.session_state.get('username', 'Guest')} !!")
-            st.caption(f"Role: {st.session_state.get('role', 'Viewer')}")
-            st.write("")
-            if st.button("Sign Out", type="secondary", use_container_width=True):
-                st.session_state.clear()
-                st.rerun()
-        
+        try: st.image("logo.png", width=150) 
+        except: pass 
+        st.title("NexHire")
+        st.markdown("### Enterprise Recruitment Intelligence")
         st.divider()
-        st.markdown("### Resources")
-        
-        if st.button("📄 Documentation", use_container_width=True):
-            @st.dialog("Documentation")
-            def show_docs():
-                st.write("**NexHire User Guide**")
-                st.write("1. **Candidates**: Upload your resume to check ATS scores and get job fit analysis.")
-                st.write("2. **Recruiters**: Upload bulk resumes to screen them against job descriptions.")
-                st.write("3. **Security**: All data is processed securely.")
-            show_docs()
-
-        if st.button("💬 Support", use_container_width=True):
-            @st.dialog("Contact Support")
-            def show_support():
-                st.write("Need help? Contact our team:")
-                st.write(" **Email**: karunyayashu6@gmail.com")
-                st.write(" **Phone**: +91 XXXXX XXXXX")
-            show_support()
-            
-        st.markdown("---")
-        st.markdown("[ Connect on LinkedIn !](https://www.linkedin.com/in/karunya-kp)")
-        st.markdown("[ Connect on GitHub !](https://github.com/in/Karunyakp)")
-        st.markdown("---")
-        st.markdown("**Developed by**")
-        st.markdown("Karunya. K. P")
-        st.caption("© 2025 NexHire Inc.")
-
-
-def render_nexbot_button(key_suffix="default"):
-    with st.popover("💬 Chat with NexBot", use_container_width=False):
-        st.markdown("### 🤖 NexBot Assistant")
-        st.caption("Ask me anything about your resume or hiring!")
-        
-        if "messages" not in st.session_state:
-            st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
-
-        chat_container = st.container(height=300)
-        with chat_container:
-            for message in st.session_state.messages:
-                avatar = "chat.png" if message["role"] == "assistant" and os.path.exists("chat.png") else None
-                with st.chat_message(message["role"], avatar=avatar):
-                    st.markdown(message["content"])
-
-        if prompt := st.chat_input("Ask a question...", key=f"chatbot_input_{key_suffix}"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            
-            with chat_container:
-                with st.chat_message("user"):
-                    st.markdown(prompt)
-                
-                avatar = "chat.png" if os.path.exists("chat.png") else None
-                with st.chat_message("assistant", avatar=avatar):
-                    with st.spinner("Thinking..."):
-                        response = ai.chat_response(prompt)
-                        st.markdown(response)
-            
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
-def candidate_mode():
-    h1, h2 = st.columns([3, 1])
-    with h1:
-        st.markdown("###  Candidate Dashboard")
-        st.caption("Optimize your profile to get hired faster.")
-    with h2:
-        render_nexbot_button(key_suffix="candidate")
-    
-    # --- HISTORY / SAVED PLANS SECTION ---
-    try:
-        history = db.fetch_user_history(st.session_state['username'])
-        saved_plans = [h for h in history if h[3] == "Complete AI Scan"]
-        
-        if saved_plans:
-            with st.expander(" Saved Learning Plans & History"):
-                for plan in saved_plans:
-                    timestamp = plan[0]
-                    score = plan[4]
-                    details_str = plan[5]
-                    try:
-                        details = json.loads(details_str)
-                        roadmap = details.get('roadmap', 'No roadmap saved.')
-                        st.markdown(f"**{timestamp}** - Score: {score}%")
-                        if st.button(f"View Plan ({timestamp})", key=f"hist_{timestamp}"):
-                            st.info("Re-loaded Plan from History")
-                            st.write(roadmap)
-                    except: pass
-    except Exception as e:
-        # Fallback if DB fetch fails
-        pass
-
-    st.divider()
-    c1, c2 = st.columns([1, 1])
-    with c1: 
-        input_method = st.radio("Resume Input Method", ["Upload PDF", "Paste Text"], horizontal=True)
-        
-        resume_text = None
-        if input_method == "Upload PDF":
-            resume = st.file_uploader("Upload Your Resume (PDF)", type="pdf", key="c_res")
-            if resume:
-                resume_text = extract_text(resume)
-        else:
-            resume_text = st.text_area("Paste Resume Content", height=300, key="c_res_text", placeholder="Paste your resume text here...")
-
-    with c2: 
-        target_role = st.text_input("Target Job Title", placeholder="e.g. Senior Product Manager")
-        jd = st.text_area("Paste Job Description", height=150, key="c_jd", placeholder="Paste the job description you are applying for...")
-    
-    if resume_text:
-        st.write("")
-        st.markdown("#### Actions")
-        col_act1, col_act2, col_act3, col_act4 = st.columns(4)
-        
-        with col_act1:
-            analyze_fit_btn = st.button("Complete AI Scan", type="primary", use_container_width=True, help="Full analysis against JD")
-        with col_act2:
-            quick_scan_btn = st.button(" Quick Scan", use_container_width=True, help="Fast resume review without JD")
-        with col_act3:
-            ats_score_btn = st.button(" ATS Score", use_container_width=True)
-        with col_act4:
-            interview_prep_btn = st.button(" Interview Prep", use_container_width=True)
-
-        # Logic for "Complete AI Scan" (Job Fit)
-        if analyze_fit_btn:
-             if not jd:
-                 st.error("Please provide a Job Description for a Complete AI Scan.")
-             else:
-                 st.toast("Analyzing... Please wait approx. 2 mins for complete results!", icon="⏳")
-                 with st.spinner("Performing Complete AI Scan... (This may take up to 2 minutes)"):
-                    text = resume_text
-                    st.session_state['c_role_title'] = target_role if target_role else "Target Role"
-                    full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
-                    
-                    st.session_state['c_data'] = ai.analyze_fit(text, full_jd)
-                    st.session_state['c_roadmap'] = ai.get_roadmap(text, full_jd)
-                    
-                    st.session_state['c_text_stored'] = text
-                    st.session_state['c_jd_stored'] = full_jd
-                    st.session_state['view_mode'] = 'fit'
-                    
-                    full_details = st.session_state['c_data']
-                    full_details['roadmap'] = st.session_state['c_roadmap']
-                    
-                    db.save_scan(st.session_state['username'], "Candidate", "Complete AI Scan", st.session_state['c_data'].get('score', 0), full_details)
-
-        # Logic for "Quick Scan"
-        if quick_scan_btn:
-             with st.spinner("Running Quick Resume Scan..."):
-                text = resume_text
-                cat = ai.categorize_resume(text)
-                auth = ai.check_authenticity(text)
-                
-                # FIX: SAFETY CHECK FOR NONE AUTH
-                if auth is None:
-                    auth = {'human_score': 0, 'verdict': 'Error (AI Unavailable)', 'analysis': 'Could not analyze authenticity due to API limits.'}
-                
-                st.session_state['c_quick'] = {'category': cat, 'auth': auth}
-                st.session_state['c_text_stored'] = text
-                st.session_state['view_mode'] = 'quick'
-                
-                # Now auth is guaranteed to be a dict, so auth.get() works
-                db.save_scan(st.session_state['username'], "Candidate", "Quick Scan", auth.get('human_score', 0), auth)
-
-        if ats_score_btn:
-             if not jd:
-                 st.error("Job Description is recommended for accurate ATS scoring.")
-             else:
-                 with st.spinner("Calculating ATS score..."):
-                    text = resume_text
-                    full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
-                    
-                    st.session_state['c_ats_data'] = ai.run_screening(text, full_jd) 
-                    st.session_state['c_text_stored'] = text
-                    st.session_state['c_jd_stored'] = full_jd
-                    st.session_state['view_mode'] = 'ats'
-
-        if interview_prep_btn:
-             if not jd:
-                 st.error("Job Description required for tailored interview questions.")
-             else:
-                 with st.spinner("Generating interview questions..."):
-                    text = resume_text
-                    full_jd = f"Target Role: {target_role}\n\n{jd}" if target_role else jd
-                    
-                    st.session_state['c_interview'] = ai.get_interview_prep(text, full_jd)
-                    st.session_state['c_text_stored'] = text
-                    st.session_state['c_jd_stored'] = full_jd
-                    st.session_state['view_mode'] = 'interview'
-
-    if 'view_mode' in st.session_state:
+        st.subheader("Connect with Developer")
+        st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
+        st.link_button("GitHub Profile", "https://github.com/karunyakp")
         st.divider()
-        if st.session_state['view_mode'] == 'fit' and 'c_data' in st.session_state:
-            data = st.session_state['c_data']
-            c_score, c_text = st.columns([1, 3])
-            with c_score: st.metric("Overall Match", f"{data['score']}%")
-            with c_text: st.info(f"**Summary:** {data['summary']}")
-            
-            st.subheader("Skills Analysis")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown("✅ **Matched**")
-                for s in data['skills']['matched']: st.success(s)
-            with col2:
-                st.markdown("⚠️ **Partial**")
-                for s in data['skills']['partial']: st.warning(s)
-            with col3:
-                st.markdown("❌ **Missing**")
-                for s in data['skills']['missing']: st.error(s)
+        st.caption("Developed & Maintained by")
+        st.markdown("### Karunya. K. P") 
+        st.caption("© 2025 NexHire Systems")
 
-            with st.expander(" 4-Week Improvement Plan (Timetable)", expanded=True):
-                 roadmap = st.session_state.get('c_roadmap', "Roadmap generation failed. Please try again.")
-                 st.write(roadmap)
-            
-            if st.button(" Download Report (PDF)"):
-                try:
-                    role_title = st.session_state.get('c_role_title', 'Target Role')
-                    pdf_bytes = af.generate_pdf_report(
-                        st.session_state['username'],
-                        role_title,
-                        data['score'],
-                        data['summary'] + "\n\nROADMAP:\n" + roadmap,
-                        ", ".join(data['skills']['matched']),
-                        ", ".join(data['skills']['missing']),
-                        "General"
-                    )
-                    st.download_button(label="Click to Download PDF", data=pdf_bytes, file_name="NexHire_Report.pdf", mime="application/pdf", key="dl_pdf_btn")
-                except Exception as e: st.error(f"Error generating PDF: {e}")
-
-        elif st.session_state['view_mode'] == 'quick' and 'c_quick' in st.session_state:
-            res = st.session_state['c_quick']
-            st.subheader("Quick Scan Results")
-            c1, c2 = st.columns(2)
-            with c1: st.metric("Detected Category", res['category'])
+def login_page():
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        st.write(""); st.write("")
+        with st.container(border=True):
+            c1, c2, c3 = st.columns([1, 2, 1])
             with c2:
-                auth = res['auth']
-                score = auth.get('human_score', 0) if auth else 0
-                verdict = auth.get('verdict', 'Unknown') if auth else 'Unknown'
-                st.metric("Authenticity Score", f"{score}%")
-                st.caption(f"Verdict: {verdict}")
-            st.info("For a detailed analysis against a specific job, use 'Complete AI Scan'.")
+                try: st.image("logo.png", use_container_width=True)
+                except: st.markdown("<h1 style='text-align: center; color: #4F46E5;'>NexHire</h1>", unsafe_allow_html=True)
+            st.write("")
+            tab_sign, tab_reg = st.tabs(["Sign In", "Register New Account"])
+            with tab_sign:
+                st.write("")
+                username = st.text_input("Username", key="login_user")
+                password = st.text_input("Password", type="password", key="login_pass")
+                st.write("")
+                if st.button("Access Dashboard"):
+                    if db.login_user(username, password):
+                        st.session_state['logged_in'] = True
+                        st.session_state['username'] = username
+                        if ai.validate_admin_login(username, password): 
+                            db.set_admin(username)
+                        st.rerun()
+                    else: st.error("Invalid credentials.")
+            with tab_reg:
+                st.write("")
+                new_user = st.text_input("Choose Username", key="new_user")
+                new_pass = st.text_input("Choose Password", type="password", key="new_pass")
+                st.info("Password must be at least 8 characters.")
+                st.write("")
+                if st.button("Create Profile"):
+                    if new_user and new_pass:
+                        if len(new_pass) < 8: st.error("Password is too short!")
+                        else:
+                            if db.add_user(new_user, new_pass):
+                                if ai.validate_admin_login(new_user, new_pass):
+                                    db.set_admin(new_user)
+                                    st.success("Admin Credentials Verified! Please Login.")
+                                else: st.success("Account created! Please log in.")
+                            else: st.error("Username taken.")
+                    else: st.warning("Please fill all fields.")
+            st.write(""); st.divider()
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            st.caption("Application Developed by")
+            st.markdown("**Karunya. K. P**") 
+            st.caption("© 2025 NexHire Systems")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        elif st.session_state['view_mode'] == 'ats' and 'c_ats_data' in st.session_state:
-            data = st.session_state['c_ats_data']
-            st.subheader("ATS Compatibility")
-            m1, m2 = st.columns(2)
-            with m1: st.metric("ATS Parse Score", f"{data['ats_score']}%")
-            with m2: 
-                if data['ats_score'] > 80: st.success("Highly Readable")
-                elif data['ats_score'] > 50: st.warning("Needs Formatting Fixes")
-                else: st.error("Risk of Rejection")
-            st.write(data['summary'])
+def dashboard_page():
+    c_left, c_right = st.columns([6, 1])
+    with c_left:
+        cl1, cl2 = st.columns([1, 10])
+        with cl1:
+            try: st.image("logo.png", width=100)
+            except: st.write("")
+        with cl2:
+            st.markdown(f"### Hello, {st.session_state['username']}")
+            st.markdown("<p style='color: #6B7280; font-size: 14px; margin-top: -15px;'>Your recruitment analytics overview</p>", unsafe_allow_html=True)
+    with c_right:
+        if st.button("Sign Out"):
+            st.session_state['logged_in'] = False
+            # Clear session state on logout
+            keys_to_remove = ['analysis_result', 'analysis_complete']
+            for key in keys_to_remove:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+    st.divider()
 
-        elif st.session_state['view_mode'] == 'interview' and 'c_interview' in st.session_state:
-            st.subheader("🎤 Interview Preparation")
-            st.write(st.session_state['c_interview'])
-
-# --- 7. RECRUITER MODE ---
-def recruiter_mode():
-    h1, h2 = st.columns([3, 1])
-    with h1:
-        st.markdown("###  Recruiter Workspace")
-        st.caption("Bulk screen candidates and identify top talent instantly.")
-    with h2:
-        render_nexbot_button(key_suffix="recruiter")
-
-    c1, c2 = st.columns([1, 1])
-    with c1: 
-        resumes = st.file_uploader("Upload Resumes (PDF)", type="pdf", key="r_res", accept_multiple_files=True)
-    with c2: 
-        job_title = st.text_input("Job Position Title", placeholder="e.g. Senior Data Scientist")
-        jd = st.text_area("Job Requirements", height=150, key="r_jd")
-    
-    bias_free = st.toggle("Enable Bias-Free Screening (Hide Name/Gender)")
-    
-    if st.button("Run Bulk Screening", type="primary"):
-        if resumes and jd:
-            results_list = []
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            total_files = len(resumes)
-            
-            full_jd = f"Target Role: {job_title}\n\n{jd}" if job_title else jd
-            
-            for i, res in enumerate(resumes):
-                status_text.text(f"Processing {res.name} ({i+1}/{total_files})...")
-                text = extract_text(res)
-                if text:
-                    ai_data = ai.run_screening(text, full_jd, bias_free)
-                    results_list.append({
-                        "Filename": res.name,
-                        "ATS Score": ai_data.get('ats_score', 0),
-                        "Authenticity": ai_data.get('auth_badge', 'Unknown'),
-                        "Red Flags": len(ai_data.get('red_flags', [])),
-                        "Summary": ai_data.get('summary', 'No summary provided')
-                    })
-                    db.save_scan(st.session_state['username'], "Recruiter", f"Bulk: {res.name}", ai_data.get('ats_score', 0), ai_data)
-                progress_bar.progress((i + 1) / total_files)
-            
-            st.session_state['r_bulk_data'] = results_list
-            status_text.text("Screening Complete!")
-            time.sleep(1)
-            status_text.empty()
-            progress_bar.empty()
-        elif not resumes: st.error("Please upload at least one resume.")
-        elif not jd: st.error("Please provide a job description.")
-
-    if 'r_bulk_data' in st.session_state and st.session_state['r_bulk_data']:
-        st.divider()
-        st.subheader("Screening Results")
-        df_results = pd.DataFrame(st.session_state['r_bulk_data'])
-        df_results = df_results.sort_values(by="ATS Score", ascending=False).reset_index(drop=True)
-        st.dataframe(df_results, column_config={
-            "ATS Score": st.column_config.ProgressColumn("Match Score", format="%d%%", min_value=0, max_value=100),
-            "Authenticity": st.column_config.TextColumn("Authenticity Badge"),
-        }, use_container_width=True)
-        csv = df_results.to_csv(index=False).encode('utf-8')
-        st.download_button("Download Results CSV", csv, "screening_results.csv", "text/csv")
-
-# --- 8. ADMIN CONSOLE ---
-def admin_console():
-    st.markdown("### System Administration")
-    data = db.get_all_full_analysis()
-    if data:
-        df = pd.DataFrame(data, columns=["Timestamp", "Username", "Mode", "Action", "Score", "Details"])
-        st.dataframe(df, use_container_width=True)
-    else: st.info("No system activity recorded.")
-
-# --- 9. MAIN APP LOGIC ---
-def main():
-    # Force table creation at startup
-    db.create_tables()
-    
-    if not st.session_state.get('logged_in'):
-        login_page()
-    else:
-        render_sidebar()
-        if st.session_state.get('admin_unlocked'):
-            admin_console()
-        else:
-            role = st.session_state.get('role', 'User')
-            if role == "Candidate":
-                candidate_mode()
-            elif role == "Recruiter":
-                recruiter_mode()
+    if db.is_admin(st.session_state['username']):
+        st.markdown("### Super Admin Console")
+        st.info("Full Access to User Data, Resumes, and AI Outputs.")
+        with st.expander("View Full Database (Click to Expand)", expanded=True):
+            all_data = db.get_all_full_analysis()
+            if all_data:
+                df = pd.DataFrame(all_data, columns=['ID', 'User', 'Role', 'Resume', 'JD', 'Score', 'Feedback', 'Cover Letter', 'Interview', 'Market', 'Roadmap', 'Date'])
+                st.dataframe(df[['ID', 'Date', 'User', 'Role', 'Score']], use_container_width=True)
+                st.divider()
+                st.markdown("### Deep Inspection")
+                selected_id = st.selectbox("Select an ID to inspect full details:", df['ID'])
+                if selected_id:
+                    record = df[df['ID'] == selected_id].iloc[0]
+                    st.success(f"Inspecting Record #{selected_id} | User: {record['User']}")
+                    with st.expander("Resume & Job Description (Inputs)"):
+                        c1, c2 = st.columns(2)
+                        with c1: 
+                            st.caption("Resume Text")
+                            st.text_area("Resume", record['Resume'], height=200, key="adm_res")
+                        with c2: 
+                            st.caption("Job Description")
+                            st.text_area("JD", record['JD'], height=200, key="adm_jd")
+                    with st.expander("AI Feedback & Analysis (Outputs)"):
+                        st.metric(label="Match Score", value=f"{record['Score']}%")
+                        st.markdown("---")
+                        st.markdown(record['Feedback'])
+                    with st.expander("Generated Content (Drafts)"):
+                        t1, t2, t3, t4 = st.tabs(["Cover Letter", "Interview Qs", "Market Data", "Roadmap"])
+                        with t1: st.text_area("Cover Letter", record['Cover Letter'], key="adm_cl")
+                        with t2: st.markdown(record['Interview'])
+                        with t3: st.markdown(record['Market'])
+                        with t4: st.markdown(record['Roadmap'])
             else:
-                tab1, tab2 = st.tabs(["Candidate Tools", "Recruiter Tools"])
-                with tab1: candidate_mode()
-                with tab2: recruiter_mode()
-        render_footer()
+                st.warning("No analysis data recorded yet.")
+        st.divider()
+
+    history = db.fetch_history(st.session_state['username'])
+    last_score = history[0][3] if history else 0
+    m1, m2 = st.columns(2)
+    with m1:
+        with st.container(border=True):
+            st.metric(label="LATEST SCORE", value=f"{last_score}%", delta="Most Recent Scan")
+    with m2:
+        with st.container(border=True):
+            st.metric(label="TOTAL SCANS", value=len(history), delta="Lifetime Usage")
+    st.write("")
+    
+    col_main, col_side = st.columns([2, 1])
+    with col_main:
+        with st.container(border=True):
+            st.markdown("### 1. Document Processing")
+            uploaded_file = st.file_uploader("Upload PDF", type="pdf", label_visibility="collapsed", key="resume_uploader")
+            resume_text = ""
+            category = "Manual Entry"
+            
+            if uploaded_file:
+                with st.spinner("Extracting text..."):
+                    reader = PyPDF2.PdfReader(uploaded_file)
+                    for page in reader.pages: resume_text += page.extract_text()
+                
+                with st.spinner("Categorizing profile..."):
+                    category = ai.categorize_resume(resume_text)
+                    st.success("Resume Extracted & Categorized!")
+                    st.markdown(f"<span class='category-badge'>{category}</span>", unsafe_allow_html=True)
+            else: 
+                resume_text = st.text_area("Or paste raw text", height=200, placeholder="Paste resume content here...")
+
+            if resume_text:
+                st.write("")
+                if st.button("Run AI & ATS Scanner", help="Check if resume looks AI-generated and is ATS friendly"):
+                    with st.spinner("Scanning for AI patterns and ATS readability..."):
+                        auth_data = ai.check_resume_authenticity(resume_text)
+                        st.write("---")
+                        st.markdown("### Authenticity Report")
+                        s1, s2 = st.columns(2)
+                        with s1:
+                            h_score = auth_data.get('human_score', 0)
+                            color = "normal" if h_score > 70 else "inverse"
+                            st.metric("Human-Written Score", f"{h_score}%", help="Lower score means high likelihood of AI generation.")
+                        with s2:
+                            st.caption("ATS Verdict")
+                            st.info(auth_data.get('verdict', 'N/A'))
+                        st.warning(auth_data.get('analysis', ''))
+
+    with col_side:
+        with st.container(border=True):
+            st.markdown("### 2. Job Requisition")
+            job_role = st.text_input("Role Title", placeholder="e.g. Product Designer")
+            job_desc = st.text_area("Requirements", height=250, placeholder="Paste Job Description here...", label_visibility="collapsed")
+    st.write("")
+    
+    btn_col1, btn_col2 = st.columns([1, 1])
+    with btn_col1:
+        run_quick_scan = st.button("Calculate Match Score", use_container_width=True, help="Instantly calculate ATS Score and Missing Keywords")
+    with btn_col2:
+        run_full_scan = st.button("Initialize Intelligence Engine", type="primary", use_container_width=True, help="Full deep dive with AI generation")
+
+    # --- QUICK SCAN LOGIC ---
+    if run_quick_scan:
+        if resume_text and job_desc:
+            with st.spinner("Calculating ATS Match Score..."):
+                score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
+                db.save_scan(st.session_state['username'], job_role, score)
+                st.divider()
+                st.markdown("### ATS Score Analysis")
+                q1, q2 = st.columns([1, 2])
+                with q1:
+                    st.metric(label="ATS Match Score", value=f"{score}%", delta="Instant Result")
+                with q2:
+                    if missing_keywords:
+                        st.error(f"**Missing Critical Keywords:**\n{', '.join(missing_keywords)}")
+                    else:
+                        st.success("Excellent Match! No critical keywords missing.")
+        else:
+             st.warning("Please provide both a Resume and a Job Description.")
+
+    # --- FULL SCAN LOGIC (PERSISTENT STATE) ---
+    if run_full_scan:
+        if resume_text and job_desc:
+            with st.status("Launching NexHire Intelligence Engine...", expanded=True) as status:
+                st.warning("Please wait! This deep analysis may take 1-2 minutes. Do not refresh the page.")
+                st.write("Analyzing Resume & Job Description...")
+                
+                score, missing_keywords = ai.get_ats_score(resume_text, job_desc)
+                feedback = ai.get_feedback(resume_text, job_desc)
+                
+                resume_skills = af.extract_skills(resume_text)
+                job_skills = af.extract_skills(job_desc)
+                
+                st.write("Drafting Cover Letter & Interview Questions...")
+                cover_letter = ai.generate_cover_letter(resume_text, job_desc)
+                interview_q = ai.generate_interview_questions(resume_text, job_desc)
+                
+                st.write("Calculating Market Value & Learning Roadmap...")
+                market_analysis = ai.get_market_analysis(resume_text, job_role)
+                roadmap = ai.generate_learning_roadmap(resume_text, job_desc)
+                
+                db.save_scan(st.session_state['username'], job_role, score)
+                db.save_full_analysis(st.session_state['username'], job_role, resume_text, job_desc, score, feedback, cover_letter, interview_q, market_analysis, roadmap)
+                status.update(label="Analysis Complete!", state="complete", expanded=False)
+                
+                # STORE RESULTS IN SESSION STATE
+                st.session_state['analysis_complete'] = True
+                st.session_state['analysis_result'] = {
+                    'score': score,
+                    'feedback': feedback,
+                    'resume_skills': resume_skills,
+                    'job_skills': job_skills,
+                    'missing_keywords': missing_keywords,
+                    'cover_letter': cover_letter,
+                    'interview_q': interview_q,
+                    'market_analysis': market_analysis,
+                    'roadmap': roadmap,
+                    'category': category
+                }
+        else:
+            st.warning("Please provide both a Resume and a Job Description.")
+
+    # --- DISPLAY RESULTS FROM SESSION STATE ---
+    if st.session_state.get('analysis_complete', False) and 'analysis_result' in st.session_state:
+        res = st.session_state['analysis_result']
+        
+        st.divider()
+        tab1, tab2, tab3, tab4 = st.tabs(["Analysis Report", "Cover Letter", "Interview Prep", "Strategic Insights"])
+        
+        with tab1:
+            r1, r2 = st.columns([1, 2])
+            with r1:
+                with st.container(border=True):
+                    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                    st.markdown("### MATCH SCORE")
+                    st.metric(label="", value=f"{res['score']}%", help="Strict ATS Calculation")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.write("")
+                    pdf_data = af.generate_pdf_report(st.session_state['username'], job_role, res['score'], res['feedback'], res['resume_skills'], res['missing_keywords'], res['category'])
+                    st.download_button("Download Report", data=pdf_data, file_name=f"NexHire_Report.pdf", mime="application/pdf")
+            with r2:
+                with st.container(border=True):
+                    st.markdown("### SKILL GAP ANALYSIS")
+                    matched = [s for s in res['resume_skills'] if s in res['job_skills']]
+                    
+                    if matched:
+                        st.markdown("**Matched Skills**")
+                        st.markdown("".join([f"<span class='skill-tag skill-match'>{s}</span>" for s in matched]), unsafe_allow_html=True)
+                    st.write("")
+                    if res['missing_keywords']:
+                        st.markdown("**Missing Skills (AI Detected)**")
+                        st.markdown("".join([f"<span class='skill-tag skill-missing'>{s}</span>" for s in res['missing_keywords'][:10]]), unsafe_allow_html=True)
+                    st.divider()
+                    st.write(res['feedback'])
+        with tab2:
+            with st.container(border=True):
+                st.markdown("### AI-Generated Cover Letter")
+                st.text_area("Copy this draft:", value=res['cover_letter'], height=400)
+        with tab3:
+            with st.container(border=True):
+                st.markdown("### Interview Questions")
+                st.markdown(res['interview_q'])
+        with tab4:
+            d1, d2 = st.columns([1.5, 1])
+            with d1:
+                with st.container(border=True):
+                    st.markdown("### Market Value & Salary")
+                    st.info("Based on 2025 Market Trends.")
+                    st.markdown(res['market_analysis'])
+                st.write("")
+                with st.container(border=True):
+                    st.markdown("### Candidate Upskilling Roadmap")
+                    st.success("Suggested 4-Week Plan to bridge skill gaps:")
+                    st.markdown(res['roadmap'])
+            with d2:
+                with st.container(border=True):
+                    st.markdown("### Recruiter Outreach")
+                    email_type = st.selectbox("Select Email Type", ["Interview Invite", "Polite Rejection", "Offer Letter"])
+                    if st.button("Generate Email Draft"):
+                        with st.spinner("Drafting..."):
+                            email_draft = ai.generate_email_draft(resume_text, job_role, email_type)
+                            st.text_area("Email Draft:", value=email_draft, height=250)
+
+def main():
+    setup_page()
+    db.create_tables()
+    render_sidebar()
+    if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
+    if 'username' not in st.session_state: st.session_state['username'] = ""
+    if not st.session_state['logged_in']: login_page()
+    else: dashboard_page()
 
 if __name__ == "__main__":
     main()
-
