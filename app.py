@@ -12,71 +12,78 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 3D GLASSMORPHISM BACKGROUND --- */
+        /* --- 1. THEME BASE (DEEP SPACE) --- */
         .stApp {
-            background-color: #F3F4F6;
-            /* Creates floating 3D color blobs */
+            background-color: #0f172a; /* Very Dark Blue */
             background-image: 
-                radial-gradient(at 10% 10%, hsla(256, 90%, 85%, 1) 0px, transparent 50%),
-                radial-gradient(at 90% 10%, hsla(200, 90%, 85%, 1) 0px, transparent 50%),
-                radial-gradient(at 90% 90%, hsla(280, 90%, 85%, 1) 0px, transparent 50%),
-                radial-gradient(at 10% 90%, hsla(200, 90%, 85%, 1) 0px, transparent 50%);
-            background-size: 150% 150%;
-        }
-        /* ----------------------------------- */
-
-        html, body, [class*="css"] {
-            font-family: 'Outfit', sans-serif;
-            color: #111827;
-            background-color: transparent;
-        }
-
-        .stMarkdown a {
-            text-decoration: none;
-            color: #4F46E5 !important;
-            font-weight: 600;
-        }
-
-        /* --- 3D FROSTED GLASS CARDS --- */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.65); /* Semi-transparent White */
-            backdrop-filter: blur(12px);             /* The Blur Effect */
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px; 
-            border: 1px solid rgba(255, 255, 255, 0.6); /* Subtle white border */
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); /* Floating shadow */
-            padding: 40px;
+                radial-gradient(at 50% 0%, #312e81 0px, transparent 50%),
+                radial-gradient(at 100% 0%, #4c1d95 0px, transparent 50%);
+            background-size: 100% 100%;
         }
         
-        /* Interactive Hover Effect for Cards */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
-            transform: translateY(-2px); /* Slight lift on hover */
+        /* --- 2. GLOBAL TEXT COLOR OVERRIDE --- */
+        html, body, [class*="css"], .stMarkdown, .stMetricLabel {
+            font-family: 'Outfit', sans-serif;
+            color: #e0e7ff !important; /* Soft White/Blue Text */
+        }
+        
+        /* Links */
+        .stMarkdown a {
+            color: #818cf8 !important; /* Bright Indigo */
+        }
+
+        /* --- 3. 3D FLOATING GLASS CARDS --- */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background: rgba(30, 41, 59, 0.7); /* Dark Glass */
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            
+            /* THE 3D EFFECT: Top Highlight + Bottom Shadow */
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.3), 
+                0 2px 4px -1px rgba(0, 0, 0, 0.15),
+                inset 0 0 20px rgba(0, 0, 0, 0.2); /* Inner depth */
+            padding: 40px;
+        }
+
+        /* --- 4. UI ELEMENTS FIXES --- */
+        /* Input Fields (Darken them to match) */
+        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+            background-color: #1e293b !important;
+            color: white !important;
+            border: 1px solid #475569;
+        }
+        
+        /* Buttons (Neon Glow) */
+        div.stButton > button {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); /* Glow */
             transition: all 0.3s ease;
         }
-
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid rgba(229, 231, 235, 0.5); }
-        .stTabs [aria-selected="true"] { color: #4F46E5 !important; border-bottom-color: #4F46E5 !important; }
-
-        .skill-tag {
-            display: inline-block;
-            padding: 5px 12px;
-            margin: 4px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        div.stButton > button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
         }
-        .skill-match { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
-        .skill-missing { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
 
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #334155; }
+        .stTabs [aria-selected="true"] { color: #818cf8 !important; border-bottom-color: #818cf8 !important; }
+
+        /* Skill Badges (Dark Mode Versions) */
+        .skill-tag {
+            display: inline-block; padding: 5px 12px; margin: 4px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+        }
+        .skill-match { background-color: #064e3b; color: #6ee7b7 !important; border: 1px solid #059669; }
+        .skill-missing { background-color: #7f1d1d; color: #fca5a5 !important; border: 1px solid #dc2626; }
+        
         .category-badge {
-            background-color: #EEF2FF;
-            color: #4F46E5;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 14px;
-            border: 1px solid #C7D2FE;
+            background-color: #312e81; color: #c7d2fe !important;
+            padding: 4px 12px; border-radius: 12px; border: 1px solid #4338ca;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
@@ -464,5 +471,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
