@@ -12,81 +12,73 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. LIGHT 3D BACKGROUND --- */
+        /* --- 1. 3D ISOMETRIC BACKGROUND --- */
         .stApp {
-            background-color: #F3F4F6; /* Light Grey Base */
-            /* Subtle glowing orbs in corners for 3D depth */
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(199, 210, 254, 0.5) 0px, transparent 50%), 
-                radial-gradient(at 100% 100%, rgba(233, 213, 255, 0.5) 0px, transparent 50%);
-            background-attachment: fixed;
-            background-size: 100% 100%;
+            background-color: #e5e7eb; /* Light Grey Base */
+            opacity: 1;
+            /* This CSS creates a 3D Isometric Cube Pattern */
+            background-image:  linear-gradient(30deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(150deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(30deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(150deg, #d1d5db 12%, transparent 12.5%, transparent 87%, #d1d5db 87.5%, #d1d5db), linear-gradient(60deg, #f3f4f6 25%, transparent 25.5%, transparent 75%, #f3f4f6 75%, #f3f4f6), linear-gradient(60deg, #f3f4f6 25%, transparent 25.5%, transparent 75%, #f3f4f6 75%, #f3f4f6);
+            background-size: 40px 70px;
+            background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
         }
 
-        /* --- 2. GLOBAL TEXT VISIBILITY (Dark Text) --- */
-        html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li {
+        /* --- 2. TEXT VISIBILITY (Dark Text on Light) --- */
+        html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #111827 !important; /* Deep Charcoal - Easy to read */
+            color: #111827 !important; /* Dark Black/Grey */
         }
         
         /* Links */
         .stMarkdown a {
             color: #4F46E5 !important;
+            font-weight: 700;
         }
 
-        /* --- 3. 3D FROSTED GLASS CARDS --- */
+        /* --- 3. 3D FLOATING CARDS (Clean White) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.9); /* 90% White (High Contrast) */
-            backdrop-filter: blur(14px);           /* Glass Blur Effect */
-            border-radius: 20px;
-            
-            /* 3D SHADOWS: Soft but deep */
+            background-color: #FFFFFF;
+            border-radius: 16px; 
             border: 1px solid #FFFFFF;
-            box-shadow: 
-                0 10px 15px -3px rgba(0, 0, 0, 0.1), 
-                0 4px 6px -2px rgba(0, 0, 0, 0.05),
-                inset 0 0 0 1px rgba(255,255,255,0.5); 
-            padding: 40px;
-            transition: transform 0.2s ease;
-        }
-
-        /* Hover Effect: Cards lift up slightly */
-        div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-4px);
+            /* Deep shadow to make it float high above the 3D grid */
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        /* --- 4. INPUT FIELDS (Clean White) --- */
-        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #FFFFFF !important;
-            color: #111827 !important;
-            border: 1px solid #E5E7EB;
-            border-radius: 10px;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* Inner shadow for depth */
-        }
-
-        /* --- 5. SIDEBAR (Glass Panel) --- */
-        section[data-testid="stSidebar"] {
-            background-color: #F9FAFB;
-            border-right: 1px solid #E5E7EB;
+            padding: 40px;
+            transition: transform 0.2s;
         }
         
-        /* --- 6. BUTTONS (3D Gradient) --- */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
+            transform: translateY(-2px); /* Subtle lift */
+        }
+
+        /* --- 4. SIDEBAR (Clean Panel) --- */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #E5E7EB;
+            box-shadow: 5px 0 15px -5px rgba(0,0,0,0.05);
+        }
+
+        /* --- 5. INPUT FIELDS (High Contrast) --- */
+        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+            background-color: #F9FAFB !important;
+            color: #111827 !important;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+        }
+        
+        /* --- 6. BUTTONS (Purple 3D) --- */
         div.stButton > button {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%); /* 3D Gradient */
             color: white !important;
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.5); /* Drop Shadow */
+            border-bottom: 4px solid #4338ca; /* 3D Bevel Edge */
             font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.5);
+            transition: all 0.1s;
         }
         div.stButton > button:active {
-            transform: scale(0.98);
+            transform: translateY(2px); /* Push down effect */
+            border-bottom: 0px solid #4338ca;
+            box-shadow: none;
         }
 
         /* --- 7. BADGES & TABS --- */
@@ -96,21 +88,20 @@ def setup_page():
         .skill-tag {
             display: inline-block; padding: 5px 12px; margin: 4px; border-radius: 20px;
             font-size: 12px; font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Mini 3D shadow for tags */
         }
-        .skill-match { background-color: #ecfdf5; color: #047857 !important; border: 1px solid #6ee7b7; }
-        .skill-missing { background-color: #fef2f2; color: #b91c1c !important; border: 1px solid #fca5a5; }
+        .skill-match { background-color: #d1fae5; color: #065f46 !important; border: 1px solid #34d399; }
+        .skill-missing { background-color: #fee2e2; color: #991b1b !important; border: 1px solid #f87171; }
 
         .category-badge {
             background-color: #eef2ff; color: #4338ca !important;
             padding: 4px 12px; border-radius: 12px; border: 1px solid #c7d2fe;
-            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.15);
         }
 
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
+    
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -491,6 +482,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
