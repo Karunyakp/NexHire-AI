@@ -54,12 +54,53 @@ def setup_page():
         </style>
     """, unsafe_allow_html=True)
 
+# --- REPLACE THE EXISTING render_sidebar FUNCTION IN app.py WITH THIS ---
+
 def render_sidebar():
     with st.sidebar:
         try: st.image("logo.png", width=150) 
         except: pass 
         st.title("NexHire")
         st.markdown("### Enterprise Recruitment Intelligence")
+        
+        # --- CHATBOT SECTION START ---
+        st.divider()
+        st.markdown("### 🤖 NexBot Assistant")
+        
+        # 1. Initialize Chat History
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
+        # 2. Chat History Display (Scrollable Container)
+        chat_container = st.container(height=300)
+        with chat_container:
+            if not st.session_state.messages:
+                st.info("👋 Hi! I'm NexBot. Ask me anything about recruitment!")
+            
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+        # 3. Chat Input
+        # Note: We use a unique key to prevent conflicts
+        if prompt := st.chat_input("Ask NexBot...", key="sidebar_chat_input"):
+            # A. Display User Message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with chat_container:
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+
+            # B. Get AI Response
+            with st.spinner("Thinking..."):
+                response = ai.get_chat_response(st.session_state.messages)
+            
+            # C. Display AI Response
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            with chat_container:
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+        # --- CHATBOT SECTION END ---
+
         st.divider()
         st.subheader("Connect with Developer")
         st.link_button("LinkedIn Profile", "https://www.linkedin.com/in/karunyakp")
@@ -368,3 +409,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
