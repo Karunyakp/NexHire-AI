@@ -11,102 +11,108 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. TECH-FLUID BACKGROUND --- */
+        /* --- 1. THE PERFECT COMBO: FLUID ART + TECH GRID --- */
         .stApp {
-            background-color: #f8fafc;
+            background-color: #FFFFFF;
             background-image: 
-                /* LAYER 1: The Grid Overlay (Crisp & Technical) */
-                linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px), 
-                linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+                /* LAYER 1: The Grid Overlay (Crisp structure) */
+                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
                 
-                /* LAYER 2: Fluid Blobs (Cooler Colors - No Pink) */
-                radial-gradient(at 0% 0%, #c7d2fe 0px, transparent 50%),       /* Soft Indigo */
-                radial-gradient(at 100% 0%, #e0f2fe 0px, transparent 50%),     /* Sky Blue (Replaced Pink) */
-                radial-gradient(at 100% 100%, #ddd6fe 0px, transparent 50%),   /* Light Violet */
-                radial-gradient(at 0% 100%, #ccfbf1 0px, transparent 50%);     /* Fresh Mint/Teal */
+                /* LAYER 2: The "Best" Fluid Art Gradients (Pink, Blue, Lavender) */
+                radial-gradient(at 50% 100%, #e0f2fe 0px, transparent 50%),    /* Baby Blue */
+                radial-gradient(at 100% 0%, #ffe4e6 0px, transparent 50%),     /* Rose Pink */
+                radial-gradient(at 0% 50%, #f3e8ff 0px, transparent 50%),      /* Lavender */
+                radial-gradient(at 80% 50%, #ccfbf1 0px, transparent 50%),     /* Mint */
+                radial-gradient(at 0% 100%, #e0e7ff 0px, transparent 50%);     /* Soft Indigo */
                 
-            /* Sizing: Grid is small (40px), Blobs are huge (100% screen) */
-            background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-            background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+            /* Sizing: Grid is 40px, Art is 100% screen */
+            background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+            background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
             background-attachment: fixed;
         }
 
-        /* --- 2. TEXT TYPOGRAPHY --- */
+        /* --- 2. TYPOGRAPHY (Dark Charcoal for Contrast) --- */
         html, body, [class*="css"], .stMarkdown, .stMetricLabel, h1, h2, h3, p, li, .stCaption {
             font-family: 'Outfit', sans-serif;
-            color: #0f172a !important; /* Dark Navy/Black for contrast */
+            color: #1f2937 !important; /* Dark Grey */
         }
         
         .stMarkdown a {
-            color: #4F46E5 !important;
+            background: linear-gradient(90deg, #4f46e5, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             font-weight: 700;
         }
 
-        /* --- 3. GLASS CARDS (High-End Tech Look) --- */
+        /* --- 3. PREMIUM GLASS CARDS (Saturated Blur) --- */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(255, 255, 255, 0.85); /* 85% White */
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            /* Clean, sharp shadow */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background: rgba(255, 255, 255, 0.75); /* Slightly more opaque for the grid */
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); 
             padding: 40px;
         }
         
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-            border-color: #a5b4fc; /* Glows Indigo on hover */
-            transition: all 0.3s ease;
+            transform: translateY(-5px) scale(1.005);
+            box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.15);
+            transition: all 0.4s ease;
         }
 
-        /* --- 4. INPUTS (Clean White) --- */
+        /* --- 4. INPUT FIELDS (Clean) --- */
         .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #FFFFFF !important;
-            color: #0f172a !important;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border: 2px solid #f3f4f6;
+            border-radius: 12px;
+            color: #1f2937 !important;
         }
         .stTextInput input:focus, .stTextArea textarea:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: #818cf8;
         }
 
-        /* --- 5. BUTTONS (Cool Blue/Purple Gradient) --- */
+        /* --- 5. BUTTONS (Liquid Gradient) --- */
         div.stButton > button {
-            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+            background-size: 200% auto;
             color: white !important;
             border: none;
-            border-radius: 8px;
+            border-radius: 50px;
             font-weight: 600;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
-            transition: all 0.2s;
+            padding: 10px 24px;
+            transition: 0.5s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         div.stButton > button:hover {
+            background-position: right center;
             transform: scale(1.02);
-            box-shadow: 0 8px 12px -2px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
         }
 
-        /* --- 6. SIDEBAR & EXTRAS --- */
+        /* --- 6. SIDEBAR & BADGES --- */
         section[data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #e2e8f0;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255,255,255,0.6);
         }
 
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e2e8f0; }
-        .stTabs [aria-selected="true"] { color: #4f46e5 !important; border-bottom-color: #4f46e5 !important; }
+        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #e5e7eb; }
+        .stTabs [aria-selected="true"] { color: #8b5cf6 !important; border-bottom-color: #8b5cf6 !important; }
 
         .skill-tag {
-            background: white; border: 1px solid #e2e8f0; 
+            background: white; border: 1px solid #e5e7eb; 
             padding: 5px 12px; margin: 4px; border-radius: 20px;
-            font-size: 12px; font-weight: 600; color: #475569;
+            font-size: 12px; font-weight: 700; color: #4b5563;
         }
-        .skill-match { background: #eff6ff; color: #1d4ed8 !important; border: 1px solid #bfdbfe; }
-        .skill-missing { background: #fef2f2; color: #b91c1c !important; border: 1px solid #fecaca; }
+        .skill-match { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; border: none; }
+        .skill-missing { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; border: none; }
 
         .category-badge {
-            background: #eef2ff; color: #4338ca !important;
-            padding: 4px 12px; border-radius: 12px; font-weight: bold; border: 1px solid #c7d2fe;
+            background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
+            color: #4338ca; padding: 6px 16px; border-radius: 20px;
+            font-weight: bold; font-size: 14px; border: none;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
@@ -494,6 +500,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
