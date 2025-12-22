@@ -12,85 +12,80 @@ def setup_page():
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        /* --- 1. THEME BASE (DEEP SPACE) --- */
+        /* --- 1. BACKGROUND (Keep the Deep Space Look) --- */
         .stApp {
-            background-color: #0f172a; /* Very Dark Blue */
+            background-color: #0f172a; /* Dark Blue Base */
             background-image: 
                 radial-gradient(at 50% 0%, #312e81 0px, transparent 50%),
                 radial-gradient(at 100% 0%, #4c1d95 0px, transparent 50%);
             background-size: 100% 100%;
         }
-        
-        /* --- 2. GLOBAL TEXT COLOR OVERRIDE --- */
-        html, body, [class*="css"], .stMarkdown, .stMetricLabel {
-            font-family: 'Outfit', sans-serif;
-            color: #e0e7ff !important; /* Soft White/Blue Text */
-        }
-        
-        /* Links */
-        .stMarkdown a {
-            color: #818cf8 !important; /* Bright Indigo */
+
+        /* --- 2. GLOBAL TEXT DEFAULT (White for titles on dark bg) --- */
+        h1, h2, h3, .stMarkdown p {
+            color: #ffffff; 
         }
 
-        /* --- 3. 3D FLOATING GLASS CARDS --- */
+        /* --- 3. THE "WHITE BOX" CONTAINERS --- */
+        /* Targets all st.container(border=True) blocks */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background: rgba(30, 41, 59, 0.7); /* Dark Glass */
-            backdrop-filter: blur(12px);
+            background-color: #FFFFFF !important; /* Pure White Box */
             border-radius: 16px;
-            
-            /* THE 3D EFFECT: Top Highlight + Bottom Shadow */
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 4px 6px -1px rgba(0, 0, 0, 0.3), 
-                0 2px 4px -1px rgba(0, 0, 0, 0.15),
-                inset 0 0 20px rgba(0, 0, 0, 0.2); /* Inner depth */
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); /* Pop-out Shadow */
             padding: 40px;
         }
 
-        /* --- 4. UI ELEMENTS FIXES --- */
-        /* Input Fields (Darken them to match) */
-        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-            background-color: #1e293b !important;
-            color: white !important;
-            border: 1px solid #475569;
+        /* --- 4. TEXT INSIDE WHITE BOXES (MUST BE DARK) --- */
+        /* Force text inside the white containers to be dark for readability */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div h1,
+        div[data-testid="stVerticalBlockBorderWrapper"] > div h2,
+        div[data-testid="stVerticalBlockBorderWrapper"] > div h3,
+        div[data-testid="stVerticalBlockBorderWrapper"] > div p,
+        div[data-testid="stVerticalBlockBorderWrapper"] > div span,
+        div[data-testid="stVerticalBlockBorderWrapper"] > div div {
+            color: #111827 !important; /* Dark Grey Text */
         }
         
-        /* Buttons (Neon Glow) */
-        div.stButton > button {
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); /* Glow */
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        /* Fix Input Fields inside White Boxes */
+        .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+            background-color: #f8fafc !important; 
+            color: #0f172a !important; 
+            border: 1px solid #cbd5e1;
         }
 
-        /* Tabs */
-        .stTabs [data-baseweb="tab-list"] { border-bottom: 2px solid #334155; }
-        .stTabs [aria-selected="true"] { color: #818cf8 !important; border-bottom-color: #818cf8 !important; }
+        /* --- 5. SIDEBAR (Make it a White Panel) --- */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #e5e7eb;
+        }
+        /* Sidebar Text must be dark */
+        section[data-testid="stSidebar"] h1,
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3,
+        section[data-testid="stSidebar"] p,
+        section[data-testid="stSidebar"] span,
+        section[data-testid="stSidebar"] div {
+            color: #111827 !important;
+        }
 
-        /* Skill Badges (Dark Mode Versions) */
+        /* --- 6. BADGES & BUTTONS --- */
         .skill-tag {
             display: inline-block; padding: 5px 12px; margin: 4px; border-radius: 20px;
             font-size: 12px; font-weight: 600;
         }
-        .skill-match { background-color: #064e3b; color: #6ee7b7 !important; border: 1px solid #059669; }
-        .skill-missing { background-color: #7f1d1d; color: #fca5a5 !important; border: 1px solid #dc2626; }
-        
+        .skill-match { background-color: #d1fae5 !important; color: #065f46 !important; border: 1px solid #34d399; }
+        .skill-missing { background-color: #fee2e2 !important; color: #991b1b !important; border: 1px solid #f87171; }
+
         .category-badge {
-            background-color: #312e81; color: #c7d2fe !important;
-            padding: 4px 12px; border-radius: 12px; border: 1px solid #4338ca;
+            background-color: #eef2ff !important; color: #4338ca !important;
+            padding: 4px 12px; border-radius: 12px; border: 1px solid #c7d2fe;
         }
 
         #MainMenu, footer, header {visibility: hidden;}
         div[data-testid="stHeaderActionElements"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
-
 def render_sidebar():
     with st.sidebar:
         # App Logo (Top)
@@ -471,6 +466,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
